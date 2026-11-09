@@ -1,0 +1,830 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   全站專屬字體規範 (Studio Typography System)
+   - 英文字體：Zen Maru Gothic (圓潤清爽日系圓體英文)
+   - 中文大標題：阿里巴巴普惠體 (大氣端正結構)
+   - 中文中標題與小標題/內文：思源黑體 (Noto Sans TC / Source Han Sans，清晰現代俐落)
+   ========================================================================== */
+
+/* 1. 英文字體專用 Unicode 映射：涵蓋所有英文字母、數字與常見符號 */
+@font-face {
+  font-family: 'Zen Maru Gothic Latin';
+  src: local('Zen Maru Gothic Medium'),
+       local('Zen Maru Gothic Regular'),
+       local('Zen Maru Gothic');
+  font-weight: 400 500;
+  font-display: swap;
+  unicode-range: U+0000-024F, U+2000-206F, U+2070-209F, U+20A0-20CF, U+2100-214F, U+2150-218F;
+}
+
+@font-face {
+  font-family: 'Zen Maru Gothic Latin';
+  src: local('Zen Maru Gothic Bold'),
+       local('Zen Maru Gothic Black'),
+       local('Zen Maru Gothic');
+  font-weight: 600 900;
+  font-display: swap;
+  unicode-range: U+0000-024F, U+2000-206F, U+2070-209F, U+20A0-20CF, U+2100-214F, U+2150-218F;
+}
+
+/* 2. 中文大標題：阿里巴巴普惠體 (Alibaba PuHuiTi 3.0) WebFont + Local Fallback */
+@font-face {
+  font-family: 'Alibaba PuHuiTi 3.0';
+  src: local('Alibaba PuHuiTi 3.0 Bold'),
+       local('Alibaba PuHuiTi 3.0-85-Bold'),
+       local('Alibaba PuHuiTi Bold'),
+       local('Alibaba PuHuiTi 3.0'),
+       local('Alibaba PuHuiTi'),
+       local('AlibabaPuHuiTi'),
+       local('阿里巴巴普惠體 3.0 Bold'),
+       local('阿里巴巴普惠體 3.0'),
+       local('阿里巴巴普惠體 Bold'),
+       local('阿里巴巴普惠體'),
+       url('https://cdn.jsdelivr.net/npm/alibabapuhuiti-3-85-bold@1.0.0/AlibabaPuHuiTi-3-85-Bold.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/npm/@pinhai/ali-fonts/AlibabaPuHuiTi-3-85-Bold.woff2') format('woff2');
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Alibaba PuHuiTi 3.0';
+  src: local('Alibaba PuHuiTi 3.0 Regular'),
+       local('Alibaba PuHuiTi 3.0-55-Regular'),
+       local('Alibaba PuHuiTi Regular'),
+       local('Alibaba PuHuiTi 3.0'),
+       local('Alibaba PuHuiTi'),
+       local('AlibabaPuHuiTi'),
+       local('阿里巴巴普惠體 3.0 Regular'),
+       local('阿里巴巴普惠體 3.0'),
+       local('阿里巴巴普惠體'),
+       url('https://cdn.jsdelivr.net/npm/alibabapuhuiti-3-55-regular@1.0.0/AlibabaPuHuiTi-3-55-Regular.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/npm/@pinhai/ali-fonts/AlibabaPuHuiTi-3-55-Regular.woff2') format('woff2');
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Alibaba PuHuiTi';
+  src: local('Alibaba PuHuiTi 3.0 Bold'),
+       local('Alibaba PuHuiTi 3.0-85-Bold'),
+       local('Alibaba PuHuiTi Bold'),
+       local('Alibaba PuHuiTi 3.0'),
+       local('Alibaba PuHuiTi'),
+       local('AlibabaPuHuiTi'),
+       local('阿里巴巴普惠體 3.0 Bold'),
+       local('阿里巴巴普惠體 3.0'),
+       local('阿里巴巴普惠體 Bold'),
+       local('阿里巴巴普惠體'),
+       url('https://cdn.jsdelivr.net/npm/alibabapuhuiti-3-85-bold@1.0.0/AlibabaPuHuiTi-3-85-Bold.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/npm/@pinhai/ali-fonts/AlibabaPuHuiTi-3-85-Bold.woff2') format('woff2');
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Alibaba PuHuiTi';
+  src: local('Alibaba PuHuiTi 3.0 Regular'),
+       local('Alibaba PuHuiTi 3.0-55-Regular'),
+       local('Alibaba PuHuiTi Regular'),
+       local('Alibaba PuHuiTi 3.0'),
+       local('Alibaba PuHuiTi'),
+       local('AlibabaPuHuiTi'),
+       local('阿里巴巴普惠體 3.0 Regular'),
+       local('阿里巴巴普惠體 3.0'),
+       local('阿里巴巴普惠體'),
+       url('https://cdn.jsdelivr.net/npm/alibabapuhuiti-3-55-regular@1.0.0/AlibabaPuHuiTi-3-55-Regular.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/npm/@pinhai/ali-fonts/AlibabaPuHuiTi-3-55-Regular.woff2') format('woff2');
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* 字體系統變數配置 */
+  --font-en: "Zen Maru Gothic", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-title-lg: "Alibaba PuHuiTi 3.0", "Alibaba PuHuiTi", "AlibabaPuHuiTi", "阿里巴巴普惠體", "Noto Sans TC", sans-serif;
+  --font-title-md: "Noto Sans TC", "Noto Sans CJK TC", "Source Han Sans TC", "Source Han Sans", "思源黑體", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: "Noto Sans TC", "Noto Sans CJK TC", "Source Han Sans TC", "Source Han Sans", "思源黑體", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* 晴空雲朵淡藍主視覺 (Cloud Sky Blue — Light Mode Default) */
+  --bg-primary: #F4F9FF;
+  --bg-secondary: #E0F2FE;
+  --surface-glass: rgba(255, 255, 255, 0.84);
+  --surface-glass-strong: rgba(255, 255, 255, 0.94);
+  --surface-subtle: #F8FAFC;
+  --sky-primary: #38BDF8;
+  --sky-hover: #0284C7;
+  --sky-deep: #0369A1;
+  --sky-tint: #EFF6FF;
+  --border-sky: rgba(56, 189, 248, 0.24);
+  --border-sky-hover: rgba(56, 189, 248, 0.55);
+  --text-main: #0F172A;
+  --text-muted: #475569;
+  --shadow-bento: 0 14px 36px -10px rgba(14, 165, 233, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+  --shadow-bento-hover: 0 22px 48px -12px rgba(14, 165, 233, 0.22), 0 6px 16px -4px rgba(15, 23, 42, 0.06);
+}
+
+.dark {
+  /* 星夜冰藍模式 (Deep Starry Navy — Dark Mode) */
+  --bg-primary: #080E1A;
+  --bg-secondary: #0F172A;
+  --surface-glass: rgba(15, 23, 42, 0.78);
+  --surface-glass-strong: rgba(15, 23, 42, 0.92);
+  --surface-subtle: #1E293B;
+  --sky-primary: #38BDF8;
+  --sky-hover: #7DD3FC;
+  --sky-deep: #BAE6FD;
+  --sky-tint: #1E293B;
+  --border-sky: rgba(56, 189, 248, 0.22);
+  --border-sky-hover: rgba(56, 189, 248, 0.52);
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+  --shadow-bento: 0 16px 40px -12px rgba(2, 8, 23, 0.65), 0 0 0 1px rgba(56, 189, 248, 0.14);
+  --shadow-bento-hover: 0 24px 52px -12px rgba(14, 165, 233, 0.22), 0 0 0 1px rgba(56, 189, 248, 0.38);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background-color 750ms cubic-bezier(0.4, 0, 0.2, 1),
+              color 750ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================================================
+   標題與內文字體層次規範
+   ========================================================================== */
+
+/* 大標題：英文 Zen Maru Gothic + 中文 阿里巴巴普惠體 */
+h1, .font-heading-lg, .font-title-lg {
+  font-family: var(--font-title-lg);
+  letter-spacing: -0.015em;
+}
+
+/* 中標題：思源黑體 (Noto Sans TC) */
+h2, h3, .font-heading-md, .font-title-md {
+  font-family: var(--font-title-md);
+  letter-spacing: -0.01em;
+}
+
+/* 小標題與內文：思源黑體 (Noto Sans TC) */
+h4, h5, h6, p, span, button, input, textarea, select, label, .font-heading-sm, .font-title-sm, .font-body {
+  font-family: var(--font-body);
+}
+
+/* 純英文字體專用類別 */
+.font-en {
+  font-family: var(--font-en);
+}
+
+/* 晴空雲朵淡藍環境光暈背景 (Cloud Sky Blue Ambient Mesh) */
+.sky-ambient-bg {
+  background-color: var(--bg-primary);
+  background-image:
+    radial-gradient(at 12% 8%, rgba(56, 189, 248, 0.18) 0px, transparent 48%),
+    radial-gradient(at 88% 12%, rgba(186, 230, 253, 0.38) 0px, transparent 52%),
+    radial-gradient(at 52% 85%, rgba(224, 242, 254, 0.45) 0px, transparent 55%);
+}
+
+.dark .sky-ambient-bg {
+  background-color: var(--bg-primary);
+  background-image:
+    radial-gradient(at 15% 10%, rgba(56, 189, 248, 0.13) 0px, transparent 45%),
+    radial-gradient(at 85% 15%, rgba(14, 165, 233, 0.10) 0px, transparent 50%),
+    radial-gradient(at 50% 90%, rgba(3, 105, 161, 0.12) 0px, transparent 55%);
+}
+
+/* Bento 雲朵毛玻璃卡片容器 (Bento Glass Card) */
+.bento-glass-card {
+  background: var(--surface-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-sky);
+  border-radius: 24px;
+  box-shadow: var(--shadow-bento);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.25s ease,
+              box-shadow 0.28s ease,
+              background-color 0.25s ease;
+}
+
+.bento-glass-card:hover {
+  border-color: var(--border-sky-hover);
+  box-shadow: var(--shadow-bento-hover);
+}
+
+.bento-card-interactive:hover {
+  transform: translateY(-3px);
+}
+
+/* 晴空淡藍柔光圓角底座規範 (Squircle Icon Badge) */
+.squircle-icon-badge {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(14, 165, 233, 0.06));
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  color: #0284C7;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6);
+}
+
+.dark .squircle-icon-badge {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.20), rgba(14, 165, 233, 0.08));
+  border: 1px solid rgba(56, 189, 248, 0.32);
+  color: #38BDF8;
+  box-shadow: inset 0 1px 1px rgba(56, 189, 248, 0.15);
+}
+
+/* 咩創意工作室統一品牌標誌 (Studio Brand Logo) */
+.studio-brand-logo {
+  user-select: none;
+}
+
+.studio-brand-logo .squircle-icon-badge {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(14, 165, 233, 0.08));
+  border: 1px solid rgba(56, 189, 248, 0.36);
+  color: #0284C7;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7), 0 2px 6px -1px rgba(14, 165, 233, 0.15);
+}
+
+.dark .studio-brand-logo .squircle-icon-badge {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.24), rgba(14, 165, 233, 0.10));
+  border: 1px solid rgba(56, 189, 248, 0.40);
+  color: #38BDF8;
+  box-shadow: inset 0 1px 1px rgba(56, 189, 248, 0.25), 0 2px 6px -1px rgba(14, 165, 233, 0.25);
+}
+
+.studio-logo-sparkle {
+  box-shadow: 0 2px 8px -1px rgba(14, 165, 233, 0.45);
+}
+
+/* 主視覺晴空淡藍漸層按鈕 */
+.btn-sky-primary {
+  background: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 55%, #0284C7 100%);
+  color: #FFFFFF;
+  box-shadow: 0 8px 20px -4px rgba(14, 165, 233, 0.38);
+  transition: all 0.2s ease;
+}
+
+.btn-sky-primary:hover {
+  background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
+  box-shadow: 0 12px 24px -4px rgba(2, 132, 199, 0.48);
+  transform: translateY(-1px);
+}
+
+.btn-sky-primary:active {
+  transform: translateY(0);
+}
+
+/* 次要雲朵淡藍膠囊按鈕 */
+.btn-sky-secondary {
+  background: rgba(239, 246, 255, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  color: #0369A1;
+  transition: all 0.2s ease;
+}
+
+.btn-sky-secondary:hover {
+  background: #E0F2FE;
+  border-color: rgba(56, 189, 248, 0.55);
+  color: #0284C7;
+}
+
+.dark .btn-sky-secondary {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: #BAE6FD;
+}
+
+.dark .btn-sky-secondary:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.45);
+  color: #E0F2FE;
+}
+
+/* 箭頭向右上微移 2px 懸停動畫 */
+.group:hover .hover-arrow-nudge {
+  transform: translate(2px, -2px);
+}
+
+/* 連線狀態呼吸燈 */
+@keyframes pulseRing {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(1.85);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.85);
+    opacity: 0;
+  }
+}
+
+.status-pulse-ring::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background-color: inherit;
+  animation: pulseRing 2.2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+}
+
+/* iOS / Android 底部安全區域適配 */
+.pb-safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+}
+
+/* 隱藏水平選單捲軸 */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ==========================================================================
+   晴空雲霧散開 × 空間景深推進 開場動畫 (PortalEntrance)
+   ========================================================================== */
+.portal-entrance-overlay {
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+              visibility 0.65s ease;
+}
+
+.portal-sky-backdrop {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.96) 0%, rgba(224, 242, 254, 0.94) 42%, rgba(186, 230, 253, 0.92) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  transition: opacity 0.72s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .portal-sky-backdrop {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(15, 23, 42, 0.94) 0%, rgba(8, 14, 26, 0.96) 55%, rgba(2, 6, 23, 0.98) 100%);
+}
+
+.portal-depth-grid {
+  background-image:
+    linear-gradient(to right, rgba(56, 189, 248, 0.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(56, 189, 248, 0.12) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.75) 10%, transparent 72%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.75) 10%, transparent 72%);
+  transform: perspective(900px) rotateX(28deg) scale(1.15);
+  transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.68s ease;
+}
+
+.portal-depth-tunnel {
+  width: min(82vw, 680px);
+  height: min(82vw, 680px);
+  border: 1.5px solid rgba(56, 189, 248, 0.25);
+  box-shadow:
+    0 0 80px rgba(56, 189, 248, 0.22),
+    inset 0 0 60px rgba(56, 189, 248, 0.14);
+  transform: translate3d(0, 0, -120px) scale(0.84);
+  opacity: 0.75;
+  transition: transform 0.86s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.72s ease;
+}
+
+/* 四向立體雲霧團塊 */
+.portal-cloud-cluster {
+  position: absolute;
+  width: 58vw;
+  height: 52vh;
+  transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 1.05s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
+}
+
+.portal-cloud-puff {
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle at 38% 35%,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(224, 242, 254, 0.82) 48%,
+    rgba(56, 189, 248, 0.18) 78%,
+    transparent 100%
+  );
+  filter: blur(18px);
+}
+
+.dark .portal-cloud-puff {
+  background: radial-gradient(
+    circle at 38% 35%,
+    rgba(56, 189, 248, 0.28) 0%,
+    rgba(14, 165, 233, 0.16) 50%,
+    rgba(15, 23, 42, 0.4) 80%,
+    transparent 100%
+  );
+}
+
+.portal-cloud-puff-xl {
+  width: 100%;
+  height: 100%;
+  inset: 0;
+}
+
+.portal-cloud-puff-lg {
+  width: 86%;
+  height: 86%;
+  inset: 6%;
+}
+
+.portal-cloud-puff-md {
+  width: 65%;
+  height: 65%;
+  inset: 18%;
+}
+
+.portal-cloud-puff-sm {
+  width: 46%;
+  height: 46%;
+  inset: 28%;
+}
+
+.portal-cloud-nw {
+  top: -8%;
+  left: -10%;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.portal-cloud-ne {
+  top: -8%;
+  right: -10%;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.portal-cloud-sw {
+  bottom: -10%;
+  left: -10%;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.portal-cloud-se {
+  bottom: -10%;
+  right: -10%;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+/* 極光能量環旋轉與呼吸 */
+@keyframes portalRingSpin {
+  0% {
+    transform: rotate(0deg) scale(0.96);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.03);
+  }
+  100% {
+    transform: rotate(360deg) scale(0.96);
+  }
+}
+
+@keyframes portalRingReverse {
+  0% {
+    transform: rotate(360deg) scale(1);
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+@keyframes portalProgressFill {
+  0% {
+    width: 12%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+.portal-aurora-ring-outer {
+  border: 2px solid rgba(56, 189, 248, 0.35);
+  box-shadow:
+    0 0 36px rgba(56, 189, 248, 0.32),
+    inset 0 0 24px rgba(56, 189, 248, 0.22);
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(56, 189, 248, 0.42) 95deg,
+    transparent 190deg,
+    rgba(14, 165, 233, 0.38) 285deg,
+    transparent 360deg
+  );
+  animation: portalRingSpin 4.5s linear infinite;
+}
+
+.portal-aurora-ring-inner {
+  border: 1.5px dashed rgba(2, 132, 199, 0.45);
+  animation: portalRingReverse 6s linear infinite;
+}
+
+.portal-aurora-glow {
+  background: radial-gradient(
+    circle,
+    rgba(56, 189, 248, 0.38) 0%,
+    rgba(14, 165, 233, 0.08) 65%,
+    transparent 100%
+  );
+  filter: blur(8px);
+}
+
+.portal-center-core {
+  transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.95s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
+}
+
+.portal-progress-bar {
+  animation: portalProgressFill 3.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 當進入 parting 階段：立體雲層向四周散開 + 鏡頭向前景深推進 */
+.portal-stage-parting .portal-cloud-nw {
+  transform: translate3d(-62%, -48%, 160px) scale(1.38);
+  opacity: 0;
+}
+
+.portal-stage-parting .portal-cloud-ne {
+  transform: translate3d(62%, -48%, 160px) scale(1.38);
+  opacity: 0;
+}
+
+.portal-stage-parting .portal-cloud-sw {
+  transform: translate3d(-64%, 48%, 210px) scale(1.45);
+  opacity: 0;
+}
+
+.portal-stage-parting .portal-cloud-se {
+  transform: translate3d(64%, 48%, 210px) scale(1.45);
+  opacity: 0;
+}
+
+.portal-stage-parting .portal-center-core {
+  transform: scale3d(1.88, 1.88, 1) translateZ(220px);
+  opacity: 0;
+}
+
+.portal-stage-parting .portal-depth-grid {
+  transform: perspective(900px) rotateX(18deg) scale(1.75);
+  opacity: 0;
+}
+
+.portal-stage-parting .portal-depth-tunnel {
+  transform: translate3d(0, 0, 320px) scale(2.15);
+  opacity: 0;
+}
+
+.portal-stage-parting .portal-sky-backdrop {
+  transform: scale(1.12);
+  opacity: 0;
+}
+
+/* ==========================================================================
+   大廳卡片物理彈簧波浪交錯浮現 (Staggered Spring Wave Reveal)
+   ========================================================================== */
+@keyframes bentoSpringWave {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0) scale(0.975);
+  }
+  68% {
+    opacity: 1;
+    transform: translate3d(0, -2px, 0) scale(1.003);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.bento-wave-reveal {
+  animation: bentoSpringWave 0.62s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+}
+
+/* 當開場雲霧尚在凝聚階段 (gathering) 時先蓄勢待發，待雲層散開 (parting) 或略過時同步啟動卡片波浪浮現 */
+.intro-gathering .bento-wave-reveal {
+  animation-name: none;
+  opacity: 0;
+  transform: translate3d(0, 22px, 0) scale(0.975);
+}
+
+/* ==========================================================================
+   全域深層緩慢漸變 ＋ 區塊微階梯波浪 (Theme Transition System - 750ms)
+   - 基底背景與色彩過渡拉長至 750ms (cubic-bezier(0.4, 0, 0.2, 1))，降低高反差刺激
+   - 僅針對關鍵容器與排版背景過渡，排除全域 box-shadow 與萬用字元 *，保障 60/120fps 高流暢度
+   - 區塊微階梯波浪延遲：Hero (0ms) -> Bento 專案 (80ms) -> 動態日誌 (160ms) -> 頁尾/導覽列 (240ms)
+   ========================================================================== */
+html.theme-transitioning,
+html.theme-transitioning body,
+html.theme-transitioning header,
+html.theme-transitioning nav,
+html.theme-transitioning main,
+html.theme-transitioning section,
+html.theme-transitioning footer,
+html.theme-transitioning .bento-glass-card,
+html.theme-transitioning button,
+html.theme-transitioning input {
+  transition-property: background-color, border-color, color !important;
+  transition-duration: 750ms !important;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+html.theme-transitioning .theme-stagger-hero,
+html.theme-transitioning .theme-stagger-hero .bento-glass-card,
+html.theme-transitioning .theme-stagger-hero button,
+html.theme-transitioning .theme-stagger-hero input {
+  transition-delay: 0ms !important;
+}
+
+html.theme-transitioning .theme-stagger-bento,
+html.theme-transitioning .theme-stagger-bento .bento-glass-card,
+html.theme-transitioning .theme-stagger-bento button,
+html.theme-transitioning .theme-stagger-bento input {
+  transition-delay: 80ms !important;
+}
+
+html.theme-transitioning .theme-stagger-pulse,
+html.theme-transitioning .theme-stagger-pulse .bento-glass-card,
+html.theme-transitioning .theme-stagger-pulse button,
+html.theme-transitioning .theme-stagger-pulse input {
+  transition-delay: 160ms !important;
+}
+
+html.theme-transitioning .theme-stagger-footer,
+html.theme-transitioning .theme-stagger-footer .bento-glass-card,
+html.theme-transitioning .theme-stagger-footer button {
+  transition-delay: 240ms !important;
+}
+
+/* 現代瀏覽器原生 View Transition 硬體加速淡入淡出 */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================================================
+   狀態通知膠囊動畫 (Toast Entrance & Exit Transitions)
+   - 進場：從下方 (translate-y-8 opacity-0 scale-95) 輕彈微回彈向上滑入 (350ms, cubic-bezier(0.16, 1, 0.3, 1))
+   - 停留：約 2.6s
+   - 收回：向下平滑柔和收回 (340ms, cubic-bezier(0.4, 0, 1, 1))，動畫完成後才卸載
+   - 連續點擊時平滑更新文字與圖示 (toast-content-fade)
+   ========================================================================== */
+@keyframes toastSpringEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 2rem, 0) scale(0.95);
+  }
+  72% {
+    opacity: 1;
+    transform: translate3d(0, -3px, 0) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes toastSlideExit {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 2rem, 0) scale(0.95);
+  }
+}
+
+@keyframes toastContentFade {
+  0% {
+    opacity: 0.3;
+    transform: translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toast-spring-enter {
+  animation: toastSpringEnter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+  transition: background-color 750ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 750ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 750ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.toast-slide-exit {
+  animation: toastSlideExit 340ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  will-change: transform, opacity;
+  transition: background-color 750ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 750ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 750ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.toast-content-fade {
+  animation: toastContentFade 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bento-wave-reveal,
+  .intro-gathering .bento-wave-reveal,
+  .portal-aurora-ring-outer,
+  .portal-aurora-ring-inner,
+  .portal-progress-bar {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  html.theme-transitioning,
+  html.theme-transitioning body,
+  html.theme-transitioning header,
+  html.theme-transitioning nav,
+  html.theme-transitioning main,
+  html.theme-transitioning section,
+  html.theme-transitioning footer,
+  html.theme-transitioning .bento-glass-card,
+  html.theme-transitioning button,
+  html.theme-transitioning input {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.01ms !important;
+  }
+
+  .toast-spring-enter,
+  .toast-slide-exit,
+  .toast-content-fade {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ==========================================================================
+   品牌標題與海報標語左右極致等寬對齊容器 (Brand Title & Tagline Full-Width Justify)
+   - 標題與標語採自適應貼合容器，使標語文字均勻展開、首尾字切齊標題兩端
+   ========================================================================== */
+.studio-title-align-box {
+  width: -moz-fit-content;
+  width: fit-content;
+  max-width: 100%;
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.studio-tagline-justify {
+  width: 100%;
+  text-align: justify;
+  text-align-last: justify;
+  text-justify: inter-ideograph;
+}
+
+/* 細緻捲軸樣式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.28);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(14, 165, 233, 0.48);
+}

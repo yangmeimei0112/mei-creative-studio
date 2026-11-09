@@ -1,0 +1,26 @@
+{
+  "name": "咩創意工作室 Mei Creative Studio",
+  "short_name": "咩創意工作室",
+  "description": "咩創意工作室數位產品與創意專案平台。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F4F9FF",
+  "theme_color": "#38BDF8",
+  "categories": ["productivity", "developer", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable.svg",
+      "sizes": "512x512 any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

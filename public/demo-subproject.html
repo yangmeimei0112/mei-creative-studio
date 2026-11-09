@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>咩創意雲端靈感白板 Mei Cloud Canvas</title>
+    <style>
+      :root {
+        --sky-primary: #38BDF8;
+        --sky-deep: #0284C7;
+        --bg-ice: #F4F9FF;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Plus Jakarta Sans", "Noto Sans TC", -apple-system, sans-serif;
+        background: radial-gradient(circle at 20% 20%, #E0F2FE 0%, #F4F9FF 55%, #FFFFFF 100%);
+        color: #0F172A;
+        min-height: 100vh;
+        padding: 28px 20px 110px;
+      }
+      .shell {
+        max-width: 780px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(56, 189, 248, 0.32);
+        border-radius: 24px;
+        padding: 28px;
+        box-shadow: 0 20px 50px -15px rgba(14, 165, 233, 0.16);
+      }
+      .top-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #E0F2FE;
+        color: #0369A1;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .scene-switcher {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .scene-pill {
+        padding: 5px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        background: #F8FAFC;
+        color: #0369A1;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.15s ease;
+      }
+      .scene-pill:hover,
+      .scene-pill.active {
+        background: #38BDF8;
+        color: #FFFFFF;
+        border-color: #0284C7;
+      }
+      h1 {
+        font-size: 24px;
+        font-weight: 800;
+        margin-bottom: 8px;
+        color: #0F172A;
+      }
+      p {
+        font-size: 14px;
+        line-height: 1.65;
+        color: #475569;
+        margin-bottom: 20px;
+      }
+      .canvas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+      .card {
+        background: #F8FAFC;
+        border: 1px solid rgba(56, 189, 248, 0.22);
+        border-radius: 16px;
+        padding: 16px;
+        transition: all 0.2s ease;
+      }
+      .card:hover {
+        border-color: #38BDF8;
+        transform: translateY(-2px);
+      }
+      .card h3 {
+        font-size: 15px;
+        margin-bottom: 6px;
+        color: #0284C7;
+      }
+      .interactive-area {
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(14, 165, 233, 0.04));
+        border: 1px dashed rgba(56, 189, 248, 0.5);
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 18px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #38BDF8, #0284C7);
+        color: white;
+        font-weight: 600;
+        font-size: 13px;
+        border: none;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="top-bar">
+        <div class="badge">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+          <span id="scene-badge">互動設計與多媒體</span>
+        </div>
+        <div class="scene-switcher" id="scene-switcher" aria-label="切換專案展示場景"></div>
+      </div>
+
+      <h1 id="scene-title">咩創意雲端靈感白板 (Mei Cloud Canvas)</h1>
+      <p id="scene-desc">
+        支援多人即時協作、無限畫布縮放與靈感卡片整理的雲端視覺白板工具。您可透過畫面右下角的導覽工具列快速切換其他專案或一鍵返回工作室大廳。
+      </p>
+
+      <div class="canvas-grid" id="scene-cards">
+        <div class="card">
+          <h3>無限畫布與自由排版</h3>
+          <p style="margin:0;font-size:13px;">支援流暢縮放、便利貼拖曳與視覺化結構整理。</p>
+        </div>
+        <div class="card">
+          <h3>即時協作與標註</h3>
+          <p style="margin:0;font-size:13px;">團隊成員可同步於畫布上標記重點與討論回饋。</p>
+        </div>
+        <div class="card">
+          <h3>跨專案快速導覽</h3>
+          <p style="margin:0;font-size:13px;">透過右下角導覽工具列隨時切換專案或返回大廳首頁。</p>
+        </div>
+      </div>
+
+      <div class="interactive-area">
+        <div id="counter-text" style="font-weight:700;color:#0369A1;">靈感節點互動計數：0 次</div>
+        <button class="btn" id="spark-btn" type="button">點亮靈感節點</button>
+      </div>
+    </div>
+
+    <script
+      src="/sdk/mei-dock.js"
+      data-hub-url="/"
+      data-project-name="咩創意雲端靈感白板"
+      data-position="bottom-right"
+    ></script>
+    <script>
+      const SCENES = {
+        'cloud-canvas': {
+          shortName: '雲端白板',
+          title: '咩創意雲端靈感白板 (Mei Cloud Canvas)',
+          badge: '互動設計與多媒體',
+          desc: '支援多人即時協作、無限畫布縮放與靈感卡片整理的雲端視覺白板工具。您可透過畫面右下角的導覽工具列快速切換其他專案或一鍵返回工作室大廳。',
+          actionLabel: '點亮靈感節點',
+          counterPrefix: '靈感節點互動計數',
+          cards: [
+            { title: '無限畫布與自由排版', text: '支援流暢縮放、便利貼拖曳與視覺化結構整理。' },
+            { title: '即時協作與標註', text: '團隊成員可同步於畫布上標記重點與討論回饋。' },
+            { title: '跨專案快速導覽', text: '透過右下角導覽工具列隨時切換專案或返回大廳首頁。' }
+          ]
+        },
+        'ai-copilot': {
+          shortName: 'AI 引擎',
+          title: '咩智慧靈感自動化引擎 (Mei AI Workflow Studio)',
+          badge: 'AI 與自動化工具',
+          desc: '整合多模型推論與視覺化節點編排的 AI 自動化平台，協助團隊快速生成品牌文案、設計草稿與自動化排程任務。',
+          actionLabel: '執行 AI 節點推論',
+          counterPrefix: '已完成工作流推論',
+          cards: [
+            { title: '多步驟提示詞串聯', text: '自動串接文案構思、結構驗證與多語系輸出節點。' },
+            { title: 'Token 用量即時監控', text: '精準追蹤每次模型呼叫延遲與快取命中率。' },
+            { title: '跨裝置一鍵觸發', text: '手機與電腦端皆可即時啟動自動化排程並檢視輸出。' }
+          ]
+        },
+        'commerce-portal': {
+          shortName: '極簡電商',
+          title: '雲絨極簡品牌電商系統 (CloudFleece Commerce)',
+          badge: '網站與商業應用',
+          desc: '專為質感設計品牌打造的現代化商業與預約系統，提供極速結帳體驗、會員中心與即時庫存看板。',
+          actionLabel: '模擬極速結帳轉換',
+          counterPrefix: '即時訂單模擬筆數',
+          cards: [
+            { title: '極速頁面載入', text: '採用邊緣快取與最佳化靜態生成，確保流暢購物體驗。' },
+            { title: '單手結帳動線', text: '針對行動裝置最佳化的直覺結帳與付款流程。' },
+            { title: '多通路庫存同步', text: '即時連動門市預約與線上商城庫存狀態。' }
+          ]
+        },
+        'voice-agent': {
+          shortName: '語音助手',
+          title: '晴空語音會議摘要助手 (SkyNote AI Transcriber)',
+          badge: 'AI 與自動化工具',
+          desc: '即時將會議錄音轉譯為結構化待辦清單與決策紀錄，自動標記關鍵里程碑與負責成員。',
+          actionLabel: '模擬語音段落轉譯',
+          counterPrefix: '已轉譯語音摘要段落',
+          cards: [
+            { title: '中英日混合辨識', text: '自動辨識跨國會議中的專業術語與時間軸標記。' },
+            { title: '結構化行動項目', text: '一鍵擷取會議決策並匯出為 JSON 或 Markdown。' },
+            { title: '離線錄音暫存', text: '支援行動裝置離線錄音，恢復連線後自動上傳轉譯。' }
+          ]
+        },
+        'motion-lab': {
+          shortName: '聲音劇場',
+          title: '雲朵粒子互動聲音劇場 (Cloud Wave Interactive Lab)',
+          badge: '互動設計與多媒體',
+          desc: '結合音訊頻譜分析與幾何流體動態的沉浸式視覺實驗作品，支援觸控漣漪與桌面游標引力場。',
+          actionLabel: '觸發聲波漣漪',
+          counterPrefix: '聲波粒子共振次數',
+          cards: [
+            { title: '即時流體粒子渲染', text: '以柔和漸層粒子建構隨音訊頻率律動的視覺波紋。' },
+            { title: '多點觸控與游標互動', text: '同時支援行動裝置多點觸控與桌面滑鼠引力互動。' },
+            { title: '低功耗渲染管線', text: '自動根據裝置效能動態調整粒子密度與幀率。' }
+          ]
+        },
+        'design-system': {
+          shortName: '設計規範',
+          title: '咩創意設計規範與組件庫 (Mei Design System)',
+          badge: '網站與商業應用',
+          desc: '彙整工作室旗下數位產品共用的介面組件、色彩主題與無障礙互動元件庫，提供一致的跨產品使用體驗。',
+          actionLabel: '檢驗組件無障礙對比',
+          counterPrefix: '已通過設計規範檢測項',
+          cards: [
+            { title: '主題色彩與深淺模式', text: '內建語意化色彩變數，支援淺色與深色外觀自動切換。' },
+            { title: '統一向量圖示元件', text: '封裝常用操作與分類圖示，確保跨產品視覺辨識一致。' },
+            { title: '無障礙互動規範', text: '完整支援鍵盤焦點導覽、螢幕閱讀器標籤與高對比度顯示。' }
+          ]
+        },
+        'private-ops': {
+          shortName: '內部中控',
+          title: '工作室內部自動化部署中控台 (Mei Private Ops Console)',
+          badge: '系統運維與監控',
+          desc: '監控工作室微服務容器、API 金鑰輪替、資料庫備份狀態與自動化 CI/CD 部署管線。',
+          actionLabel: '執行容器健康自檢',
+          counterPrefix: '已完成內部節點巡檢',
+          cards: [
+            { title: '專案權限隔離', text: '未解鎖訪客無法於大廳檢視此專案，保障內部工具安全。' },
+            { title: '服務狀態監控', text: '匯聚所有子專案的回應延遲與可用率指標。' },
+            { title: '自動備份與還原', text: '定期產生加密設定快照並同步至本地與雲端儲存。' }
+          ]
+        },
+        'spatial-poc': {
+          shortName: '空間運算',
+          title: '次世代空間運算概念實驗室 (Project Nimbus Spatial Prototype)',
+          badge: '概念實驗室',
+          desc: '探索 3D 空間卡片導覽與立體視窗在空間運算設備上的直覺手勢操作。',
+          actionLabel: '切換 3D 景深圖層',
+          counterPrefix: '空間視角校準次數',
+          cards: [
+            { title: '空間景深與光影', text: '模擬真實環境折射的動態陰影與立體卡片層次。' },
+            { title: '凝視與捏合手勢', text: '相容空間運算頭戴裝置與行動端觸控手勢。' },
+            { title: '跨專案快速切換', text: '透過導覽工具列隨時返回工作室主大廳。' }
+          ]
+        }
+      };
+
+      const params = new URLSearchParams(window.location.search);
+      const currentSceneKey = SCENES[params.get('scene')] ? params.get('scene') : 'cloud-canvas';
+      const activeScene = SCENES[currentSceneKey];
+
+      let count = 0;
+      const btn = document.getElementById('spark-btn');
+      const txt = document.getElementById('counter-text');
+      const titleEl = document.getElementById('scene-title');
+      const badgeEl = document.getElementById('scene-badge');
+      const descEl = document.getElementById('scene-desc');
+      const cardsEl = document.getElementById('scene-cards');
+      const switcherEl = document.getElementById('scene-switcher');
+
+      function applyScene(sceneKey) {
+        const scene = SCENES[sceneKey] || SCENES['cloud-canvas'];
+        document.title = scene.title + ' — 咩創意工作室';
+        if (titleEl) titleEl.textContent = scene.title;
+        if (badgeEl) badgeEl.textContent = scene.badge;
+        if (descEl) descEl.textContent = scene.desc;
+        if (btn) btn.textContent = scene.actionLabel;
+        count = 0;
+        if (txt) txt.textContent = scene.counterPrefix + '：0 次';
+
+        if (cardsEl && Array.isArray(scene.cards)) {
+          cardsEl.innerHTML = '';
+          scene.cards.forEach((c) => {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'card';
+            const h3 = document.createElement('h3');
+            h3.textContent = c.title;
+            const p = document.createElement('p');
+            p.style.margin = '0';
+            p.style.fontSize = '13px';
+            p.textContent = c.text;
+            cardDiv.appendChild(h3);
+            cardDiv.appendChild(p);
+            cardsEl.appendChild(cardDiv);
+          });
+        }
+
+        if (typeof window.__MEI_STUDIO_DOCK_SET_PROJECT__ === 'function') {
+          window.__MEI_STUDIO_DOCK_SET_PROJECT__(scene.title.split(' (')[0]);
+        }
+      }
+
+      if (switcherEl) {
+        Object.keys(SCENES).forEach((key) => {
+          const a = document.createElement('a');
+          a.href = '?scene=' + key;
+          a.className = 'scene-pill' + (key === currentSceneKey ? ' active' : '');
+          a.textContent = SCENES[key].shortName;
+          switcherEl.appendChild(a);
+        });
+      }
+
+      applyScene(currentSceneKey);
+
+      if (btn && txt) {
+        btn.addEventListener('click', () => {
+          count += 1;
+          txt.textContent = activeScene.counterPrefix + '：' + count + ' 次';
+        });
+      }
+    </script>
+  </body>
+</html>
