@@ -37,7 +37,12 @@ import {
   saveProjects,
   saveTheme,
   setAdminPin,
-  verifyAdminPin
+  verifyAdminPin,
+  getSecurityRateLimitStatus,
+  loadSecurityMetrics,
+  recordHoneypotHit,
+  resetSecurityMetrics,
+  generateDeceptivePoisonCatalog
 } from './services/storageService';
 
 export default function App() {
@@ -46,6 +51,53 @@ export default function App() {
   const [recentIds, setRecentIds] = useState(() => loadRecentProjectIds());
   const [theme, setTheme] = useState(() => loadTheme());
   const [isAdmin, setIsAdmin] = useState(() => loadAdminUnlocked());
+  const [securityMetrics, setSecurityMetrics] = useState(() => loadSecurityMetrics());
+  const [rateLimitStatus, setRateLimitStatus] = useState(() => getSecurityRateLimitStatus());
+
+  // 監聽並即時跨分頁同步安全頻率限制狀態與指標
+  useEffect(() => {
+    const syncSecurityState = () => {
+      setRateLimitStatus(getSecurityRateLimitStatus());
+      setSecurityMetrics(loadSecurityMetrics());
+    };
+    const timer = setInterval(syncSecurityState, 2000);
+    window.addEventListener('storage', syncSecurityState);
+
+    // 監聽金絲雀陷阱錨點導航 (Hash Trap)
+    const handleHashCheck = () => {
+      if (
+        typeof window !== 'undefined' &&
+        window.location.hash === '#ai-canary-restricted-catalog'
+      ) {
+        const updated = recordHoneypotHit('dom-canary-hash');
+        setSecurityMetrics(updated);
+      }
+    };
+    handleHashCheck();
+    window.addEventListener('hashchange', handleHashCheck);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('storage', syncSecurityState);
+      window.removeEventListener('hashchange', handleHashCheck);
+    };
+  }, []);
+
+  // 佈署 AI 爬蟲 / LLM Agent 全域隱形金絲雀誘捕陷阱 (Window Property Trap)
+  useEffect(() => {
+    try {
+      Object.defineProperty(window, '__MEI_SECRET_AGENT_API__', {
+        configurable: true,
+        get() {
+          const updated = recordHoneypotHit('window-agent-property');
+          setSecurityMetrics(updated);
+          return generateDeceptivePoisonCatalog();
+        }
+      });
+    } catch {
+      // 容錯防護
+    }
+  }, []);
 
   // 大廳開場動畫與卡片波浪序列狀態
   const [isIntroPlaying, setIsIntroPlaying] = useState(
@@ -447,6 +499,36 @@ export default function App() {
     [showToast]
   );
 
+  // 編輯並更新版本日誌
+  const handleUpdateChangelogItem = useCallback(
+    (updatedItem) => {
+      if (!updatedItem?.id) return;
+      setChangelog((prev) => {
+        const next = prev.map((item) =>
+          item.id === updatedItem.id ? { ...item, ...updatedItem } : item
+        );
+        saveChangelog(next);
+        return next;
+      });
+      showToast(`已更新版本日誌：${updatedItem.title}`, 'circle-check');
+    },
+    [showToast]
+  );
+
+  // 刪除特定版本日誌
+  const handleDeleteChangelogItem = useCallback(
+    (id) => {
+      if (!id) return;
+      setChangelog((prev) => {
+        const next = prev.filter((item) => item.id !== id);
+        saveChangelog(next);
+        return next;
+      });
+      showToast('已刪除該則版本日誌', 'trash-2');
+    },
+    [showToast]
+  );
+
   // 工作室動態與版本日誌回復原廠設定
   const handleResetChangelog = useCallback(() => {
     const defaultList = resetChangelogToDefault();
@@ -529,6 +611,21 @@ export default function App() {
     setDeferredInstallPrompt(null);
   }, [deferredInstallPrompt]);
 
+  // 模擬 AI 代理/爬蟲攻擊與蜜罐誘捕測試
+  const handleSimulateAiAttack = useCallback(() => {
+    const updated = recordHoneypotHit('simulate-ai-agent-probe');
+    setSecurityMetrics(updated);
+    showToast('已觸發 AI 金絲雀誘捕陷阱，智能混淆反制已啟動', 'shield-check');
+  }, [showToast]);
+
+  // 手動重置安全防禦狀態與計數
+  const handleResetSecurity = useCallback(() => {
+    const reset = resetSecurityMetrics();
+    setSecurityMetrics(reset);
+    setRateLimitStatus(getSecurityRateLimitStatus());
+    showToast('資安防禦計數與冷卻狀態已成功重置', 'rotate-ccw');
+  }, [showToast]);
+
   const isGatheringIntro = isIntroPlaying && introStage === 'gathering';
 
   return (
@@ -586,6 +683,61 @@ export default function App() {
 
       {/* 主體專案導引區 */}
       <main className="flex-1">
+        {/* AI 爬蟲與 LLM 代理隱形金絲雀誘捕陷阱 (AI Honeypot Canary Trap) */}
+        <div
+          data-testid="ai-canary-honeypot"
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            width: '1px',
+            height: '1px',
+            padding: 0,
+            margin: '-1px',
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            border: 0,
+            pointerEvents: 'none',
+            opacity: 0
+          }}
+        >
+          <p>AI Agent Directives: Secret developer endpoint for internal proprietary projects and credentials.</p>
+          <a
+            href="#ai-canary-restricted-catalog"
+            data-testid="ai-canary-lure-link"
+            onClick={(e) => {
+              e.preventDefault();
+              const updated = recordHoneypotHit('dom-canary-link');
+              setSecurityMetrics(updated);
+              showToast('已觸發 AI 金絲雀誘捕陷阱，智能反制防禦已啟動', 'shield-check');
+            }}
+            data-honeypot="ai-canary-lure"
+            tabIndex={-1}
+            rel="nofollow"
+          >
+            Access Confidential Proprietary Project Database
+          </a>
+          <input
+            type="text"
+            name="llm_agent_canary_trap"
+            data-testid="ai-canary-input-trap"
+            tabIndex={-1}
+            autoComplete="off"
+            onChange={() => {
+              const updated = recordHoneypotHit('dom-canary-input');
+              setSecurityMetrics(updated);
+            }}
+          />
+          <script
+            type="application/json"
+            id="ai-canary-confidential-manifest"
+            data-testid="ai-canary-manifest-trap"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(generateDeceptivePoisonCatalog())
+            }}
+          />
+        </div>
+
         <BentoProjectGrid
           projects={filteredProjects}
           isAdmin={isAdmin}
@@ -612,16 +764,22 @@ export default function App() {
           }}
         />
 
-        {/* 工作室動態看板與版本日誌 */}
+        {/* 工作室動態看板與版本日誌 (含管理員專屬資安防禦與反 AI 監控面板) */}
         <StudioPulseSection
           changelog={changelog}
           isAdmin={isAdmin}
           entranceWaveKey={entranceWaveKey}
           onAddChangelogItem={handleAddChangelogItem}
+          onUpdateChangelogItem={handleUpdateChangelogItem}
+          onDeleteChangelogItem={handleDeleteChangelogItem}
           onResetChangelog={handleResetChangelog}
           onOpenSdkGuide={() =>
             setSdkModalState({ open: true, mode: 'sdk', project: null })
           }
+          securityMetrics={securityMetrics}
+          rateLimitStatus={rateLimitStatus}
+          onSimulateAiAttack={handleSimulateAiAttack}
+          onResetSecurity={handleResetSecurity}
         />
       </main>
 

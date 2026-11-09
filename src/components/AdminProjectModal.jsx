@@ -10,6 +10,7 @@ import {
 import { PROJECT_CATEGORIES, PROJECT_STATUS_META } from '../data/defaultData';
 import {
   generateSubprojectEmbedSnippet,
+  getSecurityRateLimitStatus,
   probeProjectHealth,
   sanitizeProjectUrl
 } from '../services/storageService';
@@ -417,23 +418,59 @@ export default function AdminProjectModal({
 export function AdminUnlockModal({ isOpen, onClose, onUnlockSuccess, verifyPin }) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
+  const [rateStatus, setRateStatus] = useState(() => getSecurityRateLimitStatus());
 
   useEffect(() => {
     if (isOpen) {
       setPin('');
       setError('');
+      setRateStatus(getSecurityRateLimitStatus());
     }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const syncStatus = () => {
+      const next = getSecurityRateLimitStatus();
+      setRateStatus((prev) => {
+        if (prev.isLocked && !next.isLocked) {
+          setError('');
+        }
+        return next;
+      });
+    };
+    const timer = setInterval(syncStatus, 1000);
+    window.addEventListener('storage', syncStatus);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('storage', syncStatus);
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const current = getSecurityRateLimitStatus();
+    if (current.isLocked) {
+      setError(`已達 5 次嘗試失敗，系統已啟動安全防護鎖定 5 分鐘，請稍候再試（剩餘 ${current.remainingSeconds} 秒）`);
+      setRateStatus(current);
+      return;
+    }
+
     if (verifyPin(pin)) {
       onUnlockSuccess();
       onClose();
     } else {
-      setError('密碼不正確，請重新輸入（預設管理員密碼：mei888）');
+      const nextStatus = getSecurityRateLimitStatus();
+      setRateStatus(nextStatus);
+      if (nextStatus.isLocked) {
+        setError(`密碼不正確，已達 5 次嘗試失敗，系統已啟動安全防護鎖定 5 分鐘，請稍候再試（剩餘 ${nextStatus.remainingSeconds} 秒）`);
+      } else if (nextStatus.isCooldown) {
+        setError(`密碼不正確，請重新輸入（安全冷卻中，請等待 ${nextStatus.remainingSeconds} 秒，預設密碼：mei888）`);
+      } else {
+        setError('密碼不正確，請重新輸入（預設管理員密碼：mei888）');
+      }
     }
   };
 
@@ -483,7 +520,8 @@ export function AdminUnlockModal({ isOpen, onClose, onUnlockSuccess, verifyPin }
               placeholder="預設密碼：mei888"
               aria-label="管理員密碼輸入框"
               autoFocus
-              className="w-full px-4 py-2.5 rounded-2xl bg-sky-50/90 dark:bg-slate-800 border border-sky-400/35 text-sm text-slate-900 dark:text-white focus:border-sky-500 focus:outline-none"
+              disabled={rateStatus.isLocked}
+              className="w-full px-4 py-2.5 rounded-2xl bg-sky-50/90 dark:bg-slate-800 border border-sky-400/35 text-sm text-slate-900 dark:text-white focus:border-sky-500 focus:outline-none disabled:opacity-50"
             />
             <p className="mt-1.5 text-[11px] text-sky-600 dark:text-sky-400 flex items-center gap-1">
               <LucideIcon name="key-round" size={12} />
@@ -507,10 +545,15 @@ export function AdminUnlockModal({ isOpen, onClose, onUnlockSuccess, verifyPin }
             </button>
             <button
               type="submit"
-              className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full btn-sky-primary text-xs font-semibold"
+              disabled={rateStatus.isLocked}
+              className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full btn-sky-primary text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <LucideIcon name="lock-open" size={15} />
-              <span>立即解鎖管理後台</span>
+              <LucideIcon name={rateStatus.isLocked ? 'lock' : 'lock-open'} size={15} />
+              <span>
+                {rateStatus.isLocked
+                  ? `安全鎖定中 (${rateStatus.remainingSeconds}s)`
+                  : '立即解鎖管理後台'}
+              </span>
             </button>
           </div>
         </form>

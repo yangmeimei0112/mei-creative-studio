@@ -1,0 +1,47 @@
+# 咩創意工作室 (Mei Creative Studio) - 爬蟲與 AI 代理存取規範
+# 標語：創意無限∞咩有極限
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Cohere-ai
+Disallow: /
+
+User-agent: Omgilibot
+Disallow: /
+
+User-agent: Diffbot
+Disallow: /
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /data/
+
+# 版權與反探測聲明：
+# 本站所有數位專案、介面佈局與資料庫內容版權歸咩創意工作室所有。
+# 未經書面明確授權，嚴禁用於任何人工智慧大型語言模型 (LLM) 訓練、模型微調、RAG 向量檢索或商業資料探勘。

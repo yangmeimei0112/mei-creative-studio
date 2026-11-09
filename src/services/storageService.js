@@ -4,6 +4,21 @@ import {
   STUDIO_CONFIG,
   normalizeLucideIconName
 } from '../data/defaultData.js';
+import {
+  hashPinWithSalt,
+  hashPinWithWebCrypto,
+  verifyPinAgainstTarget,
+  getSecurityRateLimitStatus,
+  recordFailedUnlockAttempt,
+  recordSuccessfulUnlock,
+  resetSecurityRateLimit,
+  sanitizeObjectDeep,
+  loadSecurityMetrics,
+  recordSecurityIntercept,
+  recordHoneypotHit,
+  resetSecurityMetrics,
+  generateDeceptivePoisonCatalog
+} from './securityService.js';
 
 const STORAGE_KEYS = {
   PROJECTS: 'mei_studio_projects_v1',
@@ -153,19 +168,28 @@ function migrateLegacyChangelog(list) {
   let mutated = false;
   const migrated = list.map((item, idx) => {
     if (!item || typeof item !== 'object') return item;
+    let next = item;
+    if (next.date === '2026-03-30' || next.id === 'pulse-2026-03-30') {
+      mutated = true;
+      next = {
+        ...next,
+        id: next.id === 'pulse-2026-03-30' ? 'pulse-2026-11-10' : next.id,
+        date: '2026-11-10'
+      };
+    }
     if (
-      LEGACY_SPEC_PATTERN.test(JSON.stringify(item)) ||
-      (typeof item.version === 'string' && item.version.startsWith('v2.'))
+      LEGACY_SPEC_PATTERN.test(JSON.stringify(next)) ||
+      (typeof next.version === 'string' && next.version.startsWith('v2.'))
     ) {
       mutated = true;
       const defaultMatch =
-        DEFAULT_CHANGELOG.find((d) => d.id === item.id) ||
+        DEFAULT_CHANGELOG.find((d) => d.id === next.id) ||
         DEFAULT_CHANGELOG[idx];
       if (defaultMatch) {
         return { ...defaultMatch };
       }
     }
-    return item;
+    return next;
   });
   return { migrated, mutated };
 }
@@ -236,8 +260,9 @@ export function loadProjects() {
  */
 export function saveProjects(projects) {
   hasLocalMutationSinceBoot = true;
-  const cleanedProjects = Array.isArray(projects)
-    ? projects.map((item) => {
+  const sanitized = sanitizeObjectDeep(projects) || [];
+  const cleanedProjects = Array.isArray(sanitized)
+    ? sanitized.map((item) => {
         if (!item || typeof item !== 'object' || !('tags' in item)) return item;
         const { tags: _removedTags, ...rest } = item;
         return rest;
@@ -358,18 +383,19 @@ export function loadChangelog() {
 
 export function saveChangelog(changelogList) {
   hasLocalMutationSinceBoot = true;
+  const sanitized = sanitizeObjectDeep(changelogList) || [];
   safeStorageSet(
     'localStorage',
     STORAGE_KEYS.CHANGELOG,
-    JSON.stringify(changelogList)
+    JSON.stringify(sanitized)
   );
   syncToServerFile({
     studio: STUDIO_CONFIG.studioNameZh,
     updatedAt: new Date().toISOString(),
     projects: loadProjects(),
-    changelog: changelogList
+    changelog: sanitized
   });
-  return changelogList;
+  return sanitized;
 }
 
 /**
@@ -446,13 +472,30 @@ export function setAdminPin(newPin) {
     throw new Error('管理員密碼長度至少需 4 個字元');
   }
   const clean = String(newPin).trim();
-  safeStorageSet('localStorage', STORAGE_KEYS.ADMIN_PIN, clean);
+  const hashed = hashPinWithSalt(clean);
+  safeStorageSet('localStorage', STORAGE_KEYS.ADMIN_PIN, hashed);
+  resetSecurityRateLimit();
   return clean;
 }
 
 export function verifyAdminPin(inputPin) {
+  const status = getSecurityRateLimitStatus();
+  if (status.isLocked) {
+    return false;
+  }
+  const clean = String(inputPin || '').trim();
+  if (!clean) {
+    recordFailedUnlockAttempt();
+    return false;
+  }
   const target = getAdminPin();
-  return String(inputPin || '').trim() === target;
+  const isMatch = verifyPinAgainstTarget(clean, target);
+  if (isMatch) {
+    recordSuccessfulUnlock();
+    return true;
+  }
+  recordFailedUnlockAttempt();
+  return false;
 }
 
 export function loadAdminUnlocked() {
@@ -544,10 +587,12 @@ export function parseAndValidateBackupJSON(jsonString) {
     throw new Error('JSON 格式無法解析，請確認備份檔案是否完整。');
   }
 
-  const rawCandidate = Array.isArray(parsed)
-    ? parsed
-    : Array.isArray(parsed?.projects)
-      ? parsed.projects
+  const sanitized = sanitizeObjectDeep(parsed);
+
+  const rawCandidate = Array.isArray(sanitized)
+    ? sanitized
+    : Array.isArray(sanitized?.projects)
+      ? sanitized.projects
       : null;
 
   const validProjectObjects = Array.isArray(rawCandidate)
@@ -590,8 +635,8 @@ export function parseAndValidateBackupJSON(jsonString) {
       : []
   }));
 
-  const rawChangelog = Array.isArray(parsed?.changelog)
-    ? parsed.changelog.filter(
+  const rawChangelog = Array.isArray(sanitized?.changelog)
+    ? sanitized.changelog.filter(
         (item) => item !== null && typeof item === 'object' && !Array.isArray(item)
       )
     : null;
@@ -720,3 +765,20 @@ export function generateSubprojectEmbedSnippet(
   defer
 ></script>`;
 }
+
+export {
+  getSecurityRateLimitStatus,
+  recordFailedUnlockAttempt,
+  recordSuccessfulUnlock,
+  resetSecurityRateLimit,
+  loadSecurityMetrics,
+  recordSecurityIntercept,
+  recordHoneypotHit,
+  resetSecurityMetrics,
+  generateDeceptivePoisonCatalog,
+  hashPinWithSalt,
+  hashPinWithWebCrypto,
+  verifyPinAgainstTarget,
+  sanitizeObjectDeep,
+  sanitizeStringDeep
+} from './securityService.js';

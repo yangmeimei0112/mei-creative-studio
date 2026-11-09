@@ -187,7 +187,13 @@ export default function ProjectPreviewDrawer({
                   src={project.url}
                   title={`${project.title} 即時沙盒預覽`}
                   className="w-full flex-1 bg-white border-0"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                  sandbox={
+                    typeof project.url === 'string' && project.url.startsWith('/')
+                      ? 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals'
+                      : 'allow-scripts allow-forms allow-popups allow-modals'
+                  }
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  loading="lazy"
                 />
               </div>
               <p className="mt-3 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">

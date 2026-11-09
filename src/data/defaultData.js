@@ -102,9 +102,9 @@ export const DEFAULT_PROJECTS = [];
 
 export const DEFAULT_CHANGELOG = [
   {
-    id: 'pulse-2026-03-30',
+    id: 'pulse-2026-11-10',
     version: 'v1.0.0',
-    date: '2026-03-30',
+    date: '2026-11-10',
     title: '咩創意工作室專案平台正式上線',
     category: '官方動態',
     icon: 'sparkles',

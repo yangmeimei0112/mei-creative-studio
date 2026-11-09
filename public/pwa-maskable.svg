@@ -29,9 +29,10 @@
   <rect width="512" height="512" fill="url(#pwaBgGrad)" />
   <!-- 咩創意工作室統一品牌標誌底座 (Squircle Base 位於 80% 安全可視區內) -->
   <rect x="104" y="124" width="280" height="280" rx="85" fill="url(#pwaCardGrad)" stroke="#38BDF8" stroke-width="8" stroke-opacity="0.5" filter="url(#pwaCardShadow)" />
-  <!-- 正統 Lucide Cloud 向量 (居中於底座) -->
+  <!-- 正統 Lucide Cloud × Infinity 純粹極簡線性向量 (居中於底座) -->
   <g transform="translate(167.2, 187.2) scale(6.4)" stroke="url(#pwaSkyGrad)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+    <path d="M12 14c-1.6-1.8-2.8-2.6-4.2-2.6a2.6 2.6 0 1 0 0 5.2c1.4 0 2.6-.8 4.2-2.6Zm0 0c1.6 1.8 2.8 2.6 4.2 2.6a2.6 2.6 0 1 0 0-5.2c-1.4 0-2.6.8-4.2 2.6Z" />
   </g>
   <!-- 右上角微型靈感火花圓形徽章 -->
   <circle cx="366" cy="144" r="55" fill="url(#pwaSparkleGrad)" stroke="#FFFFFF" stroke-width="8" filter="url(#pwaSparkleShadow)" />

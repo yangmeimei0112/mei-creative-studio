@@ -384,9 +384,10 @@ export function SquircleIconBadge({
 
 /**
  * 咩創意工作室統一品牌標誌徽章 (Studio Brand Logo Emblem)
- * - 晴空淡藍超橢圓 Squircle 雲朵 (cloud) 核心底座
- * - 右上角微型靈感火花 (sparkles) 圓形漸層發光徽章
- * - 支援多種標準尺寸：xs, sm, md, lg, xl
+ * - 核心意象：靈感雲朵 × 無限符號 (∞)
+ * - 視覺風格：純粹極簡線性美學 (Pure Linear Minimalist)
+ * - 統一 1.75 線寬、俐落黃金比例幾何負空間、深淺色自適應
+ * - 支援標準尺寸：xs, sm, md, lg, xl
  */
 export function StudioLogo({
   size = 'md',
@@ -439,19 +440,31 @@ export function StudioLogo({
       {...rest}
     >
       <div
-        className={`squircle-icon-badge inline-flex items-center justify-center shrink-0 transition-transform duration-300 ${current.box} ${badgeClassName}`.trim()}
+        className={`squircle-icon-badge inline-flex items-center justify-center shrink-0 transition-transform duration-300 border border-sky-400/25 dark:border-sky-500/25 bg-sky-500/10 dark:bg-sky-400/10 ${current.box} ${badgeClassName}`.trim()}
       >
-        <LucideIcon
-          name="cloud"
-          size={current.icon}
+        {/* 純粹極簡線性：靈感雲朵 × 無限符號 (∞) */}
+        <svg
+          data-lucide-name="cloud"
+          xmlns="http://www.w3.org/2000/svg"
+          width={current.icon}
+          height={current.icon}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
           strokeWidth={1.75}
-          absoluteStrokeWidth={true}
-          className="text-sky-500 dark:text-sky-400"
-        />
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-sky-500 dark:text-sky-400 studio-infinity-cloud"
+        >
+          {/* 靈感雲朵輪廓 */}
+          <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+          {/* 核心無限符號 (∞) 創意環 */}
+          <path d="M12 14c-1.6-1.8-2.8-2.6-4.2-2.6a2.6 2.6 0 1 0 0 5.2c1.4 0 2.6-.8 4.2-2.6Zm0 0c1.6 1.8 2.8 2.6 4.2 2.6a2.6 2.6 0 1 0 0-5.2c-1.4 0-2.6.8-4.2 2.6Z" />
+        </svg>
       </div>
       <span
         aria-hidden="true"
-        className={`studio-logo-sparkle absolute rounded-full bg-gradient-to-br from-sky-400 via-sky-500 to-sky-600 text-white flex items-center justify-center shadow-md border border-white/80 dark:border-slate-900/80 ${current.sparkleBox} ${sparkleClassName}`.trim()}
+        className={`studio-logo-sparkle absolute rounded-full bg-sky-500 text-white flex items-center justify-center shadow-sm border border-white/90 dark:border-slate-900/90 ${current.sparkleBox} ${sparkleClassName}`.trim()}
       >
         <LucideIcon
           name="sparkles"

@@ -171,56 +171,58 @@ export default function PortalEntrance({
         </div>
       </div>
 
-      {/* 4. 中央發光雲朵與極光能量環核心 */}
-      <div className="portal-center-core relative z-10 flex flex-col items-center text-center px-6">
+      {/* 4. 中央毛玻璃浮島卡片自適應佈局 (Glassmorphic Adaptive Island Card) */}
+      <div className="portal-center-core relative z-10 flex flex-col items-center text-center w-[92%] max-w-lg mx-auto p-6 sm:p-9 rounded-3xl bg-white/75 dark:bg-slate-900/80 backdrop-blur-2xl border border-sky-300/40 dark:border-sky-500/25 shadow-2xl ring-1 ring-white/60 dark:ring-white/10 transition-all duration-300">
         {/* 雙層反向旋轉極光能量環 */}
-        <div className="relative flex items-center justify-center w-36 h-36 sm:w-44 sm:h-44 mb-6">
+        <div className="relative flex items-center justify-center w-32 h-32 sm:w-44 sm:h-44 mb-5 sm:mb-6">
           <div
             aria-hidden="true"
             className="portal-aurora-ring-outer absolute inset-0 rounded-full"
           />
           <div
             aria-hidden="true"
-            className="portal-aurora-ring-inner absolute inset-3 rounded-full"
+            className="portal-aurora-ring-inner absolute inset-2.5 sm:inset-3 rounded-full"
           />
           <div
             aria-hidden="true"
-            className="portal-aurora-glow absolute inset-6 rounded-full"
+            className="portal-aurora-glow absolute inset-5 sm:inset-6 rounded-full"
           />
 
-          {/* 中心發光雲朵標誌 */}
+          {/* 中心發光雲朵與無限標誌 */}
           <StudioLogo
             size="xl"
             className="portal-core-emblem relative z-10 shadow-2xl backdrop-blur-xl"
           />
         </div>
 
-        {/* 品牌識別與推進狀態提示 */}
-        <div className="space-y-2 max-w-md">
-          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white font-heading-lg flex flex-wrap sm:flex-nowrap items-baseline justify-center gap-x-3">
-            <span>{STUDIO_CONFIG.studioNameZh}</span>
-            <span className="text-2xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 dark:from-sky-300 dark:to-sky-500 bg-clip-text text-transparent font-en whitespace-nowrap">
+        {/* 智慧響應排版：行動直向雙行置中對齊、平板寬螢幕大氣水平並行 */}
+        <div className="space-y-2.5 sm:space-y-3 w-full max-w-md">
+          <h2 className="tracking-tight text-slate-900 dark:text-white font-heading-lg flex flex-col sm:flex-row items-center justify-center gap-y-1.5 sm:gap-x-3">
+            <span className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+              {STUDIO_CONFIG.studioNameZh}
+            </span>
+            <span className="text-xs sm:text-2xl font-bold tracking-widest sm:tracking-normal text-sky-600 dark:text-sky-400 sm:bg-gradient-to-r sm:from-sky-500 sm:to-sky-700 sm:dark:from-sky-300 sm:dark:to-sky-500 sm:bg-clip-text sm:text-transparent font-en uppercase sm:normal-case whitespace-nowrap">
               {STUDIO_CONFIG.studioNameEn}
             </span>
           </h2>
 
-          <p className="text-sm sm:text-base font-bold text-sky-600 dark:text-sky-400 font-sans tracking-wider">
+          <p className="text-xs sm:text-sm font-bold text-sky-600 dark:text-sky-400 font-sans tracking-widest sm:tracking-wider">
             {STUDIO_CONFIG.description}
           </p>
 
           {/* 流暢能量進度光條 */}
-          <div className="pt-3 flex flex-col items-center gap-2">
-            <div className="w-48 sm:w-56 h-1.5 rounded-full bg-sky-200/60 dark:bg-slate-800/80 overflow-hidden p-0.5 border border-sky-400/25">
+          <div className="pt-2 sm:pt-3 flex flex-col items-center gap-2">
+            <div className="w-48 sm:w-60 h-2 rounded-full bg-sky-100 dark:bg-slate-800/90 overflow-hidden p-0.5 border border-sky-400/30 shadow-inner">
               <div className="portal-progress-bar h-full rounded-full bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600" />
             </div>
-            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">
               {loadPhaseText}
             </span>
           </div>
         </div>
       </div>
 
-      {/* 5. 右下角一鍵略過按鈕 (Click / ESC) */}
+      {/* 5. 右下角一鍵略過按鈕 (支援手機虛擬導航與瀏海 Safe Area) */}
       <button
         type="button"
         data-testid="skip-entrance-btn"
@@ -228,7 +230,7 @@ export default function PortalEntrance({
           e.stopPropagation();
           finishEntrance();
         }}
-        className="fixed bottom-7 right-7 z-20 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/85 dark:bg-slate-900/85 hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-sky-400/35 shadow-lg backdrop-blur-xl text-xs font-semibold transition-all hover:scale-105"
+        className="fixed bottom-5 right-5 sm:bottom-8 sm:right-8 z-20 pb-[max(0px,env(safe-area-inset-bottom))] pr-[max(0px,env(safe-area-inset-right))] inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full bg-white/90 dark:bg-slate-900/90 hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-sky-400/35 shadow-xl backdrop-blur-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95"
       >
         <span>略過開場</span>
         <kbd className="px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-700 dark:text-sky-300 font-mono text-[10px]">
