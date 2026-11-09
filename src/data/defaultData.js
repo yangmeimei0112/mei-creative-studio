@@ -6,8 +6,8 @@
 export const STUDIO_CONFIG = {
   studioNameZh: '咩創意工作室',
   studioNameEn: 'Mei Creative Studio',
-  tagline: '創意無限 · 咩有極限',
-  description: '創意無限 · 咩有極限',
+  tagline: '創意無限∞咩有極限',
+  description: '創意無限∞咩有極限',
   themeColor: '#38BDF8',
   version: 'v1.0.0',
   defaultAdminPin: 'mei888'

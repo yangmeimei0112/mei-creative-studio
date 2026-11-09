@@ -142,7 +142,7 @@ describe('咩創意工作室 Mei Creative Studio — 跨平台導引大廳完整
     expect(screen.getAllByText('咩創意工作室').length).toBeGreaterThan(0);
     expect(screen.getAllByTestId('studio-brand-logo').length).toBeGreaterThan(0);
     expect(screen.getAllByText('v1.0.0').length).toBeGreaterThan(0);
-    const taglineEls = screen.getAllByText('創意無限 · 咩有極限');
+    const taglineEls = screen.getAllByText('創意無限∞咩有極限');
     const taglineEl =
       taglineEls.find((el) => el.classList.contains('studio-tagline-justify')) ||
       taglineEls[0];
