@@ -892,6 +892,7 @@ export default function App() {
         }
         onTriggerNativeInstall={handleTriggerNativeInstall}
         canNativeInstall={Boolean(deferredInstallPrompt)}
+        isAdmin={isAdmin}
       />
 
       {/* 管理員專屬 AI 客服系統 (限管理員模式解鎖後可見，開場動畫播放時不渲染) */}

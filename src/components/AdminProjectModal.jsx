@@ -765,6 +765,113 @@ export function StudioBackupModal({
 }
 
 /**
+ * 即時偵測當前訪客之終端設備類型、作業系統、瀏覽器與 PWA 運行狀態
+ */
+export function detectUserDeviceAndOS() {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+    return {
+      targetCategory: 'desktop',
+      deviceType: 'desktop',
+      deviceLabel: '桌面電腦',
+      osName: '未知作業系統',
+      browserName: '現代網路瀏覽器',
+      icon: 'laptop',
+      isStandalone: false
+    };
+  }
+
+  const ua = navigator.userAgent || '';
+  const platform = navigator.userAgentData?.platform || navigator.platform || '';
+
+  let targetCategory = 'desktop'; // 'ios' | 'android' | 'desktop'
+  let deviceType = 'desktop';
+  let deviceLabel = '桌面電腦';
+  let osName = '其他作業系統';
+  let icon = 'laptop';
+
+  const isIOS =
+    /iPhone|iPad|iPod/i.test(ua) ||
+    (platform === 'MacIntel' && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(ua);
+  const isWindows = /Windows/i.test(ua) || /Win/i.test(platform);
+  const isMac = !isIOS && (/Mac/i.test(ua) || /Mac/i.test(platform));
+  const isLinux = !isAndroid && (/Linux/i.test(ua) || /Linux/i.test(platform));
+
+  if (isIOS) {
+    targetCategory = 'ios';
+    if (/iPad/i.test(ua) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+      deviceType = 'tablet';
+      deviceLabel = 'Apple iPad 平板';
+      osName = 'Apple iPadOS';
+      icon = 'tablet';
+    } else {
+      deviceType = 'mobile';
+      deviceLabel = 'Apple iPhone 手機';
+      osName = 'Apple iOS';
+      icon = 'smartphone';
+    }
+  } else if (isAndroid) {
+    targetCategory = 'android';
+    if (/Mobile/i.test(ua)) {
+      deviceType = 'mobile';
+      deviceLabel = 'Android 智慧手機';
+      icon = 'smartphone';
+    } else {
+      deviceType = 'tablet';
+      deviceLabel = 'Android 平板裝置';
+      icon = 'tablet';
+    }
+    osName = 'Google Android';
+  } else if (isMac) {
+    targetCategory = 'desktop';
+    deviceType = 'desktop';
+    deviceLabel = 'Apple Mac 電腦';
+    osName = 'macOS';
+    icon = 'laptop';
+  } else if (isWindows) {
+    targetCategory = 'desktop';
+    deviceType = 'desktop';
+    deviceLabel = 'Windows 個人電腦';
+    osName = 'Microsoft Windows';
+    icon = 'monitor';
+  } else if (isLinux) {
+    targetCategory = 'desktop';
+    deviceType = 'desktop';
+    deviceLabel = 'Linux 系統裝置';
+    osName = 'GNU/Linux';
+    icon = 'terminal';
+  }
+
+  // 瀏覽器判斷
+  let browserName = '現代網路瀏覽器';
+  if (/Edg/i.test(ua)) {
+    browserName = 'Microsoft Edge';
+  } else if (/Chrome|CriOS/i.test(ua) && !/Edg/i.test(ua)) {
+    browserName = 'Google Chrome';
+  } else if (/Safari/i.test(ua) && !/Chrome|CriOS|Edg/i.test(ua)) {
+    browserName = 'Apple Safari';
+  } else if (/Firefox|FxiOS/i.test(ua)) {
+    browserName = 'Mozilla Firefox';
+  }
+
+  // 是否處於 PWA 獨立應用模式
+  const isStandalone = Boolean(
+    (typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches) ||
+    window.navigator?.standalone
+  );
+
+  return {
+    targetCategory,
+    deviceType,
+    deviceLabel,
+    osName,
+    browserName,
+    icon,
+    isStandalone
+  };
+}
+
+/**
  * 4. 子專案接入 SDK 精靈 與 跨四平台 (iOS/Android/Mac/Windows) 安裝指南視窗
  */
 export function SdkAndInstallModal({
@@ -773,13 +880,17 @@ export function SdkAndInstallModal({
   targetProject,
   onClose,
   onTriggerNativeInstall,
-  canNativeInstall
+  canNativeInstall,
+  isAdmin = false
 }) {
   const [tab, setTab] = useState(initialMode);
   const [copied, setCopied] = useState(false);
   const [dockPosition, setDockPosition] = useState('bottom-right');
   const [diagReport, setDiagReport] = useState(null);
   const [isProbingSingle, setIsProbingSingle] = useState(false);
+
+  const effectiveTab = isAdmin ? tab : 'install';
+  const detectedClient = detectUserDeviceAndOS();
 
   const effectiveProject = targetProject || {
     title: '我的新創意專案',
@@ -790,7 +901,7 @@ export function SdkAndInstallModal({
 
   useEffect(() => {
     if (isOpen) {
-      setTab(initialMode);
+      setTab(isAdmin ? initialMode : 'install');
       setCopied(false);
       setDockPosition('bottom-right');
       setDiagReport({
@@ -799,7 +910,7 @@ export function SdkAndInstallModal({
         checkedAt: new Date().toLocaleTimeString('zh-TW', { hour12: false })
       });
     }
-  }, [isOpen, initialMode, targetProject]);
+  }, [isOpen, initialMode, targetProject, isAdmin]);
 
   if (!isOpen) return null;
 
@@ -853,19 +964,21 @@ export function SdkAndInstallModal({
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            {tab === 'sdk' ? (
+            {effectiveTab === 'sdk' ? (
               <StudioLogo size="md" />
             ) : (
               <SquircleIconBadge name="smartphone" size="md" />
             )}
             <div>
               <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
-                {tab === 'sdk'
+                {isAdmin && effectiveTab === 'sdk'
                   ? '子專案「返回咩創意大廳」導覽工具接入精靈'
                   : '桌面與行動裝置安裝指南'}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                快速整合子專案導覽或將本站加入主畫面
+                {isAdmin && effectiveTab === 'sdk'
+                  ? '快速整合子專案導覽工具列'
+                  : '將本站加入手機主畫面或電腦桌面常駐'}
               </p>
             </div>
           </div>
@@ -879,31 +992,33 @@ export function SdkAndInstallModal({
           </button>
         </div>
 
-        {/* 分頁切換 */}
-        <div className="flex items-center gap-2 border-b border-sky-400/20 pb-3">
-          <button
-            type="button"
-            onClick={() => setTab('sdk')}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all ${
-              tab === 'sdk' ? 'btn-sky-primary' : 'btn-sky-secondary'
-            }`}
-          >
-            <LucideIcon name="code-2" size={15} />
-            <span>子專案返回大廳 SDK (mei-dock.js)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('install')}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all ${
-              tab === 'install' ? 'btn-sky-primary' : 'btn-sky-secondary'
-            }`}
-          >
-            <LucideIcon name="smartphone" size={15} />
-            <span>安裝至手機與電腦桌面</span>
-          </button>
-        </div>
+        {/* 分頁切換 (僅管理員解鎖後可見) */}
+        {isAdmin && (
+          <div className="flex items-center gap-2 border-b border-sky-400/20 pb-3">
+            <button
+              type="button"
+              onClick={() => setTab('sdk')}
+              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all ${
+                effectiveTab === 'sdk' ? 'btn-sky-primary' : 'btn-sky-secondary'
+              }`}
+            >
+              <LucideIcon name="code-2" size={15} />
+              <span>子專案返回大廳 SDK (mei-dock.js)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('install')}
+              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all ${
+                effectiveTab === 'install' ? 'btn-sky-primary' : 'btn-sky-secondary'
+              }`}
+            >
+              <LucideIcon name="smartphone" size={15} />
+              <span>安裝至手機與電腦桌面</span>
+            </button>
+          </div>
+        )}
 
-        {tab === 'sdk' ? (
+        {effectiveTab === 'sdk' ? (
           <div className="space-y-4">
             {/* 專屬專案連線檢測報告 */}
             <div className="p-4 rounded-2xl bg-sky-50/90 dark:bg-slate-800/80 border border-sky-400/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1012,6 +1127,50 @@ export function SdkAndInstallModal({
           </div>
         ) : (
           <div className="space-y-4">
+            {/* 當前使用者裝置與系統即時偵測卡片 */}
+            <div
+              data-testid="device-detection-card"
+              className="p-4 rounded-2xl bg-gradient-to-r from-sky-500/10 via-sky-400/10 to-sky-500/5 dark:from-sky-500/15 dark:to-sky-900/20 border border-sky-400/35 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-inner"
+            >
+              <div className="flex items-center gap-3">
+                <SquircleIconBadge name={detectedClient.icon} size="md" iconSize={20} />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                      偵測到您目前使用的裝置與系統
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 status-pulse-ring" />
+                      <span>即時偵測</span>
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-600 dark:text-slate-300 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-medium">
+                    <span className="font-bold text-sky-600 dark:text-sky-400">
+                      {detectedClient.deviceLabel}
+                    </span>
+                    <span className="opacity-40">·</span>
+                    <span>系統：{detectedClient.osName}</span>
+                    <span className="opacity-40">·</span>
+                    <span>瀏覽器：{detectedClient.browserName}</span>
+                    {detectedClient.isStandalone && (
+                      <>
+                        <span className="opacity-40">·</span>
+                        <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                          <LucideIcon name="circle-check" size={12} />
+                          <span>已作為獨立應用運行</span>
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="text-left sm:text-right shrink-0">
+                <span className="inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-400/25">
+                  推薦查看下方標註之安裝方式
+                </span>
+              </div>
+            </div>
+
             {canNativeInstall && (
               <div className="p-4 rounded-2xl bg-sky-500/15 border border-sky-400/40 flex items-center justify-between gap-3">
                 <div className="text-xs font-semibold text-sky-900 dark:text-sky-100">
@@ -1029,30 +1188,72 @@ export function SdkAndInstallModal({
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div className="p-4 rounded-2xl bg-sky-50/80 dark:bg-slate-800/70 border border-sky-400/25">
-                <div className="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white mb-2">
-                  <LucideIcon name="smartphone" size={16} className="text-sky-500" />
-                  <span>iPhone / iPad</span>
+              {/* iPhone / iPad */}
+              <div
+                className={`p-4 rounded-2xl border transition-all ${
+                  detectedClient.targetCategory === 'ios'
+                    ? 'bg-sky-500/12 dark:bg-sky-500/15 border-sky-400 shadow-md ring-1 ring-sky-400/40'
+                    : 'bg-sky-50/80 dark:bg-slate-800/70 border-sky-400/25'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white">
+                    <LucideIcon name="smartphone" size={16} className="text-sky-500" />
+                    <span>iPhone / iPad</span>
+                  </div>
+                  {detectedClient.targetCategory === 'ios' && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500 text-white shadow-sm">
+                      最適合此裝置
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                   使用 Safari 開啟本站 → 點擊底部「分享」按鈕 → 選擇<strong>「加入主畫面」</strong>，即可全螢幕操作。
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-sky-50/80 dark:bg-slate-800/70 border border-sky-400/25">
-                <div className="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white mb-2">
-                  <LucideIcon name="smartphone" size={16} className="text-sky-500" />
-                  <span>Android 手機與平板</span>
+              {/* Android 手機與平板 */}
+              <div
+                className={`p-4 rounded-2xl border transition-all ${
+                  detectedClient.targetCategory === 'android'
+                    ? 'bg-sky-500/12 dark:bg-sky-500/15 border-sky-400 shadow-md ring-1 ring-sky-400/40'
+                    : 'bg-sky-50/80 dark:bg-slate-800/70 border-sky-400/25'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white">
+                    <LucideIcon name="smartphone" size={16} className="text-sky-500" />
+                    <span>Android 手機與平板</span>
+                  </div>
+                  {detectedClient.targetCategory === 'android' && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500 text-white shadow-sm">
+                      最適合此裝置
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                   使用 Chrome 開啟本站 → 點擊右上角選單 → 選擇<strong>「安裝應用程式」</strong>，即會產生專屬桌面圖示。
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-sky-50/80 dark:bg-slate-800/70 border border-sky-400/25 sm:col-span-2">
-                <div className="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white mb-2">
-                  <LucideIcon name="laptop" size={16} className="text-sky-500" />
-                  <span>macOS 與 Windows 電腦端</span>
+              {/* macOS 與 Windows 電腦端 */}
+              <div
+                className={`p-4 rounded-2xl border sm:col-span-2 transition-all ${
+                  detectedClient.targetCategory === 'desktop'
+                    ? 'bg-sky-500/12 dark:bg-sky-500/15 border-sky-400 shadow-md ring-1 ring-sky-400/40'
+                    : 'bg-sky-50/80 dark:bg-slate-800/70 border-sky-400/25'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white">
+                    <LucideIcon name="laptop" size={16} className="text-sky-500" />
+                    <span>macOS 與 Windows 電腦端</span>
+                  </div>
+                  {detectedClient.targetCategory === 'desktop' && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500 text-white shadow-sm">
+                      最適合此裝置
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                   於 Chrome、Edge 或 macOS Safari 網址列右側點擊<strong>「安裝 咩創意工作室」</strong>圖示（或「加入 Dock」），即可作為獨立桌面應用程式常駐系統。
