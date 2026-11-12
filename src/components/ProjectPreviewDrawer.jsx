@@ -160,7 +160,7 @@ export default function ProjectPreviewDrawer({
         </div>
 
         {/* 抽屜主內容區 */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-sky-50/40 dark:bg-slate-950/40 flex flex-col">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-[max(1.5rem,env(safe-area-inset-bottom,1.5rem))] bg-sky-50/40 dark:bg-slate-950/40 flex flex-col">
           {activeTab === 'sandbox' && (
             <div className="flex-1 flex flex-col items-center justify-center min-h-[420px]">
               <div

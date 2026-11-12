@@ -790,7 +790,7 @@ export default function App() {
       </main>
 
       {/* 頁尾品牌資訊 */}
-      <footer className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8 theme-stagger-footer">
+      <footer className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-28 md:pb-8 theme-stagger-footer">
         <div className="bento-glass-card px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-3">
             <StudioLogo size="sm" />

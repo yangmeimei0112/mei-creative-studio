@@ -151,7 +151,7 @@ export default function AdminChatWidget({
         data-testid="admin-chat-fab"
         aria-label="開啟咩創意 AI 專屬客服"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="fixed bottom-20 sm:bottom-8 right-5 sm:right-8 z-40 flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 border border-white/20"
+        className="fixed bottom-20 mb-[env(safe-area-inset-bottom,0px)] sm:bottom-8 sm:mb-0 right-5 sm:right-8 z-40 flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 border border-white/20"
       >
         <LucideIcon name="bot" size={24} strokeWidth={1.75} absoluteStrokeWidth={true} />
       </button>
@@ -269,7 +269,7 @@ export default function AdminChatWidget({
           {/* 訊息輸入框與發送按鈕 */}
           <form
             onSubmit={handleSubmit}
-            className="p-3 border-t border-slate-200/60 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 flex items-end gap-2 shrink-0"
+            className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0.75rem))] sm:pb-3 border-t border-slate-200/60 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 flex items-end gap-2 shrink-0"
           >
             <textarea
               rows={1}

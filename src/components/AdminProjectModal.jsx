@@ -476,7 +476,7 @@ export function AdminUnlockModal({ isOpen, onClose, onUnlockSuccess, verifyPin }
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-label="管理員解鎖驗證"

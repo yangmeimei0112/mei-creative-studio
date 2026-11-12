@@ -346,6 +346,18 @@ h4, h5, h6, p, span, button, input, textarea, select, label, .font-heading-sm, .
 .pb-safe-bottom {
   padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
 }
+.pt-safe {
+  padding-top: max(0px, env(safe-area-inset-top, 0px));
+}
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+}
+.pl-safe {
+  padding-left: max(0px, env(safe-area-inset-left, 0px));
+}
+.pr-safe {
+  padding-right: max(0px, env(safe-area-inset-right, 0px));
+}
 
 /* 隱藏水平選單捲軸 */
 .no-scrollbar::-webkit-scrollbar {

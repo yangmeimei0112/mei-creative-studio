@@ -192,7 +192,7 @@ export default function CommandPalette({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-14 sm:pt-24 px-4 bg-slate-950/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-[max(3.5rem,env(safe-area-inset-top,3.5rem))] sm:pt-24 px-4 bg-slate-950/50 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-label="全域極速搜尋與快捷命令列"

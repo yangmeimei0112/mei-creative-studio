@@ -59,7 +59,7 @@ export default function HeaderHero({
   return (
     <header className="w-full theme-stagger-hero">
       {/* 頂部毛玻璃導覽列 */}
-      <div className="sticky top-0 z-30 border-b border-sky-400/20 bg-white/82 dark:bg-slate-950/82 backdrop-blur-xl transition-colors">
+      <div className="sticky top-0 z-30 border-b border-sky-400/20 bg-white/82 dark:bg-slate-950/82 backdrop-blur-xl transition-colors pt-[env(safe-area-inset-top,0px)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
           {/* 品牌主標誌 */}
           <a
