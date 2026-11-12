@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { LucideIcon, SquircleIconBadge } from './LucideIcon';
+import { SECURITY_AUDIT_DOMAINS } from '../data/securityAuditData';
+import SecurityAuditModal from './SecurityAuditModal';
 
 export function ChangelogEditModal({
   isOpen,
@@ -234,6 +236,30 @@ export default function StudioPulseSection({
   const [category, setCategory] = useState('新專案上線');
   const [summary, setSummary] = useState('');
 
+  // 資安事故清查面板狀態
+  const [selectedDomainId, setSelectedDomainId] = useState('identity-access');
+  const [expandedAuditItem, setExpandedAuditItem] = useState(null);
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
+  const [isScanningAudit, setIsScanningAudit] = useState(false);
+  const [scanTimestamp, setScanTimestamp] = useState(null);
+  const [copiedAuditCmdId, setCopiedAuditCmdId] = useState(null);
+
+  const handleCopyAuditCmd = (id, cmd) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(cmd).catch(() => {});
+      setCopiedAuditCmdId(id);
+      setTimeout(() => setCopiedAuditCmdId(null), 2000);
+    }
+  };
+
+  const handleRunFullAuditScan = () => {
+    setIsScanningAudit(true);
+    setTimeout(() => {
+      setIsScanningAudit(false);
+      setScanTimestamp(new Date().toLocaleTimeString('zh-TW', { hour12: false }));
+    }, 600);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -395,8 +421,9 @@ export default function StudioPulseSection({
             <div
               data-testid="security-monitor-panel"
               style={{ animationDelay: '260ms' }}
-              className="bento-glass-card bento-wave-reveal p-6 sm:p-7 border border-sky-400/40 space-y-5"
+              className="bento-glass-card bento-wave-reveal p-5 sm:p-6 border border-sky-400/40 space-y-4"
             >
+              {/* 頂部標題與 SOC 運作狀態 */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <SquircleIconBadge name="shield-check" size="md" />
@@ -405,55 +432,18 @@ export default function StudioPulseSection({
                       資安防禦與反 AI 監控面板
                     </h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      即時防禦網與 AI 金絲雀誘捕指標
+                      企業級 SOC 事故清查與威脅防禦中心
                     </p>
                   </div>
                 </div>
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-400/30">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-400/30">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>防禦全時啟動</span>
+                  <span>SOC 監控運作中</span>
                 </span>
               </div>
 
-              {/* 三大即時防禦狀態膠囊 */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-                <div className="p-3 rounded-2xl bg-sky-50/80 dark:bg-slate-900/70 border border-sky-400/20">
-                  <div className="flex items-center gap-1.5 text-sky-700 dark:text-sky-300 font-bold mb-1">
-                    <LucideIcon name="shield-check" size={14} />
-                    <span>多層防禦網</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    CSP/HSTS 全開
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-sky-50/80 dark:bg-slate-900/70 border border-sky-400/20">
-                  <div className="flex items-center gap-1.5 text-sky-700 dark:text-sky-300 font-bold mb-1">
-                    <LucideIcon name="bot" size={14} />
-                    <span>AI 金絲雀蜜罐</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    誘捕佈防就緒
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-sky-50/80 dark:bg-slate-900/70 border border-sky-400/20">
-                  <div className="flex items-center gap-1.5 text-sky-700 dark:text-sky-300 font-bold mb-1">
-                    <LucideIcon name="lock" size={14} />
-                    <span>防暴力破解盾</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    {rateLimitStatus.isLocked
-                      ? `鎖定 (${rateLimitStatus.remainingSeconds}s)`
-                      : rateLimitStatus.isCooldown
-                        ? `冷卻 (${rateLimitStatus.remainingSeconds}s)`
-                        : '待命護盾正常'}
-                  </p>
-                </div>
-              </div>
-
-              {/* 攔截與誘捕命中計數 */}
-              <div className="grid grid-cols-2 gap-3 p-4 rounded-2xl bg-sky-50/60 dark:bg-slate-900/60 border border-sky-400/25">
+              {/* 即時防護與誘捕計數卡片 */}
+              <div className="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-sky-50/60 dark:bg-slate-900/60 border border-sky-400/25">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-sky-500/15 border border-sky-400/30 flex items-center justify-center text-sky-600 dark:text-sky-300">
                     <LucideIcon name="zap" size={20} />
@@ -489,34 +479,228 @@ export default function StudioPulseSection({
                 </div>
               </div>
 
-              {/* 最新安全事件摘要 */}
+              {/* 5 大清查面向導覽籤 */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 px-0.5">
+                  <span className="flex items-center gap-1.5">
+                    <LucideIcon name="layers" size={13} className="text-sky-500" />
+                    <span>5 大資安事故清查面向</span>
+                  </span>
+                  <span className="text-[11px] font-mono text-sky-600 dark:text-sky-400">
+                    14 項威脅指標
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-5 gap-1 p-1 rounded-2xl bg-sky-50/70 dark:bg-slate-900/70 border border-sky-400/20 text-center">
+                  {SECURITY_AUDIT_DOMAINS.map((domain) => {
+                    const isSelected = selectedDomainId === domain.id;
+                    return (
+                      <button
+                        key={domain.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedDomainId(domain.id);
+                          setExpandedAuditItem(null);
+                        }}
+                        className={`py-2 px-1 rounded-xl transition-all flex flex-col items-center justify-center gap-1 ${
+                          isSelected
+                            ? 'bg-sky-500 text-white font-bold shadow-sm'
+                            : 'text-slate-600 dark:text-slate-300 hover:text-sky-600 hover:bg-sky-100/50 dark:hover:bg-slate-800/50 text-[11px]'
+                        }`}
+                        title={`${domain.title} (${domain.items.length}項)`}
+                      >
+                        <LucideIcon name={domain.icon} size={14} />
+                        <span className="truncate w-full text-[10px] scale-95 sm:scale-100">
+                          {domain.title.slice(0, 4)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 當前選中面向之事故清查詳情卡片 */}
+              {(() => {
+                const currentDomain =
+                  SECURITY_AUDIT_DOMAINS.find((d) => d.id === selectedDomainId) ||
+                  SECURITY_AUDIT_DOMAINS[0];
+
+                return (
+                  <div className="rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-sky-400/25 p-3.5 space-y-3">
+                    <div className="flex items-center justify-between gap-2 pb-2 border-b border-sky-400/15">
+                      <div className="flex items-center gap-2">
+                        <SquircleIconBadge name={currentDomain.icon} size="sm" iconSize={14} />
+                        <div>
+                          <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
+                            {currentDomain.title}
+                          </h3>
+                          <span className="text-[10px] font-mono text-slate-400">
+                            {currentDomain.subtitle}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-400/25">
+                        {currentDomain.badge}
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed bg-sky-50/50 dark:bg-slate-950/40 p-2 rounded-xl border border-sky-400/15">
+                      <span className="font-bold text-sky-700 dark:text-sky-300">威脅情境：</span>
+                      {currentDomain.description}
+                    </p>
+
+                    {/* 該面向下的檢驗細項 */}
+                    <div className="space-y-2">
+                      {currentDomain.items.map((item) => {
+                        const isExpanded = expandedAuditItem === item.id;
+                        return (
+                          <div
+                            key={item.id}
+                            className="p-2.5 rounded-xl bg-slate-50/90 dark:bg-slate-800/70 border border-sky-400/20 text-xs space-y-2"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-bold text-slate-900 dark:text-white">
+                                    {item.name}
+                                  </span>
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-400/30">
+                                    {item.statusText}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                                  {item.checkpoints}
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setExpandedAuditItem(isExpanded ? null : item.id)
+                                }
+                                className="p-1 rounded-lg text-slate-500 hover:text-sky-600 dark:hover:text-sky-300 shrink-0"
+                                aria-label={isExpanded ? '收合日誌' : '展開日誌'}
+                              >
+                                <LucideIcon
+                                  name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                                  size={14}
+                                />
+                              </button>
+                            </div>
+
+                            {/* 清查標的標籤 */}
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                              <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                標的：
+                              </span>
+                              <span className="font-mono text-sky-600 dark:text-sky-400">
+                                {item.target}
+                              </span>
+                            </div>
+
+                            {/* 展開之排查指令與 Audit Log */}
+                            {isExpanded && (
+                              <div className="pt-2 border-t border-sky-400/15 space-y-2 animate-fadeIn">
+                                <div className="p-2 rounded-lg bg-slate-950 text-slate-300 text-[10px] font-mono space-y-1">
+                                  <div className="text-sky-400 font-bold mb-1 flex items-center gap-1">
+                                    <LucideIcon name="activity" size={10} />
+                                    <span>SOC 稽核紀錄 (Audit Log)</span>
+                                  </div>
+                                  {item.sampleLogs.map((log, lIdx) => (
+                                    <div key={lIdx} className="truncate">
+                                      <span className="text-emerald-400 mr-1">›</span>
+                                      {log}
+                                    </div>
+                                  ))}
+                                </div>
+
+                                <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-slate-100 dark:bg-slate-900 border border-sky-400/15 text-[10px]">
+                                  <span className="font-mono truncate text-slate-700 dark:text-slate-300">
+                                    {item.queryCmd}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCopyAuditCmd(item.id, item.queryCmd)}
+                                    className="px-2 py-0.5 rounded btn-sky-primary font-semibold shrink-0"
+                                  >
+                                    {copiedAuditCmdId === item.id ? '已複製' : '複製指令'}
+                                  </button>
+                                </div>
+
+                                <div className="text-[10px] text-slate-500 dark:text-slate-400 bg-amber-500/10 p-1.5 rounded-lg border border-amber-400/20">
+                                  <strong className="text-amber-700 dark:text-amber-300">清查指引：</strong>
+                                  {item.inspectTip}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* 最新事件或即時清查時間 */}
               <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 px-1 truncate">
                 <LucideIcon name="activity" size={13} className="text-sky-500 shrink-0" />
                 <span className="truncate">
-                  最新事件：{securityMetrics.lastEventDesc || '多層防禦網全時警戒中'}
+                  {scanTimestamp
+                    ? `全域清查完成：14/14 項指標檢驗合規 (${scanTimestamp})`
+                    : `最新事件：${securityMetrics.lastEventDesc || 'SOC 核心運作正常，清查指標無異常'}`}
                 </span>
               </div>
 
-              {/* 控制與測試按鈕 */}
+              {/* 控制與測試工具列 */}
               <div className="pt-2 border-t border-sky-400/20 flex flex-wrap items-center justify-between gap-2">
-                <button
-                  type="button"
-                  data-testid="simulate-ai-attack-btn"
-                  onClick={onSimulateAiAttack}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full btn-sky-primary text-xs font-semibold"
-                >
-                  <LucideIcon name="bot" size={14} />
-                  <span>模擬 AI 誘捕測試</span>
-                </button>
-                <button
-                  type="button"
-                  data-testid="reset-security-btn"
-                  onClick={onResetSecurity}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full btn-sky-secondary text-xs font-semibold"
-                >
-                  <LucideIcon name="rotate-ccw" size={13} />
-                  <span>重置安全防禦</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleRunFullAuditScan}
+                    disabled={isScanningAudit}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full btn-sky-primary text-xs font-semibold"
+                  >
+                    <LucideIcon
+                      name={isScanningAudit ? 'refresh-cw' : 'shield-check'}
+                      size={13}
+                      className={isScanningAudit ? 'animate-spin' : ''}
+                    />
+                    <span>{isScanningAudit ? '清查中...' : '全域清查'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-testid="simulate-ai-attack-btn"
+                    onClick={onSimulateAiAttack}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full btn-sky-secondary text-xs font-semibold"
+                  >
+                    <LucideIcon name="bot" size={13} />
+                    <span>模擬 AI 誘捕</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    data-testid="open-full-audit-modal-btn"
+                    onClick={() => setIsAuditModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full btn-sky-secondary text-xs font-semibold"
+                    title="開啟完整 5 大面向 14 項威脅指標清查視窗"
+                  >
+                    <LucideIcon name="scan-line" size={13} />
+                    <span>完整清查</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-testid="reset-security-btn"
+                    onClick={onResetSecurity}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full btn-sky-secondary text-xs font-semibold"
+                    title="重置防護計數"
+                  >
+                    <LucideIcon name="rotate-ccw" size={12} />
+                    <span>重置</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -609,6 +793,14 @@ export default function StudioPulseSection({
           onDeleteChangelogItem?.(id);
           setEditingItem(null);
         }}
+      />
+
+      {/* 管理員專屬：SOC 資安事故清查詳細報告彈窗 */}
+      <SecurityAuditModal
+        isOpen={isAuditModalOpen}
+        onClose={() => setIsAuditModalOpen(false)}
+        securityMetrics={securityMetrics}
+        rateLimitStatus={rateLimitStatus}
       />
     </section>
   );

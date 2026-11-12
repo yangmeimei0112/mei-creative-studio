@@ -284,25 +284,50 @@ describe('咩創意工作室 資安防禦網與反 AI 誘捕系統深度驗證',
       fireEvent.click(screen.getByText('立即解鎖管理後台'));
     });
 
-    // 3. 管理員解鎖後：監控面板即時呈現
+    // 3. 管理員解鎖後：企業級 SOC 事故清查監控面板即時呈現
     const panel = screen.getByTestId('security-monitor-panel');
     expect(panel).toBeInTheDocument();
     expect(screen.getByText('資安防禦與反 AI 監控面板')).toBeInTheDocument();
-    expect(screen.getByText('防禦全時啟動')).toBeInTheDocument();
-    expect(screen.getByText('多層防禦網')).toBeInTheDocument();
-    expect(screen.getByText('AI 金絲雀蜜罐')).toBeInTheDocument();
-    expect(screen.getByText('防暴力破解盾')).toBeInTheDocument();
+    expect(screen.getByText('SOC 監控運作中')).toBeInTheDocument();
     expect(screen.getByTestId('security-intercept-count')).toBeInTheDocument();
     expect(screen.getByTestId('security-honeypot-count')).toBeInTheDocument();
 
-    // 4. 點擊「模擬 AI 誘捕測試」按鈕
+    // 驗證已成功移除陽春及宣傳性文字註解
+    expect(screen.queryByText('多層防禦網')).not.toBeInTheDocument();
+    expect(screen.queryByText('防禦全時啟動')).not.toBeInTheDocument();
+    expect(screen.queryByText('AI 金絲雀蜜罐')).not.toBeInTheDocument();
+    expect(screen.queryByText('防暴力破解盾')).not.toBeInTheDocument();
+    expect(screen.queryByText('CSP/HSTS 全開')).not.toBeInTheDocument();
+    expect(screen.queryByText('即時防禦網與 AI 金絲雀誘捕指標')).not.toBeInTheDocument();
+
+    // 驗證 5 大資安事故清查面向與威脅指標
+    expect(screen.getByText('5 大資安事故清查面向')).toBeInTheDocument();
+    expect(screen.getByText('帳號與身分驗證')).toBeInTheDocument();
+    expect(screen.getByText('異常登入紀錄')).toBeInTheDocument();
+    expect(screen.getByText('新增與提權帳號')).toBeInTheDocument();
+    expect(screen.getByText('API 金鑰與憑證')).toBeInTheDocument();
+
+    // 4. 點擊「完整清查」按鈕展開 SOC 詳細報告彈窗並關閉
+    const openModalBtn = screen.getByTestId('open-full-audit-modal-btn');
+    act(() => {
+      fireEvent.click(openModalBtn);
+    });
+    expect(screen.getByRole('dialog', { name: 'SOC 資安事故清查詳細報告' })).toBeInTheDocument();
+    expect(screen.getByText('SOC 資安事故清查與防禦詳細資料')).toBeInTheDocument();
+    const closeBtn = screen.getByLabelText('關閉清查視窗');
+    act(() => {
+      fireEvent.click(closeBtn);
+    });
+    expect(screen.queryByRole('dialog', { name: 'SOC 資安事故清查詳細報告' })).not.toBeInTheDocument();
+
+    // 5. 點擊「模擬 AI 誘捕」按鈕
     const simulateBtn = screen.getByTestId('simulate-ai-attack-btn');
     act(() => {
       fireEvent.click(simulateBtn);
     });
     expect(screen.getByTestId('security-honeypot-count')).toHaveTextContent(/1 次/);
 
-    // 5. 點擊「重置安全防禦」按鈕
+    // 6. 點擊「重置」按鈕
     const resetBtn = screen.getByTestId('reset-security-btn');
     act(() => {
       fireEvent.click(resetBtn);
@@ -359,5 +384,17 @@ describe('咩創意工作室 資安防禦網與反 AI 誘捕系統深度驗證',
       'utf-8'
     );
     expect(EMOJI_REGEX.test(pulseCode)).toBe(false);
+
+    const auditDataCode = fs.readFileSync(
+      path.resolve('src/data/securityAuditData.js'),
+      'utf-8'
+    );
+    expect(EMOJI_REGEX.test(auditDataCode)).toBe(false);
+
+    const auditModalCode = fs.readFileSync(
+      path.resolve('src/components/SecurityAuditModal.jsx'),
+      'utf-8'
+    );
+    expect(EMOJI_REGEX.test(auditModalCode)).toBe(false);
   });
 });

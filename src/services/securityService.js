@@ -1,7 +1,7 @@
 /**
  * 咩創意工作室 (Mei Creative Studio) - 資安防禦與反 AI 誘捕系統 (Security & AI Defense Engine)
  * 標語：創意無限∞咩有極限
- * 規格：全時多層防禦、Salted SHA-256 加鹽雜湊、漸進式退避防暴力破解、深度資料消毒、AI 金絲雀蜜罐與動態欺騙反制
+ * 規格：Salted SHA-256 加鹽雜湊、漸進式退避防暴力破解、深度資料消毒、AI 誘捕防禦與動態欺騙反制
  */
 
 const SECURITY_STORAGE_KEYS = {
@@ -351,7 +351,7 @@ export function loadSecurityMetrics() {
     interceptCount: 0,
     honeypotCount: 0,
     lastEventAt: null,
-    lastEventDesc: '系統就緒，多層防禦網全時警戒中'
+    lastEventDesc: '系統就緒，SOC 監控中心全時警戒中'
   };
   if (raw) {
     try {
@@ -361,7 +361,7 @@ export function loadSecurityMetrics() {
           interceptCount: Number(parsed.interceptCount) || 0,
           honeypotCount: Number(parsed.honeypotCount) || 0,
           lastEventAt: parsed.lastEventAt || null,
-          lastEventDesc: parsed.lastEventDesc || '系統就緒，多層防禦網全時警戒中'
+          lastEventDesc: parsed.lastEventDesc || '系統就緒，SOC 監控中心全時警戒中'
         };
       }
     } catch {
