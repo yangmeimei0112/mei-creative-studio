@@ -12,6 +12,7 @@ import AdminProjectModal, {
 import StudioPulseSection from './components/StudioPulseSection';
 import MobileBottomNav from './components/MobileBottomNav';
 import PortalEntrance from './components/PortalEntrance';
+import AdminChatWidget from './components/AdminChatWidget';
 import { LucideIcon, SquircleIconBadge, StudioLogo } from './components/LucideIcon';
 import { STUDIO_CONFIG } from './data/defaultData';
 import {
@@ -886,6 +887,14 @@ export default function App() {
         }
         onTriggerNativeInstall={handleTriggerNativeInstall}
         canNativeInstall={Boolean(deferredInstallPrompt)}
+      />
+
+      {/* 管理員專屬 AI 客服系統 (限管理員模式解鎖後可見，開場動畫播放時不渲染) */}
+      <AdminChatWidget
+        isAdmin={isAdmin}
+        isIntroPlaying={isIntroPlaying}
+        projects={projects}
+        changelog={changelog}
       />
 
       {/* 狀態通知膠囊 (Toast) */}
