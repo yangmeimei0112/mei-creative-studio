@@ -13,8 +13,13 @@ import StudioPulseSection from './components/StudioPulseSection';
 import MobileBottomNav from './components/MobileBottomNav';
 import PortalEntrance from './components/PortalEntrance';
 import AdminChatWidget from './components/AdminChatWidget';
+import MemberPortalModal from './components/MemberPortalModal';
 import { LucideIcon, SquircleIconBadge, StudioLogo } from './components/LucideIcon';
 import { STUDIO_CONFIG } from './data/defaultData';
+import {
+  loadCurrentMember,
+  signOutMember
+} from './services/memberAuthService';
 import {
   createBackupPayload,
   fetchServerProjectsIfAvailable,
@@ -60,6 +65,7 @@ export default function App() {
     const syncSecurityState = () => {
       setRateLimitStatus(getSecurityRateLimitStatus());
       setSecurityMetrics(loadSecurityMetrics());
+      setCurrentMember(loadCurrentMember());
     };
     const timer = setInterval(syncSecurityState, 2000);
     window.addEventListener('storage', syncSecurityState);
@@ -124,6 +130,8 @@ export default function App() {
   const [editingProject, setEditingProject] = useState(null);
   const [isUnlockModalOpen, setIsUnlockModalOpen] = useState(false);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+  const [currentMember, setCurrentMember] = useState(() => loadCurrentMember());
+  const [isMemberPortalOpen, setIsMemberPortalOpen] = useState(false);
   const [sdkModalState, setSdkModalState] = useState({
     open: false,
     mode: 'sdk',
@@ -685,6 +693,8 @@ export default function App() {
         sortBy={sortBy}
         onSelectSortBy={setSortBy}
         entranceWaveKey={entranceWaveKey}
+        currentMember={currentMember}
+        onOpenMemberPortal={() => setIsMemberPortalOpen(true)}
       />
 
       {/* 主體專案導引區 */}
@@ -803,8 +813,32 @@ export default function App() {
             </div>
           </div>
 
-          <div className="text-slate-400 dark:text-slate-500">
-            © {new Date().getFullYear()} {STUDIO_CONFIG.studioNameZh}. All rights reserved.
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 text-slate-400 dark:text-slate-500">
+            <span>
+              © {new Date().getFullYear()} {STUDIO_CONFIG.studioNameZh}. All rights reserved.
+            </span>
+            {isAdmin ? (
+              <button
+                type="button"
+                data-testid="footer-admin-lock-btn"
+                onClick={handleLockAdmin}
+                title="已解鎖管理員模式（點擊切換回公開訪客視角）"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-xs font-semibold hover:bg-emerald-500/25 transition-colors"
+              >
+                <LucideIcon name="lock-open" size={14} />
+                <span>管理員已解鎖</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                data-testid="footer-admin-unlock-btn"
+                onClick={() => setIsUnlockModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full btn-sky-secondary text-xs font-semibold"
+              >
+                <LucideIcon name="lock" size={14} />
+                <span>管理員解鎖</span>
+              </button>
+            )}
           </div>
         </div>
       </footer>
@@ -871,6 +905,20 @@ export default function App() {
         verifyPin={verifyAdminPin}
       />
 
+      {/* 全站聯通會員專區視窗 (方案一 × 方案二 雙引擎融合) */}
+      <MemberPortalModal
+        isOpen={isMemberPortalOpen}
+        onClose={() => setIsMemberPortalOpen(false)}
+        currentMember={currentMember}
+        onMemberChange={(member) => {
+          if (!member) {
+            signOutMember();
+          }
+          setCurrentMember(member);
+        }}
+        onNotify={showToast}
+      />
+
       {/* 資料備份 (JSON 匯出/匯入) 與密碼設定視窗 */}
       <StudioBackupModal
         isOpen={isBackupModalOpen}
@@ -911,13 +959,13 @@ export default function App() {
           data-testid="studio-toast"
           onClick={dismissToast}
           title="點擊關閉通知"
-          className={`fixed bottom-20 md:bottom-6 right-4 z-50 inline-flex items-center gap-2.5 px-4 py-3 rounded-full bg-slate-900/92 dark:bg-sky-950/95 text-white border border-sky-400/40 shadow-xl backdrop-blur-xl text-xs font-semibold select-none cursor-pointer ${
+          className={`fixed bottom-20 md:bottom-6 right-4 z-50 inline-flex items-center gap-2.5 px-4 py-3 rounded-full bg-sky-100/95 dark:bg-sky-950/95 text-slate-900 dark:text-white border border-sky-300/80 dark:border-sky-400/40 shadow-xl shadow-sky-950/10 dark:shadow-sky-950/50 backdrop-blur-xl text-xs font-semibold select-none cursor-pointer ${
             toast.isExiting ? 'toast-slide-exit' : 'toast-spring-enter'
           }`}
         >
           <span
             key={`toast-icon-${toast.icon}-${toast.timestamp}`}
-            className="toast-content-fade flex items-center justify-center text-sky-400"
+            className="toast-content-fade flex items-center justify-center text-sky-600 dark:text-sky-400"
           >
             <LucideIcon name={toast.icon} size={16} />
           </span>

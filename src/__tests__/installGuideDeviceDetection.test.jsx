@@ -144,6 +144,24 @@ describe('咩創意工作室 - 安裝指南權限隔離與即時裝置/系統偵
       // 下方指南中至少應有一張卡片被標註「最適合此裝置」
       expect(screen.getByText('最適合此裝置')).toBeInTheDocument();
     });
+
+    it('DETECT-04: 安裝指南頁面不應包含任何綠色彈出式動畫或脈衝光圈類別 (.status-pulse-ring)', () => {
+      render(
+        <SdkAndInstallModal
+          isOpen={true}
+          initialMode="install"
+          targetProject={null}
+          onClose={vi.fn()}
+          onTriggerNativeInstall={vi.fn()}
+          canNativeInstall={true}
+          isAdmin={false}
+        />
+      );
+
+      const detectionCard = screen.getByTestId('device-detection-card');
+      expect(detectionCard.querySelector('.status-pulse-ring')).toBeNull();
+      expect(document.querySelector('.status-pulse-ring')).toBeNull();
+    });
   });
 
   // =========================================================================

@@ -40,6 +40,7 @@ import {
   FileJson,
   Film,
   Filter,
+  Fingerprint,
   FolderGit2,
   Gamepad2,
   GitCommitHorizontal,
@@ -58,6 +59,8 @@ import {
   Link2,
   Lock,
   LockOpen,
+  LogOut,
+  Mail,
   Maximize2,
   MessageSquareCode,
   Mic,
@@ -78,6 +81,7 @@ import {
   RefreshCw,
   Rocket,
   RotateCcw,
+  ScanFace,
   ScanLine,
   Search,
   Send,
@@ -153,6 +157,7 @@ export const LUCIDE_ICON_MAP = {
   'file-json': FileJson,
   'film': Film,
   'filter': Filter,
+  'fingerprint': Fingerprint,
   'folder-git-2': FolderGit2,
   'gamepad-2': Gamepad2,
   'git-commit-horizontal': GitCommitHorizontal,
@@ -171,6 +176,8 @@ export const LUCIDE_ICON_MAP = {
   'link-2': Link2,
   'lock': Lock,
   'lock-open': LockOpen,
+  'log-out': LogOut,
+  'mail': Mail,
   'maximize-2': Maximize2,
   'message-square-code': MessageSquareCode,
   'mic': Mic,
@@ -191,6 +198,7 @@ export const LUCIDE_ICON_MAP = {
   'refresh-cw': RefreshCw,
   'rocket': Rocket,
   'rotate-ccw': RotateCcw,
+  'scan-face': ScanFace,
   'scan-line': ScanLine,
   'search': Search,
   'send': Send,
@@ -343,10 +351,8 @@ export function LucideIcon({
 
 /**
  * 晴空淡藍柔光圓角圖示底座 (Squircle Icon Badge)
- * - 標準卡尺寸：44px × 44px (size="md")
- * - 置頂大卡尺寸：56px × 56px (size="lg")
- * - 小型標籤底座：36px × 36px (size="sm")
- * - 圓角固定 14px，內含 #38BDF8 / #0284C7 晴空淡藍漸層與柔光邊框
+ * - 支援尺寸規格：2xs, xs, sm, md, lg, xl, 2xl
+ * - 圓角與尺寸自適應，內含 #38BDF8 / #0284C7 晴空淡藍漸層與柔光邊框
  */
 export function SquircleIconBadge({
   name = 'cloud',
@@ -356,11 +362,13 @@ export function SquircleIconBadge({
   children
 }) {
   const dimensions = {
+    '2xs': { box: 'w-5 h-5 rounded-[6px]', icon: 11 },
     xs: { box: 'w-6 h-6 rounded-[8px]', icon: 13 },
     sm: { box: 'w-9 h-9 rounded-[12px]', icon: 18 },
     md: { box: 'w-[44px] h-[44px] rounded-[14px]', icon: 22 },
-    lg: { box: 'w-[56px] h-[56px] rounded-[14px]', icon: 28 },
-    xl: { box: 'w-20 h-20 sm:w-24 sm:h-24 rounded-[28px]', icon: 42 }
+    lg: { box: 'w-[56px] h-[56px] rounded-[18px]', icon: 28 },
+    xl: { box: 'w-20 h-20 sm:w-24 sm:h-24 rounded-[26px] sm:rounded-[30px]', icon: 46 },
+    '2xl': { box: 'w-28 h-28 sm:w-32 sm:h-32 rounded-[32px] sm:rounded-[36px]', icon: 58 }
   };
 
   const selected = dimensions[size] || dimensions.md;
@@ -387,7 +395,7 @@ export function SquircleIconBadge({
  * - 核心意象：靈感雲朵 × 無限符號 (∞)
  * - 視覺風格：純粹極簡線性美學 (Pure Linear Minimalist)
  * - 統一 1.75 線寬、俐落黃金比例幾何負空間、深淺色自適應
- * - 支援標準尺寸：xs, sm, md, lg, xl
+ * - 支援標準尺寸：2xs, xs, sm, md, lg, xl, 2xl
  */
 export function StudioLogo({
   size = 'md',
@@ -398,6 +406,12 @@ export function StudioLogo({
   ...rest
 }) {
   const sizeMap = {
+    '2xs': {
+      box: 'w-5 h-5 rounded-[6px]',
+      icon: 11,
+      sparkleBox: 'w-2.5 h-2.5 -top-0.5 -right-0.5',
+      sparkleIcon: 6
+    },
     xs: {
       box: 'w-6 h-6 rounded-[8px]',
       icon: 13,
@@ -427,16 +441,24 @@ export function StudioLogo({
       icon: 46,
       sparkleBox: 'w-8 h-8 sm:w-9 sm:h-9 -top-2 -right-2',
       sparkleIcon: 18
+    },
+    '2xl': {
+      box: 'w-28 h-28 sm:w-32 sm:h-32 rounded-[32px] sm:rounded-[36px]',
+      icon: 58,
+      sparkleBox: 'w-10 h-10 sm:w-11 sm:h-11 -top-2.5 -right-2.5',
+      sparkleIcon: 22
     }
   };
 
-  const current = sizeMap[size] || sizeMap.md;
+  const normalizedSize = sizeMap[size] ? size : 'md';
+  const activeSize = sizeMap[size] ? size : 'md';
+  const current = sizeMap[normalizedSize];
 
   return (
     <div
       className={`studio-brand-logo relative inline-flex items-center justify-center shrink-0 ${className}`.trim()}
       data-testid={testId}
-      data-logo-size={size}
+      data-logo-size={normalizedSize}
       {...rest}
     >
       <div
@@ -456,10 +478,10 @@ export function StudioLogo({
           strokeLinejoin="round"
           className="text-sky-500 dark:text-sky-400 studio-infinity-cloud"
         >
-          {/* 靈感雲朵輪廓 */}
+          {/* 靈感雲朵輪廓 (Lucide Standard Anchor) */}
           <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
-          {/* 核心無限符號 (∞) 創意環 */}
-          <path d="M12 14c-1.6-1.8-2.8-2.6-4.2-2.6a2.6 2.6 0 1 0 0 5.2c1.4 0 2.6-.8 4.2-2.6Zm0 0c1.6 1.8 2.8 2.6 4.2 2.6a2.6 2.6 0 1 0 0-5.2c-1.4 0-2.6.8-4.2 2.6Z" />
+          {/* 核心無限符號 (∞) 創意環 (Refined Orthogonal Lemniscate) */}
+          <path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z" />
         </svg>
       </div>
       <span

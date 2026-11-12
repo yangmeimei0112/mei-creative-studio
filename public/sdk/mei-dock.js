@@ -91,7 +91,7 @@
   // Pure Lucide SVG Icons (24x24 grid, stroke-width="1.75", round caps/joins)
   const LUCIDE_SVGS = {
     cloud:
-      '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/><path d="M12 14c-1.6-1.8-2.8-2.6-4.2-2.6a2.6 2.6 0 1 0 0 5.2c1.4 0 2.6-.8 4.2-2.6Zm0 0c1.6 1.8 2.8 2.6 4.2 2.6a2.6 2.6 0 1 0 0-5.2c-1.4 0-2.6.8-4.2 2.6Z"/></svg>',
+      '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/><path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z"/></svg>',
     sparkles:
       '<svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>',
     arrowLeft:
@@ -447,6 +447,61 @@
         labelEl.textContent = String(newTitle);
       }
     };
+
+    // Expose Universal Member SSO Bridge for all connected child projects
+    const ssoListeners = new Set();
+    function readSharedMember() {
+      try {
+        const raw =
+          window.localStorage &&
+          window.localStorage.getItem('mei_universal_member_sso_v1');
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+
+    window.MeiStudioSSO = {
+      currentMember: readSharedMember(),
+      getMember: readSharedMember,
+      onAuthStateChange(cb) {
+        if (typeof cb === 'function') {
+          ssoListeners.add(cb);
+          return () => ssoListeners.delete(cb);
+        }
+        return () => {};
+      }
+    };
+
+    function notifySsoListeners(member) {
+      window.MeiStudioSSO.currentMember = member;
+      ssoListeners.forEach((cb) => {
+        try {
+          cb(member);
+        } catch {
+          // Ignore callback error
+        }
+      });
+    }
+
+    window.addEventListener('storage', (evt) => {
+      if (evt.key === 'mei_universal_member_sso_v1') {
+        notifySsoListeners(readSharedMember());
+      }
+    });
+
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        const ssoChannel = new BroadcastChannel('mei_universal_sso_channel_v1');
+        ssoChannel.onmessage = (evt) => {
+          if (evt && evt.data) {
+            notifySsoListeners(evt.data.member || readSharedMember());
+          }
+        };
+      } catch {
+        // Ignore broadcast error
+      }
+    }
   }
 
   if (document.readyState === 'loading') {

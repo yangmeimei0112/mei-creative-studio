@@ -43,11 +43,13 @@ describe('咩創意工作室 Mei Creative Studio — 跨平台導引大廳完整
       pascalRender.container.querySelector('svg')
     ).toHaveAttribute('data-lucide-name', 'wand-sparkles');
 
-    // Check SquircleIconBadge renders with squircle-icon-badge class
-    const badgeRender = render(<SquircleIconBadge name="bot" size="md" />);
-    expect(
-      badgeRender.container.querySelector('.squircle-icon-badge')
-    ).toBeInTheDocument();
+    // Check SquircleIconBadge renders with squircle-icon-badge class and supports all 7 tiers
+    ['2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl'].forEach((sz) => {
+      const badgeRender = render(<SquircleIconBadge name="bot" size={sz} />);
+      expect(
+        badgeRender.container.querySelector('.squircle-icon-badge')
+      ).toBeInTheDocument();
+    });
 
     // Check StudioLogo renders unified structure: squircle cloud + top-right sparkles
     const studioLogoRender = render(<StudioLogo size="md" />);
@@ -56,21 +58,51 @@ describe('咩創意工作室 Mei Creative Studio — 跨平台導引大廳完整
     );
     expect(logoEl).toBeInTheDocument();
     expect(logoEl).toHaveClass('studio-brand-logo');
+    expect(logoEl.querySelector('.squircle-icon-badge')).toBeInTheDocument();
+    expect(logoEl.querySelector('.studio-logo-sparkle')).toBeInTheDocument();
+
     const cloudSvg = logoEl.querySelector('[data-lucide-name="cloud"]');
     const sparklesSvg = logoEl.querySelector('[data-lucide-name="sparkles"]');
     expect(cloudSvg).toBeInTheDocument();
     expect(cloudSvg).toHaveAttribute('data-lucide-name', 'cloud');
+    expect(cloudSvg).toHaveClass('studio-infinity-cloud');
+    expect(cloudSvg).toHaveAttribute('stroke-width', '1.75');
+
+    // Verify cloud anchor path and Candidate F lemniscate path
+    const paths = cloudSvg.querySelectorAll('path');
+    expect(paths).toHaveLength(2);
+    expect(paths[0]).toHaveAttribute('d', 'M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z');
+    expect(paths[1]).toHaveAttribute(
+      'd',
+      'M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z'
+    );
+
     expect(sparklesSvg).toBeInTheDocument();
     expect(sparklesSvg).toHaveAttribute('data-lucide-name', 'sparkles');
+    expect(Number(sparklesSvg.getAttribute('stroke-width'))).toBeCloseTo(
+      (1.75 * 24) / 11,
+      2
+    );
 
-    // Verify all size variants of StudioLogo ('xs', 'sm', 'md', 'lg', 'xl')
-    ['xs', 'sm', 'md', 'lg', 'xl'].forEach((sz) => {
+    // Verify all 7 size variants of StudioLogo ('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl')
+    ['2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl'].forEach((sz) => {
       const { container: szContainer } = render(<StudioLogo size={sz} />);
       const szEl = szContainer.querySelector(`[data-logo-size="${sz}"]`);
       expect(szEl).toBeInTheDocument();
       expect(szEl.querySelector('[data-lucide-name="cloud"]')).toBeInTheDocument();
       expect(szEl.querySelector('[data-lucide-name="sparkles"]')).toBeInTheDocument();
     });
+
+    // Verify absoluteStrokeWidth across non-md size (e.g. 2xs: (1.75 * 24) / 6 = 7.0)
+    const { container: sz2xsContainer } = render(<StudioLogo size="2xs" />);
+    const sparkle2xs = sz2xsContainer.querySelector('.studio-logo-sparkle svg');
+    expect(Number(sparkle2xs.getAttribute('stroke-width'))).toBeCloseTo((1.75 * 24) / 6, 2);
+
+    // Verify fallback on invalid sizes
+    const { container: fallbackContainer } = render(<StudioLogo size="invalid-size" />);
+    const fallbackEl = fallbackContainer.querySelector('[data-logo-size="md"]');
+    expect(fallbackEl).toBeInTheDocument();
+    expect(fallbackContainer.querySelector('.squircle-icon-badge')).toHaveClass('w-[44px]', 'h-[44px]');
 
     // Ensure 48 icons in LUCIDE_PICKER_GROUPS and all exist in LUCIDE_ICON_MAP
     const pickerIcons = LUCIDE_PICKER_GROUPS.flatMap((g) => g.icons);

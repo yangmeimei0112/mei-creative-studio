@@ -1139,8 +1139,7 @@ export function SdkAndInstallModal({
                     <span className="text-xs font-bold text-slate-900 dark:text-white">
                       偵測到您目前使用的裝置與系統
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 status-pulse-ring" />
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-400/25">
                       <span>即時偵測</span>
                     </span>
                   </div>

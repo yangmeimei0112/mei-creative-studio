@@ -33,7 +33,9 @@ export default function HeaderHero({
   onResetFilters,
   sortBy = 'default',
   onSelectSortBy,
-  entranceWaveKey = 0
+  entranceWaveKey = 0,
+  currentMember = null,
+  onOpenMemberPortal
 }) {
   const onlineCount = visibleProjects.filter(
     (p) => p.status === 'online' || p.status === 'beta'
@@ -142,8 +144,36 @@ export default function HeaderHero({
               <LucideIcon name={theme === 'dark' ? 'sun' : 'moon'} size={17} />
             </button>
 
-            {/* 管理員視角切換 / 新增專案 */}
-            {isAdmin ? (
+            {/* 全站聯通會員專區按鈕 (取代原頂部管理員解鎖位置) */}
+            <button
+              type="button"
+              data-testid="header-member-portal-btn"
+              onClick={onOpenMemberPortal}
+              title={
+                currentMember
+                  ? `全站聯通會員：${currentMember.displayName}（${currentMember.tierLabel}）`
+                  : '開啟全站聯通會員專區（支援 Apple / Google / 指紋與人臉快速登入）'
+              }
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                currentMember ? 'btn-sky-primary' : 'btn-sky-secondary'
+              }`}
+            >
+              <LucideIcon
+                name={currentMember ? 'user-check' : 'fingerprint'}
+                size={15}
+              />
+              <span>
+                {currentMember ? currentMember.displayName : '會員專區'}
+              </span>
+              {currentMember && (
+                <span className="hidden xl:inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/20 text-[10px] font-bold">
+                  會員專區
+                </span>
+              )}
+            </button>
+
+            {/* 管理員專屬快速操作 (管理員解鎖按鈕已移至頁面底部頁尾) */}
+            {isAdmin && (
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
@@ -162,25 +192,7 @@ export default function HeaderHero({
                 >
                   <LucideIcon name="sliders-horizontal" size={16} />
                 </button>
-                <button
-                  type="button"
-                  onClick={onLockAdmin}
-                  title="已解鎖管理員模式（點擊切換回公開訪客視角）"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-xs font-semibold hover:bg-emerald-500/25 transition-colors"
-                >
-                  <LucideIcon name="lock-open" size={15} />
-                  <span className="hidden md:inline">管理員已解鎖</span>
-                </button>
               </div>
-            ) : (
-              <button
-                type="button"
-                onClick={onOpenAdminUnlock}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full btn-sky-secondary text-xs font-semibold"
-              >
-                <LucideIcon name="lock" size={15} />
-                <span>管理員解鎖</span>
-              </button>
             )}
           </div>
         </div>

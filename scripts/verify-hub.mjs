@@ -63,7 +63,7 @@ globalThis.window = {
   location: { origin: 'http://localhost:5173' }
 };
 
-const EMOJI_REGEX = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
+const EMOJI_REGEX = /[\u{1F300}-\u{1FAFF}\u{2300}-\u{23FF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/u;
 
 test('1. 品牌配置、三大預設分類與 48 款 Lucide 圖示挑選器驗證 (Zero Emoji + Lucide 標準名稱)', () => {
   assert.equal(STUDIO_CONFIG.studioNameZh, '咩創意工作室');
