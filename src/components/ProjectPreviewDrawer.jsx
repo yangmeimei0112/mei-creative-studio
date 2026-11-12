@@ -221,7 +221,7 @@ export default function ProjectPreviewDrawer({
                 <div className="bento-glass-card p-5">
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                     <LucideIcon name="circle-check" size={16} className="text-sky-500" />
-                    <span>專案核心亮點</span>
+                    <span>核心技術與功能亮點</span>
                   </h3>
                   <ul className="space-y-2">
                     {project.highlights.map((hl, i) => (
@@ -283,7 +283,7 @@ export default function ProjectPreviewDrawer({
                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full btn-sky-primary text-xs font-semibold shrink-0"
                   >
                     <LucideIcon name={copiedSnippet ? 'check' : 'copy'} size={14} />
-                    <span>{copiedSnippet ? '已複製嵌入碼' : '複製嵌入碼'}</span>
+                    <span>{copiedSnippet ? '已複製程式碼' : '複製嵌入碼'}</span>
                   </button>
                 </div>
 

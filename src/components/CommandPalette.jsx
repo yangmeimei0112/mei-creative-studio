@@ -228,7 +228,8 @@ export default function CommandPalette({
         <div className="max-h-[60vh] overflow-y-auto p-2 space-y-1">
           {items.length === 0 ? (
             <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
-              找不到符合「{query}」的專案或指令
+              <div>查無符合的專案或指令</div>
+              <div className="text-xs mt-1 text-slate-400 dark:text-slate-500">找不到「{query}」</div>
             </div>
           ) : (
             items.map((item, idx) => {

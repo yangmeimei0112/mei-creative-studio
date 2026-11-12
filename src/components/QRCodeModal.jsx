@@ -116,7 +116,7 @@ export default function QRCodeModal({ project, onClose }) {
             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full btn-sky-primary text-xs font-semibold shrink-0"
           >
             <LucideIcon name={copied ? 'check' : 'copy'} size={13} />
-            <span>{copied ? '已複製' : '複製連結'}</span>
+            <span>{copied ? '已複製網址' : '複製專案網址'}</span>
           </button>
         </div>
 

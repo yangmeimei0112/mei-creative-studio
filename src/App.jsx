@@ -543,7 +543,10 @@ export default function App() {
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json'
     });
-    const url = URL.createObjectURL(blob);
+    let url = '#';
+    if (typeof URL.createObjectURL === 'function') {
+      url = URL.createObjectURL(blob);
+    }
     const a = document.createElement('a');
     a.href = url;
     a.download = `mei-creative-studio-backup-${new Date()
@@ -552,7 +555,9 @@ export default function App() {
     document.body.appendChild(a);
     a.click();
     a.remove();
-    URL.revokeObjectURL(url);
+    if (typeof URL.revokeObjectURL === 'function' && url !== '#') {
+      URL.revokeObjectURL(url);
+    }
     showToast('已匯出 projects.json 備份檔', 'download');
   }, [projects, changelog, showToast]);
 
