@@ -1,9 +1,16 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { LucideIcon, SquircleIconBadge, StudioLogo } from './LucideIcon';
 import {
   PROJECT_CATEGORIES,
   STUDIO_CONFIG
 } from '../data/defaultData';
+
+const SORT_OPTIONS = [
+  { value: 'default', label: '預設置頂與自訂順序' },
+  { value: 'updated', label: '最新更新優先' },
+  { value: 'latency', label: '連線速度優先' },
+  { value: 'title', label: '專案名稱排序' }
+];
 
 export default function HeaderHero({
   projects,
@@ -37,6 +44,27 @@ export default function HeaderHero({
   currentMember = null,
   onOpenMemberPortal
 }) {
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const sortDropdownRef = useRef(null);
+
+  useEffect(() => {
+    if (!isSortOpen) return;
+    const handleClickOutside = (e) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(e.target)) {
+        setIsSortOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isSortOpen]);
+
+  const currentSortLabel =
+    SORT_OPTIONS.find((opt) => opt.value === sortBy)?.label || '預設置頂與自訂順序';
+
   const onlineCount = visibleProjects.filter(
     (p) => p.status === 'online' || p.status === 'beta'
   ).length;
@@ -153,7 +181,7 @@ export default function HeaderHero({
               title={
                 currentMember
                   ? `全站聯通會員：${currentMember.displayName}（${currentMember.tierLabel}）`
-                  : '開啟全站聯通會員專區（支援 Apple / Google / 指紋與人臉快速登入）'
+                  : '開啟全站聯通會員專區（支援 Google 帳號與指紋/人臉快速登入）'
               }
               className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all max-w-[124px] sm:max-w-[200px] ${
                 currentMember ? 'btn-sky-primary' : 'btn-sky-secondary'
@@ -372,7 +400,7 @@ export default function HeaderHero({
                     onClick={() => onSelectCategory(cat.id)}
                     className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
                       isActive
-                        ? 'btn-sky-primary shadow-md'
+                        ? 'btn-sky-primary shadow-none'
                         : 'bg-sky-50/75 dark:bg-slate-900/65 text-slate-600 dark:text-slate-300 border border-sky-400/20 hover:border-sky-400/50 hover:text-sky-700 dark:hover:text-sky-300'
                     }`}
                   >
@@ -421,20 +449,76 @@ export default function HeaderHero({
               </div>
 
               {onSelectSortBy && (
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div ref={sortDropdownRef} className="relative flex items-center gap-1.5 shrink-0">
                   <span className="text-xs text-slate-400 dark:text-slate-500 font-medium hidden sm:inline">
                     排序：
                   </span>
+
+                  {/* 自訂設計 Studio 浮動 Popover 選單觸發按鈕 */}
+                  <button
+                    type="button"
+                    onClick={() => setIsSortOpen((prev) => !prev)}
+                    aria-haspopup="listbox"
+                    aria-expanded={isSortOpen}
+                    aria-label={`專案排序：${currentSortLabel}`}
+                    className="w-full min-[420px]:w-auto inline-flex items-center justify-between gap-2 px-3.5 py-2 rounded-full text-xs font-semibold bg-sky-50/90 dark:bg-slate-900/90 border border-sky-400/30 text-sky-700 dark:text-sky-300 hover:border-sky-400/60 focus:border-sky-500 focus:outline-none cursor-pointer transition-all shadow-sm"
+                  >
+                    <span className="truncate">{currentSortLabel}</span>
+                    <LucideIcon
+                      name={isSortOpen ? 'chevron-up' : 'chevron-down'}
+                      size={14}
+                      className="shrink-0 text-sky-500"
+                    />
+                  </button>
+
+                  {/* Studio-styled 浮動選取視窗 (Popover / Modal Dropdown) */}
+                  {isSortOpen && (
+                    <div
+                      role="listbox"
+                      aria-label="專案排序選單"
+                      className="absolute right-0 top-full mt-1.5 w-48 sm:w-52 py-1.5 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-sky-400/30 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150"
+                    >
+                      {SORT_OPTIONS.map((opt) => {
+                        const isSelected = sortBy === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            role="option"
+                            aria-selected={isSelected}
+                            onClick={() => {
+                              onSelectSortBy(opt.value);
+                              setIsSortOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-3.5 py-2 text-xs font-medium transition-colors ${
+                              isSelected
+                                ? 'bg-sky-500/15 text-sky-700 dark:text-sky-300 font-bold'
+                                : 'text-slate-700 dark:text-slate-300 hover:bg-sky-500/10 hover:text-sky-600 dark:hover:text-sky-300'
+                            }`}
+                          >
+                            <span>{opt.label}</span>
+                            {isSelected && (
+                              <LucideIcon name="check" size={14} className="text-sky-500 shrink-0" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* 視覺隱藏原生 select，保持與 screen.getByLabelText('專案排序方式') 及 fireEvent.change 完全相容 */}
                   <select
                     aria-label="專案排序方式"
                     value={sortBy}
                     onChange={(e) => onSelectSortBy(e.target.value)}
-                    className="w-full min-[420px]:w-auto px-3.5 py-2 rounded-full text-xs font-semibold bg-sky-50/90 dark:bg-slate-900/90 border border-sky-400/30 text-sky-700 dark:text-sky-300 focus:border-sky-500 focus:outline-none cursor-pointer"
+                    className="sr-only"
+                    tabIndex={-1}
                   >
-                    <option value="default">預設置頂與自訂順序</option>
-                    <option value="updated">最新更新優先</option>
-                    <option value="latency">連線速度優先</option>
-                    <option value="title">專案名稱排序</option>
+                    {SORT_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
               )}

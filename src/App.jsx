@@ -22,6 +22,14 @@ import {
   initAuthListener
 } from './services/memberAuthService';
 import {
+  fetchCloudProjects,
+  syncProjectToCloud,
+  deleteProjectFromCloud,
+  syncBatchProjectsToCloud,
+  initProjectRealtimeListener,
+  sortProjectsDeterministically
+} from './services/projectSyncService';
+import {
   createBackupPayload,
   fetchServerProjectsIfAvailable,
   hasSeenEntranceIntro,
@@ -247,23 +255,111 @@ export default function App() {
       clearTimeout(themeTransitionTimerRef.current);
     }
     if (!supportsViewTransition) {
-      // 750ms 漸變 + 240ms 階梯波浪延遲 = 990ms，設為 1100ms 後優雅清理過渡 class
+      // 350ms 漸變 + 120ms 階梯延遲 = 470ms，設為 500ms 後優雅清理過渡 class
       themeTransitionTimerRef.current = setTimeout(() => {
         root.classList.remove('theme-transitioning');
         themeTransitionTimerRef.current = null;
-      }, 1100);
+      }, 500);
     }
   }, [theme]);
 
-  // 載入伺服器端持久化 projects.json 並在開場動畫期間於背景同步預熱載入各專案
+  // 載入伺服器端與 Supabase 雲端持久化專案，並訂閱跨裝置即時同步 (Realtime WebSocket + BroadcastChannel + Storage)
   useEffect(() => {
     let mounted = true;
+
     fetchServerProjectsIfAvailable().then((serverList) => {
       if (mounted && Array.isArray(serverList) && serverList.length > 0) {
         setProjects(serverList);
         setChangelog(loadChangelog());
       }
     });
+
+    fetchCloudProjects()
+      .then((cloudList) => {
+        if (!mounted || !Array.isArray(cloudList) || cloudList.length === 0) {
+          return;
+        }
+        setProjects((prev) => {
+          if (JSON.stringify(prev) === JSON.stringify(cloudList)) {
+            return prev;
+          }
+          return cloudList;
+        });
+      })
+      .catch(() => {});
+
+    const unsubscribeRealtime = initProjectRealtimeListener((changeEvent) => {
+      if (!mounted || !changeEvent) return;
+
+      if (
+        changeEvent.type === 'PROJECT_BATCH_SYNC' &&
+        Array.isArray(changeEvent.projects)
+      ) {
+        saveProjects(changeEvent.projects);
+        setProjects(changeEvent.projects);
+        return;
+      }
+
+      if (changeEvent.type === 'PROJECT_UPSERT' && changeEvent.project) {
+        setProjects((prev) => {
+          const exists = prev.some((p) => p.id === changeEvent.project.id);
+          const next = exists
+            ? prev.map((p) =>
+                p.id === changeEvent.project.id ? changeEvent.project : p
+              )
+            : [changeEvent.project, ...prev];
+          const ordered = sortProjectsDeterministically(next);
+          saveProjects(ordered);
+          return ordered;
+        });
+        return;
+      }
+
+      if (changeEvent.type === 'PROJECT_DELETE' && changeEvent.projectId) {
+        setProjects((prev) => {
+          const next = prev.filter((p) => p.id !== changeEvent.projectId);
+          saveProjects(next);
+          return next;
+        });
+        return;
+      }
+
+      if (changeEvent.source === 'supabase-realtime') {
+        const evt = String(changeEvent.eventType || '').toUpperCase();
+        if (evt === 'DELETE' && changeEvent.oldRecord?.id) {
+          setProjects((prev) => {
+            const next = prev.filter((p) => p.id !== changeEvent.oldRecord.id);
+            saveProjects(next);
+            return next;
+          });
+        } else if (changeEvent.newRecord?.id) {
+          setProjects((prev) => {
+            const exists = prev.some((p) => p.id === changeEvent.newRecord.id);
+            const next = exists
+              ? prev.map((p) =>
+                  p.id === changeEvent.newRecord.id
+                    ? { ...p, ...changeEvent.newRecord }
+                    : p
+                )
+              : [changeEvent.newRecord, ...prev];
+            const ordered = sortProjectsDeterministically(next);
+            saveProjects(ordered);
+            return ordered;
+          });
+        }
+      }
+    });
+
+    const handleCrossTabProjectStorage = (e) => {
+      if (!mounted) return;
+      if (!e || e.key === 'mei_studio_projects_v1') {
+        const latest = loadProjects();
+        if (Array.isArray(latest)) {
+          setProjects(latest);
+        }
+      }
+    };
+    window.addEventListener('storage', handleCrossTabProjectStorage);
 
     // 於開場動畫期間在背景同步進行專案連線巡檢與資源預熱
     const warmupTimer = setTimeout(() => {
@@ -278,6 +374,10 @@ export default function App() {
     return () => {
       mounted = false;
       clearTimeout(warmupTimer);
+      window.removeEventListener('storage', handleCrossTabProjectStorage);
+      if (typeof unsubscribeRealtime === 'function') {
+        unsubscribeRealtime();
+      }
     };
   }, []);
 
@@ -354,10 +454,19 @@ export default function App() {
     const next = theme === 'dark' ? 'light' : 'dark';
     const applyThemeChange = () => {
       setTheme(next);
-      showToast(
-        next === 'dark' ? '已切換至深色模式' : '已切換至淺色模式',
-        next === 'dark' ? 'moon' : 'sun'
-      );
+      // 解耦 Toast 通知：延遲至下一影格或非同步掛載，避免與全頁深淺色初次過渡幀競爭 GPU/主線程
+      const triggerToast = () => {
+        showToast(
+          next === 'dark' ? '已切換至深色模式' : '已切換至淺色模式',
+          next === 'dark' ? 'moon' : 'sun'
+        );
+      };
+
+      if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function' && process.env.NODE_ENV !== 'test') {
+        window.requestAnimationFrame(triggerToast);
+      } else {
+        triggerToast();
+      }
     };
 
     if (typeof document !== 'undefined' && typeof document.startViewTransition === 'function') {
@@ -426,15 +535,24 @@ export default function App() {
     showToast('已切換回公開訪客瀏覽視角', 'lock');
   }, [showToast]);
 
-  // 新增或編輯專案儲存
+  // 新增或編輯專案儲存 (本地端樂觀寫入 + Supabase 雲端跨裝置雙向同步)
   const handleSaveProject = useCallback(
     (projectPayload) => {
       setProjects((prev) => {
         const exists = prev.some((p) => p.id === projectPayload.id);
-        const updated = exists
+        const rawUpdated = exists
           ? prev.map((p) => (p.id === projectPayload.id ? projectPayload : p))
           : [projectPayload, ...prev];
+        const updated = rawUpdated.map((item, idx) => ({
+          ...item,
+          sort_order: idx
+        }));
         saveProjects(updated);
+        const savedIdx = updated.findIndex((p) => p.id === projectPayload.id);
+        syncProjectToCloud(
+          updated[savedIdx >= 0 ? savedIdx : 0],
+          savedIdx >= 0 ? savedIdx : 0
+        ).catch(() => {});
         return updated;
       });
       showToast(`已儲存專案「${projectPayload.title}」`, 'circle-check');
@@ -442,14 +560,17 @@ export default function App() {
     [showToast]
   );
 
-  // 刪除專案
+  // 刪除專案 (本地端樂觀移除 + Supabase 雲端同步刪除)
   const handleDeleteProject = useCallback(
     (projectId) => {
       const target = projects.find((p) => p.id === projectId);
       if (!target) return;
-      const updated = projects.filter((p) => p.id !== projectId);
+      const updated = projects
+        .filter((p) => p.id !== projectId)
+        .map((item, idx) => ({ ...item, sort_order: idx }));
       setProjects(updated);
       saveProjects(updated);
+      deleteProjectFromCloud(projectId).catch(() => {});
       showToast(`已移除專案「${target.title}」`, 'trash-2');
     },
     [projects, showToast]
@@ -459,10 +580,11 @@ export default function App() {
   const handleTogglePinProject = useCallback(
     (projectId) => {
       setProjects((prev) => {
-        const updated = prev.map((p) =>
-          p.id === projectId ? { ...p, pinned: !p.pinned } : p
-        );
+        const updated = prev
+          .map((p) => (p.id === projectId ? { ...p, pinned: !p.pinned } : p))
+          .map((item, idx) => ({ ...item, sort_order: idx }));
         saveProjects(updated);
+        syncBatchProjectsToCloud(updated).catch(() => {});
         return updated;
       });
       showToast('已更新專案置頂排序', 'pin');
@@ -474,15 +596,17 @@ export default function App() {
   const handleToggleVisibilityProject = useCallback(
     (projectId) => {
       setProjects((prev) => {
-        const updated = prev.map((p) =>
+        const updated = prev.map((p, idx) =>
           p.id === projectId
             ? {
                 ...p,
-                visibility: p.visibility === 'private' ? 'public' : 'private'
+                visibility: p.visibility === 'private' ? 'public' : 'private',
+                sort_order: idx
               }
-            : p
+            : { ...p, sort_order: idx }
         );
         saveProjects(updated);
+        syncBatchProjectsToCloud(updated).catch(() => {});
         return updated;
       });
       showToast('已切換專案公開／私人顯示權限', 'shield-check');
@@ -494,8 +618,13 @@ export default function App() {
   const handleReorderProject = useCallback(
     (projectId, direction) => {
       setProjects((prev) => {
-        const updated = reorderProjectList(prev, projectId, direction);
+        const reordered = reorderProjectList(prev, projectId, direction);
+        const updated = reordered.map((item, idx) => ({
+          ...item,
+          sort_order: idx
+        }));
         saveProjects(updated);
+        syncBatchProjectsToCloud(updated).catch(() => {});
         return updated;
       });
       setSortBy('default');
@@ -816,12 +945,12 @@ export default function App() {
         <div className="bento-glass-card px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-3 text-center sm:text-left">
             <StudioLogo size="sm" className="shrink-0" />
-            <div>
+            <div className="flex flex-col sm:flex-row sm:items-center">
               <span className="font-bold text-slate-800 dark:text-slate-100">
                 {STUDIO_CONFIG.studioNameZh} {STUDIO_CONFIG.studioNameEn}
               </span>
-              <span className="mx-2 opacity-40">·</span>
-              <span>{STUDIO_CONFIG.description}</span>
+              <span className="hidden sm:inline mx-2 opacity-40">·</span>
+              <span className="mt-0.5 sm:mt-0">{STUDIO_CONFIG.description}</span>
             </div>
           </div>
 

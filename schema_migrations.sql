@@ -349,6 +349,89 @@ GRANT SELECT ON public.mei_member_public_profiles TO anon, authenticated;
 REVOKE ALL ON public.mei_member_profiles FROM anon;
 REVOKE ALL ON public.mei_member_passkeys FROM anon;
 
+-- -------------------------------------------------------------------------------------
+-- 10. 建立跨裝置專案雲端雙向同步表：public.mei_member_projects
+-- -------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.mei_member_projects (
+  -- 專案唯一識別字串 (與前端本地端 ID 一致)
+  id TEXT PRIMARY KEY,
+
+  -- 專案標題與副標題
+  title VARCHAR(200) NOT NULL DEFAULT '未命名專案',
+  subtitle VARCHAR(200) NOT NULL DEFAULT '',
+
+  -- 專案說明與分類
+  description TEXT NOT NULL DEFAULT '',
+  category VARCHAR(50) NOT NULL DEFAULT 'web-business'
+    CHECK (category IN ('ai-automation', 'web-business', 'interactive-media', 'websites')),
+
+  -- 專案狀態與公開權限
+  status VARCHAR(30) NOT NULL DEFAULT 'online'
+    CHECK (status IN ('online', 'beta', 'maintenance', 'offline')),
+  visibility VARCHAR(20) NOT NULL DEFAULT 'public'
+    CHECK (visibility IN ('public', 'private')),
+
+  -- 向量圖示名稱與目標網址
+  icon VARCHAR(80) NOT NULL DEFAULT 'globe',
+  url TEXT NOT NULL DEFAULT '/demo-subproject.html',
+  version VARCHAR(40) NOT NULL DEFAULT 'v1.0.0',
+
+  -- 置頂狀態與自訂順序索引 (手機版與電腦版跨裝置排序一致核心欄位)
+  pinned BOOLEAN NOT NULL DEFAULT false,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+
+  -- 連線延遲毫秒與擴充屬性
+  latency_ms INTEGER DEFAULT 20,
+  tags TEXT[] DEFAULT ARRAY[]::TEXT[],
+  payload JSONB DEFAULT '{}'::jsonb,
+
+  -- 建立與更新時間戳
+  updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
+
+COMMENT ON TABLE public.mei_member_projects IS '咩創意工作室跨裝置專案雲端同步資料表 (手機端與電腦端即時一致)';
+
+-- 建立複合排序索引，確保置頂優先與自訂順序決定性查詢效能
+CREATE INDEX IF NOT EXISTS idx_mei_member_projects_sort
+  ON public.mei_member_projects(pinned DESC, sort_order ASC, updated_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_mei_member_projects_category
+  ON public.mei_member_projects(category);
+
+-- 掛載自動更新 updated_at 觸發器
+DROP TRIGGER IF EXISTS trigger_mei_member_projects_updated_at ON public.mei_member_projects;
+CREATE TRIGGER trigger_mei_member_projects_updated_at
+  BEFORE UPDATE ON public.mei_member_projects
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();
+
+-- 強制啟用並列級鎖定 RLS
+ALTER TABLE public.mei_member_projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mei_member_projects FORCE ROW LEVEL SECURITY;
+
+-- 允許讀取公開專案，已認證會員可讀取並同步更新專案清單
+DROP POLICY IF EXISTS "mei_member_projects_select_public_or_auth" ON public.mei_member_projects;
+CREATE POLICY "mei_member_projects_select_public_or_auth"
+  ON public.mei_member_projects
+  FOR SELECT
+  TO anon, authenticated
+  USING (visibility = 'public' OR auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "mei_member_projects_write_sync" ON public.mei_member_projects;
+CREATE POLICY "mei_member_projects_write_sync"
+  ON public.mei_member_projects
+  FOR ALL
+  TO anon, authenticated
+  USING (true)
+  WITH CHECK (true);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.mei_member_projects TO anon, authenticated;
+
+-- 將跨裝置專案表加入 Supabase Realtime 即時廣播頻道
+ALTER PUBLICATION supabase_realtime ADD TABLE public.mei_member_projects;
+
 COMMIT;
 
 -- =====================================================================================

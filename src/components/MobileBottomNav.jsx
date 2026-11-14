@@ -74,10 +74,10 @@ export default function MobileBottomNav({
                 key={item.id}
                 type="button"
                 onClick={item.onClick}
-                className="flex flex-col items-center justify-center -mt-4 mobile-nav-primary-btn"
+                className="flex flex-col items-center justify-center py-1 rounded-xl mobile-nav-primary-btn"
               >
-                <span className="w-11 h-11 rounded-2xl btn-sky-primary flex items-center justify-center shadow-lg mobile-nav-primary-badge">
-                  <LucideIcon name={item.icon} size={20} />
+                <span className="w-7 h-7 rounded-lg btn-sky-primary flex items-center justify-center mobile-nav-primary-badge">
+                  <LucideIcon name={item.icon} size={16} />
                 </span>
                 <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400 mt-1 truncate max-w-full">
                   {item.label}

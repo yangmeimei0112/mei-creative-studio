@@ -854,8 +854,7 @@ describe('咩創意工作室 Mei Creative Studio - 全站動畫系統端對端 (
       expect(cloudInfinitySvg.getAttribute('stroke-width')).toBe('1.75');
 
       const sparkles = logo.querySelector('.studio-logo-sparkle');
-      expect(sparkles).toBeInTheDocument();
-      expect(sparkles.className).toMatch(/bg-sky-500/);
+      expect(sparkles).not.toBeInTheDocument();
     });
 
     it('T4-U1-08: 視覺系統規範：Bento Grid 毛玻璃卡片符合 24px 圓角與晴空微光陰影規範', () => {

@@ -191,7 +191,8 @@ export default function PortalEntrance({
           {/* 中心發光雲朵與無限標誌 */}
           <StudioLogo
             size="xl"
-            className="portal-core-emblem relative z-10 shadow-2xl backdrop-blur-xl"
+            frameless={true}
+            className="portal-core-emblem relative z-10"
           />
         </div>
 

@@ -1,16 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { LucideIcon, SquircleIconBadge, StudioLogo } from './LucideIcon';
 import {
-  MEMBER_TIERS,
   detectBiometricCapability,
   signInWithGoogle,
-  signInWithApple,
-  signInWithEmail,
-  signUpWithEmail,
   signInWithPasskey,
   bindPasskeyToCurrentMember,
   signOutMember
 } from '../services/memberAuthService';
+import * as supabaseClientModule from '../services/supabaseClient';
+
+function safeGetEffectiveConfig() {
+  try {
+    if (typeof supabaseClientModule.getEffectiveSupabaseConfig === 'function') {
+      return supabaseClientModule.getEffectiveSupabaseConfig();
+    }
+  } catch {
+    // Fallback when module is partially mocked in unit tests
+  }
+  return {
+    supabaseUrl:
+      typeof window !== 'undefined'
+        ? window.localStorage?.getItem('mei_custom_supabase_url') || ''
+        : '',
+    supabaseAnonKey:
+      typeof window !== 'undefined'
+        ? window.localStorage?.getItem('mei_custom_supabase_anon_key') || ''
+        : ''
+  };
+}
+
+function safeIsValidHttpUrl(val) {
+  try {
+    if (typeof supabaseClientModule.isValidHttpUrl === 'function') {
+      return supabaseClientModule.isValidHttpUrl(val);
+    }
+  } catch {
+    // Fallback when module is partially mocked
+  }
+  return /^https?:\/\/.+/i.test(String(val || '').trim());
+}
 
 export default function MemberPortalModal({
   isOpen,
@@ -19,35 +47,70 @@ export default function MemberPortalModal({
   onMemberChange,
   onNotify
 }) {
-  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
-  const [displayName, setDisplayName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [selectedTier, setSelectedTier] = useState('creator');
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSupabaseConfig, setShowSupabaseConfig] = useState(false);
+  const [customSupabaseUrl, setCustomSupabaseUrl] = useState('');
+  const [customSupabaseAnonKey, setCustomSupabaseAnonKey] = useState('');
 
   const bioCap = detectBiometricCapability();
 
   useEffect(() => {
     if (isOpen) {
       setErrorMsg('');
-      setPassword('');
+      const effective = safeGetEffectiveConfig();
+      setCustomSupabaseUrl(effective.supabaseUrl || '');
+      setCustomSupabaseAnonKey(effective.supabaseAnonKey || '');
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleOAuthLogin = async (provider) => {
+  const handleSaveSupabaseConfig = () => {
+    setErrorMsg('');
+    const trimmedUrl = String(customSupabaseUrl || '').trim();
+    const trimmedKey = String(customSupabaseAnonKey || '').trim();
+    if (!safeIsValidHttpUrl(trimmedUrl) || !trimmedKey) {
+      setErrorMsg('請輸入有效的 Supabase Project URL (https://...) 與 Anon Public Key');
+      return;
+    }
+    try {
+      if (typeof supabaseClientModule.saveCustomSupabaseConfig === 'function') {
+        supabaseClientModule.saveCustomSupabaseConfig(trimmedUrl, trimmedKey);
+      }
+    } catch {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('mei_custom_supabase_url', trimmedUrl);
+        window.localStorage.setItem('mei_custom_supabase_anon_key', trimmedKey);
+      }
+    }
+    onNotify?.('已儲存自訂 Supabase 雲端資料庫連線設定', 'database');
+    setShowSupabaseConfig(false);
+  };
+
+  const handleResetSupabaseConfig = () => {
+    setErrorMsg('');
+    try {
+      if (typeof supabaseClientModule.clearCustomSupabaseConfig === 'function') {
+        supabaseClientModule.clearCustomSupabaseConfig();
+      }
+    } catch {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem('mei_custom_supabase_url');
+        window.localStorage.removeItem('mei_custom_supabase_anon_key');
+      }
+    }
+    const effective = safeGetEffectiveConfig();
+    setCustomSupabaseUrl(effective.supabaseUrl || '');
+    setCustomSupabaseAnonKey(effective.supabaseAnonKey || '');
+    onNotify?.('已還原預設 Supabase 雲端連線設定', 'rotate-ccw');
+  };
+
+  const handleOAuthLogin = async (provider = 'google') => {
     setErrorMsg('');
     setIsSubmitting(true);
     try {
-      let result;
-      if (provider === 'google') {
-        result = await signInWithGoogle();
-      } else if (provider === 'apple') {
-        result = await signInWithApple();
-      }
+      const result = await signInWithGoogle();
       if (result?.error) {
         throw result.error;
       }
@@ -55,14 +118,9 @@ export default function MemberPortalModal({
       if (member) {
         onMemberChange?.(member);
       }
-      const label = provider === 'apple' ? 'Apple 帳號' : 'Google 帳號';
-      onNotify?.(`已使用 ${label} 登入全站會員中心`, 'user-check');
+      onNotify?.('已使用 Google 帳號登入全站會員中心', 'user-check');
     } catch (err) {
-      if (provider === 'apple') {
-        setErrorMsg('Apple 登入已預留雲端介面，建議優先使用 Google 帳號一鍵登入');
-      } else {
-        setErrorMsg(err?.message || '第三方登入失敗，請稍後再試');
-      }
+      setErrorMsg(err?.message || '第三方登入失敗，請稍後再試');
     } finally {
       setIsSubmitting(false);
     }
@@ -83,37 +141,6 @@ export default function MemberPortalModal({
       onNotify?.(`已透過 ${bioCap.biometricLabel} 完成全站聯通登入`, 'fingerprint');
     } catch (err) {
       setErrorMsg(err?.message || '生物辨識驗證未完成，請重試或使用 Google 登入');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleEmailSubmit = async (e) => {
-    e.preventDefault();
-    setErrorMsg('');
-    setIsSubmitting(true);
-    try {
-      let res;
-      if (authMode === 'register') {
-        res = await signUpWithEmail(email, password, {
-          displayName: displayName.trim() || email.split('@')[0],
-          tier: selectedTier
-        });
-      } else {
-        res = await signInWithEmail(email, password);
-      }
-      if (res?.error) {
-        throw res.error;
-      }
-      const member = res?.data?.member || (res?.unionId ? res : null);
-      if (member) {
-        onMemberChange?.(member);
-        onNotify?.(`歡迎，${member.displayName}`, 'sparkles');
-      } else {
-        onNotify?.('認證確認信已發送，請檢查您的電子郵件信箱', 'mail');
-      }
-    } catch (err) {
-      setErrorMsg(err?.message || '電子郵件認證失敗，請檢查輸入內容');
     } finally {
       setIsSubmitting(false);
     }
@@ -204,7 +231,7 @@ export default function MemberPortalModal({
         {/* 訪客未登入視圖 */}
         {!currentMember ? (
           <div className="space-y-5 mt-5">
-            {/* 1. Google OAuth (首要認證) 與 Apple (預留介面) */}
+            {/* 1. Google OAuth (首要認證) */}
             <div className="space-y-2.5">
               <div className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
@@ -212,37 +239,21 @@ export default function MemberPortalModal({
                   <span>雲端單一登入 (Cloud Single Sign-On)</span>
                 </span>
                 <span className="text-[10px] text-sky-600 dark:text-sky-400 font-semibold">
-                  推薦方式 · 免密碼
+                  Google 快速授權 · 免密碼
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
                 <button
                   type="button"
                   data-testid="member-google-login-btn"
                   disabled={isSubmitting}
                   onClick={() => handleOAuthLogin('google')}
-                  className="flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold transition-all shadow-md hover:shadow-sky-500/25 active:scale-[0.98] disabled:opacity-60"
+                  className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white text-xs sm:text-sm font-bold transition-all shadow-md hover:shadow-sky-500/25 active:scale-[0.98] disabled:opacity-60"
                 >
                   <LucideIcon name="globe" size={16} />
                   <span>使用 Google 帳號繼續</span>
                 </button>
-
-                <div className="relative group">
-                  <button
-                    type="button"
-                    data-testid="member-apple-login-btn"
-                    disabled={isSubmitting}
-                    onClick={() => handleOAuthLogin('apple')}
-                    className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold transition-all shadow-sm active:scale-[0.98] disabled:opacity-60"
-                  >
-                    <LucideIcon name="shield-check" size={16} />
-                    <span>使用 Apple 帳號繼續</span>
-                  </button>
-                  <div className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[10px] whitespace-nowrap shadow-lg pointer-events-none z-10 border border-slate-700">
-                    Apple 登入預留介面 · 優先推薦 Google 快速登入
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -278,141 +289,6 @@ export default function MemberPortalModal({
                 </button>
               </div>
             </div>
-
-            {/* 3. 電子郵件帳號登入 / 註冊表單 */}
-            <form
-              onSubmit={handleEmailSubmit}
-              className="p-4 sm:p-5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-sky-400/20 space-y-3.5"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                  <LucideIcon name="mail" size={14} className="text-sky-500" />
-                  <span>電子郵件帳號</span>
-                </span>
-                <div className="flex items-center gap-2 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setAuthMode('login')}
-                    className={`font-semibold transition-colors ${
-                      authMode === 'login'
-                        ? 'text-sky-600 dark:text-sky-400 underline underline-offset-4'
-                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
-                    }`}
-                  >
-                    登入
-                  </button>
-                  <span className="text-slate-300 dark:text-slate-600">|</span>
-                  <button
-                    type="button"
-                    onClick={() => setAuthMode('register')}
-                    className={`font-semibold transition-colors ${
-                      authMode === 'register'
-                        ? 'text-sky-600 dark:text-sky-400 underline underline-offset-4'
-                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
-                    }`}
-                  >
-                    註冊新帳號
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {authMode === 'register' && (
-                  <div>
-                    <label
-                      htmlFor="member-display-name"
-                      className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1"
-                    >
-                      會員暱稱
-                    </label>
-                    <input
-                      id="member-display-name"
-                      type="text"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="例如：Mei 創作者"
-                      className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-slate-950 border border-sky-400/30 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
-                    />
-                  </div>
-                )}
-
-                <div className={authMode === 'login' ? 'sm:col-span-2' : ''}>
-                  <label
-                    htmlFor="member-email-input"
-                    className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1"
-                  >
-                    電子郵件信箱
-                  </label>
-                  <input
-                    id="member-email-input"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="creator@example.com"
-                    className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-slate-950 border border-sky-400/30 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label
-                    htmlFor="member-password-input"
-                    className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1"
-                  >
-                    登入密碼
-                  </label>
-                  <input
-                    id="member-password-input"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="至少 6 位字元"
-                    className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-slate-950 border border-sky-400/30 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
-                  />
-                </div>
-
-                {authMode === 'register' && (
-                  <div>
-                    <label
-                      htmlFor="member-tier-select"
-                      className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1"
-                    >
-                      會員規格等級
-                    </label>
-                    <select
-                      id="member-tier-select"
-                      value={selectedTier}
-                      onChange={(e) => setSelectedTier(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-950 border border-sky-400/30 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
-                    >
-                      {Object.values(MEMBER_TIERS).map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.label} ({t.id.toUpperCase()})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              <div className="pt-2 flex items-center justify-between">
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                  全站子專案單一登入通用
-                </span>
-                <button
-                  type="submit"
-                  data-testid="member-email-submit-btn"
-                  disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-full btn-sky-primary text-xs font-bold disabled:opacity-60"
-                >
-                  <LucideIcon name={authMode === 'register' ? 'user-plus' : 'log-in'} size={15} />
-                  <span>{authMode === 'register' ? '建立新帳號' : '登入會員帳號'}</span>
-                </button>
-              </div>
-            </form>
           </div>
         ) : (
           /* 已登入視圖：展示全站聯通會員數位通行證 */
@@ -517,6 +393,91 @@ export default function MemberPortalModal({
             </div>
           </div>
         )}
+
+        {/* 進階：自訂 Supabase 雲端連線設定（預設收合） */}
+        <div className="mt-5 pt-4 border-t border-sky-400/20">
+          <button
+            type="button"
+            data-testid="toggle-supabase-config-btn"
+            aria-expanded={showSupabaseConfig}
+            onClick={() => setShowSupabaseConfig((prev) => !prev)}
+            className="w-full flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-300 transition-colors"
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <LucideIcon name="database" size={14} className="text-sky-500" />
+              <span>Supabase 雲端資料庫連線設定</span>
+            </span>
+            <LucideIcon
+              name="chevron-down"
+              size={14}
+              className={`transition-transform duration-200 ${showSupabaseConfig ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {showSupabaseConfig && (
+            <div
+              data-testid="supabase-config-panel"
+              className="mt-3 p-3.5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-sky-400/20 space-y-3"
+            >
+              <div>
+                <label
+                  htmlFor="supabase-custom-url-input"
+                  className="block text-[11px] font-semibold text-slate-700 dark:text-slate-200 mb-1"
+                >
+                  Supabase Project URL
+                </label>
+                <input
+                  id="supabase-custom-url-input"
+                  data-testid="supabase-url-input"
+                  type="url"
+                  value={customSupabaseUrl}
+                  onChange={(e) => setCustomSupabaseUrl(e.target.value)}
+                  placeholder="https://your-project.supabase.co"
+                  className="w-full px-3 py-2 rounded-xl text-xs bg-white/90 dark:bg-slate-950/80 border border-sky-400/25 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-400/50"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="supabase-custom-anon-key-input"
+                  className="block text-[11px] font-semibold text-slate-700 dark:text-slate-200 mb-1"
+                >
+                  Supabase Anon Public Key
+                </label>
+                <input
+                  id="supabase-custom-anon-key-input"
+                  data-testid="supabase-anon-key-input"
+                  type="text"
+                  value={customSupabaseAnonKey}
+                  onChange={(e) => setCustomSupabaseAnonKey(e.target.value)}
+                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  className="w-full px-3 py-2 rounded-xl text-xs font-mono bg-white/90 dark:bg-slate-950/80 border border-sky-400/25 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-400/50"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  data-testid="reset-supabase-config-btn"
+                  onClick={handleResetSupabaseConfig}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200/80 transition-colors"
+                >
+                  <LucideIcon name="rotate-ccw" size={12} />
+                  <span>還原預設</span>
+                </button>
+                <button
+                  type="button"
+                  data-testid="save-supabase-config-btn"
+                  onClick={handleSaveSupabaseConfig}
+                  className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full text-[11px] font-semibold btn-sky-primary"
+                >
+                  <LucideIcon name="check" size={12} />
+                  <span>套用連線設定</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

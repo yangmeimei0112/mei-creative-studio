@@ -15,7 +15,13 @@ import QRCodeModal from '../components/QRCodeModal';
 import CommandPalette from '../components/CommandPalette';
 import MemberPortalModal from '../components/MemberPortalModal';
 import App from '../App';
-import { supabase } from '../services/supabaseClient';
+import {
+  supabase,
+  getEffectiveSupabaseConfig,
+  isValidHttpUrl,
+  DEFAULT_SUPABASE_URL,
+  DEFAULT_SUPABASE_ANON_KEY
+} from '../services/supabaseClient';
 
 import {
   MEMBER_TIERS,
@@ -436,8 +442,9 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
 
       expect(screen.getByTestId('member-portal-modal')).toBeInTheDocument();
       expect(screen.getByTestId('member-passkey-login-btn')).toBeInTheDocument();
-      expect(screen.getByTestId('member-apple-login-btn')).toBeInTheDocument();
       expect(screen.getByTestId('member-google-login-btn')).toBeInTheDocument();
+      expect(screen.queryByTestId('member-apple-login-btn')).toBeNull();
+      expect(screen.queryByTestId('member-email-submit-btn')).toBeNull();
       expect(screen.queryByTestId('member-profile-card')).toBeNull();
 
       const member = createMockMember();
@@ -1132,7 +1139,7 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
     it('RW-06: 雲端服務異常/逾時與離線優雅降級工作流 (Network Fault & Graceful Fallback)', async () => {
       vi.spyOn(supabase.auth, 'signInWithOAuth').mockResolvedValueOnce({
         data: null,
-        error: new Error('Apple OAuth provider interface reserved')
+        error: new Error('Google OAuth network timeout')
       });
 
       render(
@@ -1145,21 +1152,162 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
         />
       );
 
-      const appleBtn = screen.getByTestId('member-apple-login-btn');
-      expect(appleBtn).toBeInTheDocument();
+      const googleBtn = screen.getByTestId('member-google-login-btn');
+      expect(googleBtn).toBeInTheDocument();
+      expect(screen.queryByTestId('member-apple-login-btn')).toBeNull();
+      expect(screen.queryByTestId('member-email-submit-btn')).toBeNull();
 
       await act(async () => {
-        fireEvent.click(appleBtn);
+        fireEvent.click(googleBtn);
       });
 
       await waitFor(() => {
         const alertEl = screen.getByRole('alert');
         expect(alertEl).toBeInTheDocument();
-        expect(alertEl).toHaveTextContent(/Apple 登入已預留雲端介面/);
+        expect(alertEl).toHaveTextContent(/Google OAuth network timeout/);
       });
 
       expect(screen.getByTestId('member-portal-modal')).toBeInTheDocument();
-      expect(screen.getByTestId('member-apple-login-btn')).toBeInTheDocument();
+      expect(screen.getByTestId('member-google-login-btn')).toBeInTheDocument();
+    });
+
+    it('R1-F1: getEffectiveSupabaseConfig 支援 localStorage 自訂 URL/Key 與預設值安全回退', () => {
+      // 1. 預設狀態回退
+      const defaultConfig = getEffectiveSupabaseConfig();
+      expect(defaultConfig.supabaseUrl).toBeDefined();
+      expect(defaultConfig.supabaseAnonKey).toBeDefined();
+      expect(defaultConfig.supabaseUrl).toContain('supabase.co');
+
+      // 2. 自訂 localStorage 設定
+      try {
+        localStorage.setItem('mei_custom_supabase_url', 'https://custom-project.supabase.co');
+        localStorage.setItem('mei_custom_supabase_anon_key', 'custom-anon-key-123456');
+
+        const customConfig = getEffectiveSupabaseConfig();
+        expect(customConfig.supabaseUrl).toBe('https://custom-project.supabase.co');
+        expect(customConfig.supabaseAnonKey).toBe('custom-anon-key-123456');
+      } finally {
+        localStorage.removeItem('mei_custom_supabase_url');
+        localStorage.removeItem('mei_custom_supabase_anon_key');
+      }
+
+      // 3. 清理後恢復
+      const restored = getEffectiveSupabaseConfig();
+      expect(restored.supabaseUrl).toBe(DEFAULT_SUPABASE_URL);
+      expect(restored.supabaseAnonKey).toBe(DEFAULT_SUPABASE_ANON_KEY);
+    });
+
+    it('R1-F1: isValidHttpUrl 正確驗證 HTTP/HTTPS 協議與過濾無效字串', () => {
+      expect(isValidHttpUrl('https://custom.supabase.co')).toBe(true);
+      expect(isValidHttpUrl('http://localhost:54321')).toBe(true);
+      expect(isValidHttpUrl('  https://custom.supabase.co  ')).toBe(true);
+      expect(isValidHttpUrl('')).toBe(false);
+      expect(isValidHttpUrl('   ')).toBe(false);
+      expect(isValidHttpUrl('not-a-url')).toBe(false);
+      expect(isValidHttpUrl('null')).toBe(false);
+      expect(isValidHttpUrl('{bad}')).toBe(false);
+      expect(isValidHttpUrl('ftp://files.example.com')).toBe(false);
+      expect(isValidHttpUrl('javascript:alert(1)')).toBe(false);
+      expect(isValidHttpUrl(null)).toBe(false);
+      expect(isValidHttpUrl(undefined)).toBe(false);
+    });
+
+    it('R1-F1: getEffectiveSupabaseConfig 支援空白字串過濾與安全回退預設值', () => {
+      try {
+        localStorage.setItem('mei_custom_supabase_url', '   ');
+        localStorage.setItem('mei_custom_supabase_anon_key', '   ');
+
+        const config = getEffectiveSupabaseConfig();
+        expect(config.supabaseUrl).toBe(DEFAULT_SUPABASE_URL);
+        expect(config.supabaseAnonKey).toBe(DEFAULT_SUPABASE_ANON_KEY);
+      } finally {
+        localStorage.removeItem('mei_custom_supabase_url');
+        localStorage.removeItem('mei_custom_supabase_anon_key');
+      }
+    });
+
+    it('R1-F1: getEffectiveSupabaseConfig 支援無效 URL (not-a-url, null, {bad}) 安全回退預設值', () => {
+      const invalidUrls = ['not-a-url', 'null', '{bad}', 'ftp://invalid.com'];
+      for (const invalid of invalidUrls) {
+        try {
+          localStorage.setItem('mei_custom_supabase_url', invalid);
+          const config = getEffectiveSupabaseConfig();
+          expect(config.supabaseUrl).toBe(DEFAULT_SUPABASE_URL);
+        } finally {
+          localStorage.removeItem('mei_custom_supabase_url');
+        }
+      }
+    });
+
+    it('R1-F1: getEffectiveSupabaseConfig 支援合法自訂 URL 與 Key 並完成 trim 修剪', () => {
+      try {
+        localStorage.setItem('mei_custom_supabase_url', '  https://custom.supabase.co  ');
+        localStorage.setItem('mei_custom_supabase_anon_key', '  custom-key-123  ');
+
+        const config = getEffectiveSupabaseConfig();
+        expect(config.supabaseUrl).toBe('https://custom.supabase.co');
+        expect(config.supabaseAnonKey).toBe('custom-key-123');
+      } finally {
+        localStorage.removeItem('mei_custom_supabase_url');
+        localStorage.removeItem('mei_custom_supabase_anon_key');
+      }
+    });
+
+    it('R1-F1: getEffectiveSupabaseConfig 在 localStorage 拋出例外時安全回退預設值', () => {
+      const originalGetItem = Storage.prototype.getItem;
+      const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new Error('SecurityError: The operation is insecure.');
+      });
+
+      try {
+        const config = getEffectiveSupabaseConfig();
+        expect(config.supabaseUrl).toBe(DEFAULT_SUPABASE_URL);
+        expect(config.supabaseAnonKey).toBe(DEFAULT_SUPABASE_ANON_KEY);
+      } finally {
+        getItemSpy.mockRestore();
+        Storage.prototype.getItem = originalGetItem;
+      }
+    });
+
+    it('R1-F1: MemberPortalModal 支援展開自訂 Supabase 連線設定、儲存與還原預設', () => {
+      const onNotify = vi.fn();
+      render(
+        <MemberPortalModal
+          isOpen={true}
+          onClose={() => {}}
+          currentMember={null}
+          onMemberChange={() => {}}
+          onNotify={onNotify}
+        />
+      );
+
+      const toggleBtn = screen.getByTestId('toggle-supabase-config-btn');
+      expect(screen.queryByTestId('supabase-config-panel')).not.toBeInTheDocument();
+
+      fireEvent.click(toggleBtn);
+      expect(screen.getByTestId('supabase-config-panel')).toBeInTheDocument();
+
+      const urlInput = screen.getByTestId('supabase-url-input');
+      const keyInput = screen.getByTestId('supabase-anon-key-input');
+
+      fireEvent.change(urlInput, { target: { value: 'https://user-studio.supabase.co' } });
+      fireEvent.change(keyInput, { target: { value: 'user-anon-key-xyz' } });
+      fireEvent.click(screen.getByTestId('save-supabase-config-btn'));
+
+      const saved = getEffectiveSupabaseConfig();
+      expect(saved.supabaseUrl).toBe('https://user-studio.supabase.co');
+      expect(saved.supabaseAnonKey).toBe('user-anon-key-xyz');
+      expect(onNotify).toHaveBeenCalledWith(
+        expect.stringContaining('Supabase'),
+        'database'
+      );
+
+      // Re-open panel and reset to default
+      fireEvent.click(screen.getByTestId('toggle-supabase-config-btn'));
+      fireEvent.click(screen.getByTestId('reset-supabase-config-btn'));
+      const restored = getEffectiveSupabaseConfig();
+      expect(restored.supabaseUrl).toBe(DEFAULT_SUPABASE_URL);
+      expect(restored.supabaseAnonKey).toBe(DEFAULT_SUPABASE_ANON_KEY);
     });
   });
 });

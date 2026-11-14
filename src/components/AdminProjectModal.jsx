@@ -1139,9 +1139,6 @@ export function SdkAndInstallModal({
                     <span className="text-xs font-bold text-slate-900 dark:text-white">
                       偵測到您目前使用的裝置與系統
                     </span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-400/25">
-                      <span>即時偵測</span>
-                    </span>
                   </div>
                   <div className="text-xs text-slate-600 dark:text-slate-300 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-medium">
                     <span className="font-bold text-sky-600 dark:text-sky-400">
@@ -1197,7 +1194,7 @@ export function SdkAndInstallModal({
               >
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white">
-                    <LucideIcon name="smartphone" size={16} className="text-sky-500" />
+                    <LucideIcon name="apple" size={16} className="text-sky-500" />
                     <span>iPhone / iPad</span>
                   </div>
                   {detectedClient.targetCategory === 'ios' && (
@@ -1221,7 +1218,7 @@ export function SdkAndInstallModal({
               >
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white">
-                    <LucideIcon name="smartphone" size={16} className="text-sky-500" />
+                    <LucideIcon name="android" size={16} className="text-sky-500" />
                     <span>Android 手機與平板</span>
                   </div>
                   {detectedClient.targetCategory === 'android' && (

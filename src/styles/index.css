@@ -282,6 +282,17 @@ h4, h5, h6, p, span, button, input, textarea, select, label, .font-heading-sm, .
   transform: translateY(0);
 }
 
+/* 移除分類標籤選取時的深藍色陰影 (R5-F2) */
+[role="tablist"] [role="tab"].btn-sky-primary,
+[role="tab"].btn-sky-primary {
+  box-shadow: none !important;
+}
+
+[role="tablist"] [role="tab"].btn-sky-primary:hover,
+[role="tab"].btn-sky-primary:hover {
+  box-shadow: none !important;
+}
+
 /* 次要雲朵淡藍膠囊按鈕 */
 .btn-sky-secondary {
   background: rgba(239, 246, 255, 0.9);
@@ -638,10 +649,11 @@ h4, h5, h6, p, span, button, input, textarea, select, label, .font-heading-sm, .
 }
 
 /* ==========================================================================
-   全域深層緩慢漸變 ＋ 區塊微階梯波浪 (Theme Transition System - 750ms)
-   - 基底背景與色彩過渡拉長至 750ms (cubic-bezier(0.4, 0, 0.2, 1))，降低高反差刺激
-   - 僅針對關鍵容器與排版背景過渡，排除全域 box-shadow 與萬用字元 *，保障 60/120fps 高流暢度
-   - 區塊微階梯波浪延遲：Hero (0ms) -> Bento 專案 (80ms) -> 動態日誌 (160ms) -> 頁尾/導覽列 (240ms)
+   全域深層緩慢漸變 ＋ 區塊微階梯波浪 (Theme Transition System - 350ms 60fps)
+   - 基底背景與色彩過渡收斂至 350ms (cubic-bezier(0.4, 0, 0.2, 1))，消除行動端卡頓並維持 60fps
+   - 僅針對主版面關鍵容器與卡片背景過渡，排除全域 button / input 萬用過渡以防止大量 DOM 樣式級聯重繪
+   - will-change 優化硬體加速，防止連續 backdrop-filter 20px 高斯模糊重柵格化 (re-rasterization)
+   - 區塊微階梯波浪延遲：Hero (0ms) -> Bento 專案 (40ms) -> 動態日誌 (80ms) -> 頁尾/導覽列 (120ms)
    ========================================================================== */
 html.theme-transitioning,
 html.theme-transitioning body,
@@ -650,39 +662,52 @@ html.theme-transitioning nav,
 html.theme-transitioning main,
 html.theme-transitioning section,
 html.theme-transitioning footer,
-html.theme-transitioning .bento-glass-card,
-html.theme-transitioning button,
-html.theme-transitioning input {
+html.theme-transitioning .bento-glass-card {
   transition-property: background-color, border-color, color !important;
-  transition-duration: 750ms !important;
+  transition-duration: 350ms !important;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+  will-change: background-color, border-color;
 }
 
-html.theme-transitioning .theme-stagger-hero,
-html.theme-transitioning .theme-stagger-hero .bento-glass-card,
-html.theme-transitioning .theme-stagger-hero button,
-html.theme-transitioning .theme-stagger-hero input {
+html.theme-transitioning .theme-stagger-hero {
   transition-delay: 0ms !important;
 }
 
-html.theme-transitioning .theme-stagger-bento,
-html.theme-transitioning .theme-stagger-bento .bento-glass-card,
-html.theme-transitioning .theme-stagger-bento button,
-html.theme-transitioning .theme-stagger-bento input {
+html.theme-transitioning .theme-stagger-bento {
+  transition-delay: 40ms !important;
+}
+
+html.theme-transitioning .theme-stagger-pulse {
   transition-delay: 80ms !important;
 }
 
-html.theme-transitioning .theme-stagger-pulse,
-html.theme-transitioning .theme-stagger-pulse .bento-glass-card,
-html.theme-transitioning .theme-stagger-pulse button,
-html.theme-transitioning .theme-stagger-pulse input {
-  transition-delay: 160ms !important;
+html.theme-transitioning .theme-stagger-footer {
+  transition-delay: 120ms !important;
 }
 
-html.theme-transitioning .theme-stagger-footer,
-html.theme-transitioning .theme-stagger-footer .bento-glass-card,
-html.theme-transitioning .theme-stagger-footer button {
-  transition-delay: 240ms !important;
+/* 行動端 300ms 響應式優化與零掉幀保障 */
+@media (max-width: 640px) {
+  html.theme-transitioning,
+  html.theme-transitioning body,
+  html.theme-transitioning header,
+  html.theme-transitioning nav,
+  html.theme-transitioning main,
+  html.theme-transitioning section,
+  html.theme-transitioning footer,
+  html.theme-transitioning .bento-glass-card {
+    transition-duration: 300ms !important;
+    transition-delay: 0ms !important;
+  }
+}
+
+/* 尊重使用者減少動態偏好 */
+@media (prefers-reduced-motion: reduce) {
+  html.theme-transitioning,
+  html.theme-transitioning body,
+  html.theme-transitioning * {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
 }
 
 /* 現代瀏覽器原生 View Transition 硬體加速淡入淡出 */
@@ -908,13 +933,13 @@ html.theme-transitioning .theme-stagger-footer button {
   }
 
   .mobile-nav-primary-btn {
-    margin-top: -0.5rem !important;
+    margin-top: 0 !important;
   }
 
   .mobile-nav-primary-badge {
-    width: 2.25rem !important;
-    height: 2.25rem !important;
-    border-radius: 0.75rem !important;
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+    border-radius: 0.5rem !important;
   }
 
   .portal-center-core {

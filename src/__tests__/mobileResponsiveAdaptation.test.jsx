@@ -207,4 +207,21 @@ describe('手機與多比例裝置響應式適配驗證 (Multi-Aspect-Ratio Mobi
     expect(dockCode).toContain('@media (orientation: landscape) and (max-height: 500px)');
     expect(EMOJI_REGEX.test(dockCode)).toBe(false);
   });
+
+  it('7. 行動端頁尾文字垂直堆疊與底部導覽平齊無凸出驗證 (R4-F1 & R4-F2)', () => {
+    const { container } = render(<App />);
+    const footer = container.querySelector('footer');
+    expect(footer).toBeInTheDocument();
+
+    // R4-F1: 頁尾文字容器具備 flex-col sm:flex-row，且隔點在手機端隱藏 (hidden sm:inline)
+    const footerTextContainer = footer.querySelector('.flex.flex-col.sm\\:flex-row.sm\\:items-center');
+    expect(footerTextContainer).toBeInTheDocument();
+    const dot = footerTextContainer.querySelector('.hidden.sm\\:inline');
+    expect(dot).toBeInTheDocument();
+
+    // R4-F2: 底部導覽快速搜尋按鈕平齊，無 -mt-4 突出類別
+    const primaryNavBtn = container.querySelector('.mobile-nav-primary-btn');
+    expect(primaryNavBtn).toBeInTheDocument();
+    expect(primaryNavBtn.className).not.toContain('-mt-4');
+  });
 });

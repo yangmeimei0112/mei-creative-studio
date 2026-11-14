@@ -346,6 +346,7 @@ export async function signInWithGoogle(options = {}) {
 }
 
 /**
+ * @deprecated Legacy login channel. Only Google OAuth and Passkey/WebAuthn are supported per R2.
  * Apple OAuth authentication with graceful degradation fallback
  */
 export async function signInWithApple(options = {}) {
@@ -366,6 +367,7 @@ export async function signInWithApple(options = {}) {
 }
 
 /**
+ * @deprecated Legacy login channel. Only Google OAuth and Passkey/WebAuthn are supported per R2.
  * Email password authentication
  */
 export async function signInWithEmail(email, password) {
@@ -389,6 +391,7 @@ export async function signInWithEmail(email, password) {
 }
 
 /**
+ * @deprecated Legacy login channel. Only Google OAuth and Passkey/WebAuthn are supported per R2.
  * Email password sign up with optional user metadata
  */
 export async function signUpWithEmail(email, password, metadata = {}) {

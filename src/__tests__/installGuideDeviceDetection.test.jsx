@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'node:fs';
@@ -161,6 +161,44 @@ describe('咩創意工作室 - 安裝指南權限隔離與即時裝置/系統偵
       const detectionCard = screen.getByTestId('device-detection-card');
       expect(detectionCard.querySelector('.status-pulse-ring')).toBeNull();
       expect(document.querySelector('.status-pulse-ring')).toBeNull();
+    });
+
+    it('DETECT-05: 安裝指南頂部裝置偵測卡片中已完全移除「即時偵測」文字註解 (R7-F1)', () => {
+      render(
+        <SdkAndInstallModal
+          isOpen={true}
+          initialMode="install"
+          targetProject={null}
+          onClose={vi.fn()}
+          onTriggerNativeInstall={vi.fn()}
+          canNativeInstall={true}
+          isAdmin={false}
+        />
+      );
+
+      const detectionCard = screen.getByTestId('device-detection-card');
+      expect(within(detectionCard).queryByText('即時偵測')).not.toBeInTheDocument();
+      expect(screen.queryByText('即時偵測')).not.toBeInTheDocument();
+    });
+
+    it('DETECT-06: 安裝指南 iPhone/iPad 與 Android 手機與平板渲染 Apple 及 Android 專屬向量圖示 (R7-F2)', () => {
+      const { container } = render(
+        <SdkAndInstallModal
+          isOpen={true}
+          initialMode="install"
+          targetProject={null}
+          onClose={vi.fn()}
+          onTriggerNativeInstall={vi.fn()}
+          canNativeInstall={true}
+          isAdmin={false}
+        />
+      );
+
+      const appleIcon = container.querySelector('svg[data-lucide-name="apple"]');
+      expect(appleIcon).toBeInTheDocument();
+
+      const androidIcon = container.querySelector('svg[data-lucide-name="android"]');
+      expect(androidIcon).toBeInTheDocument();
     });
   });
 

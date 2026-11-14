@@ -191,10 +191,13 @@ describe('全站聯通雲端會員專區 (Supabase 認證)、頁尾管理員解�
     expect(footerLockBtn).toHaveTextContent('管理員已解鎖');
   });
 
-  it('2. 會員專區未登入介面：顯示 StudioLogo、多元登入按鈕 (Google/Apple/Passkey/Email)，並徹底清除歷史漫遊與雙引擎分頁', () => {
+  it('2. 會員專區未登入介面：顯示 StudioLogo、限定登入按鈕 (Google/Passkey)，徹底移除 Apple 與 Email，並清除歷史漫遊分頁', () => {
     render(<App />);
 
-    fireEvent.click(screen.getByTestId('header-member-portal-btn'));
+    const memberBtn = screen.getByTestId('header-member-portal-btn');
+    expect(memberBtn).toHaveAttribute('title', '開啟全站聯通會員專區（支援 Google 帳號與指紋/人臉快速登入）');
+
+    fireEvent.click(memberBtn);
     const modal = screen.getByTestId('member-portal-modal');
     expect(modal).toBeInTheDocument();
 
@@ -203,11 +206,11 @@ describe('全站聯通雲端會員專區 (Supabase 認證)、頁尾管理員解�
     expect(logo).toBeInTheDocument();
     expect(logo.getAttribute('data-logo-size')).toBe('md');
 
-    // 驗證多元登入按鈕
+    // 驗證限定登入按鈕 (Google OAuth 與 Passkey 存在，Apple 與 Email 徹底不存在)
     expect(within(modal).getByTestId('member-google-login-btn')).toBeInTheDocument();
-    expect(within(modal).getByTestId('member-apple-login-btn')).toBeInTheDocument();
     expect(within(modal).getByTestId('member-passkey-login-btn')).toBeInTheDocument();
-    expect(within(modal).getByTestId('member-email-submit-btn')).toBeInTheDocument();
+    expect(within(modal).queryByTestId('member-apple-login-btn')).toBeNull();
+    expect(within(modal).queryByTestId('member-email-submit-btn')).toBeNull();
 
     // 負向驗證：徹底排除歷史模擬代碼分頁與按鈕
     expect(within(modal).queryByText('跨裝置漫遊同步')).not.toBeInTheDocument();
@@ -236,19 +239,24 @@ describe('全站聯通雲端會員專區 (Supabase 認證)、頁尾管理員解�
     );
   });
 
-  it('4. Apple 登入預留介面：調用 signInWithOAuth 並在未配置憑證時具備友善降級防護', async () => {
+  it('4. Google OAuth 登入異常時：具備友善降級防護且捕捉錯誤呈現提示', async () => {
+    mockAuth.signInWithOAuth.mockResolvedValueOnce({
+      data: null,
+      error: new Error('Google OAuth 連線異常，請稍後再試')
+    });
+
     render(<App />);
 
     fireEvent.click(screen.getByTestId('header-member-portal-btn'));
-    const appleBtn = screen.getByTestId('member-apple-login-btn');
+    const googleBtn = screen.getByTestId('member-google-login-btn');
 
     await act(async () => {
-      fireEvent.click(appleBtn);
+      fireEvent.click(googleBtn);
     });
 
     expect(mockAuth.signInWithOAuth).toHaveBeenCalledWith(
       expect.objectContaining({
-        provider: 'apple',
+        provider: 'google',
         options: expect.objectContaining({
           redirectTo: expect.any(String)
         })
@@ -257,6 +265,9 @@ describe('全站聯通雲端會員專區 (Supabase 認證)、頁尾管理員解�
 
     // 驗證彈窗仍保持開啟，且捕捉錯誤呈現提示或容錯狀態
     expect(screen.getByTestId('member-portal-modal')).toBeInTheDocument();
+    const alertEl = screen.getByRole('alert');
+    expect(alertEl).toBeInTheDocument();
+    expect(alertEl).toHaveTextContent(/Google OAuth 連線異常/);
   });
 
   it('5. 已登入狀態會員數位通行證展示與全站登出流程', async () => {

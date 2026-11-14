@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Activity,
+  Apple,
   AppWindow,
   ArrowDown,
   ArrowLeft,
@@ -112,11 +113,54 @@ import {
 } from 'lucide-react';
 
 /**
+ * Android 官方識別向量圖示 (Zero Emoji, 100% SVG Vector Paths)
+ * 遵循 Lucide 向量幾何、strokeWidth 1.75 與 round-cap 規範
+ */
+export function AndroidIcon({
+  size = 20,
+  color = 'currentColor',
+  strokeWidth = 1.75,
+  className = '',
+  absoluteStrokeWidth,
+  ...props
+}) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      data-lucide-name="android"
+      {...props}
+    >
+      {/* 機器人頭部半圓穹頂 */}
+      <path d="M5 14a7 7 0 0 1 14 0Z" />
+      {/* 觸角天線 */}
+      <path d="M8.5 6L10 8.5" />
+      <path d="M15.5 6L14 8.5" />
+      {/* 雙眼 */}
+      <line x1="9" y1="11" x2="9.01" y2="11" />
+      <line x1="15" y1="11" x2="15.01" y2="11" />
+      {/* 身體輪廓線 */}
+      <path d="M6 14v4a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-4" />
+    </svg>
+  );
+}
+
+/**
  * 全站 Lucide 圖示註冊表 (Lucide Icon Registry)
  * 100% 遵循 https://lucide.dev/ 命名規範，嚴禁混用任何系統 Emoji
  */
 export const LUCIDE_ICON_MAP = {
   'activity': Activity,
+  'android': AndroidIcon,
+  'apple': Apple,
   'app-window': AppWindow,
   'arrow-down': ArrowDown,
   'arrow-left': ArrowLeft,
@@ -402,6 +446,7 @@ export function StudioLogo({
   className = '',
   badgeClassName = '',
   'data-testid': testId = 'studio-brand-logo',
+  frameless = false,
   ...rest
 }) {
   const sizeMap = {
@@ -445,10 +490,7 @@ export function StudioLogo({
       data-logo-size={normalizedSize}
       {...rest}
     >
-      <div
-        className={`squircle-icon-badge inline-flex items-center justify-center shrink-0 transition-transform duration-300 border border-sky-400/25 dark:border-sky-500/25 bg-sky-500/10 dark:bg-sky-400/10 ${current.box} ${badgeClassName}`.trim()}
-      >
-        {/* 純粹極簡線性：靈感雲朵 × 無限符號 (∞) */}
+      {frameless ? (
         <svg
           data-lucide-name="cloud"
           xmlns="http://www.w3.org/2000/svg"
@@ -460,14 +502,38 @@ export function StudioLogo({
           strokeWidth={1.75}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="text-sky-500 dark:text-sky-400 studio-infinity-cloud"
+          className="text-sky-500 dark:text-sky-400 studio-infinity-cloud drop-shadow-md"
         >
           {/* 靈感雲朵輪廓 (Lucide Standard Anchor) */}
           <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
           {/* 核心無限符號 (∞) 創意環 (Refined Orthogonal Lemniscate) */}
           <path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z" />
         </svg>
-      </div>
+      ) : (
+        <div
+          className={`squircle-icon-badge inline-flex items-center justify-center shrink-0 transition-transform duration-300 border border-sky-400/25 dark:border-sky-500/25 bg-sky-500/10 dark:bg-sky-400/10 ${current.box} ${badgeClassName}`.trim()}
+        >
+          {/* 純粹極簡線性：靈感雲朵 × 無限符號 (∞) */}
+          <svg
+            data-lucide-name="cloud"
+            xmlns="http://www.w3.org/2000/svg"
+            width={current.icon}
+            height={current.icon}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.75}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-sky-500 dark:text-sky-400 studio-infinity-cloud"
+          >
+            {/* 靈感雲朵輪廓 (Lucide Standard Anchor) */}
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+            {/* 核心無限符號 (∞) 創意環 (Refined Orthogonal Lemniscate) */}
+            <path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z" />
+          </svg>
+        </div>
+      )}
     </div>
   );
 }
