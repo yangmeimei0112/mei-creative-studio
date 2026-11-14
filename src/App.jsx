@@ -18,7 +18,8 @@ import { LucideIcon, SquircleIconBadge, StudioLogo } from './components/LucideIc
 import { STUDIO_CONFIG } from './data/defaultData';
 import {
   loadCurrentMember,
-  signOutMember
+  signOutMember,
+  initAuthListener
 } from './services/memberAuthService';
 import {
   createBackupPayload,
@@ -65,7 +66,6 @@ export default function App() {
     const syncSecurityState = () => {
       setRateLimitStatus(getSecurityRateLimitStatus());
       setSecurityMetrics(loadSecurityMetrics());
-      setCurrentMember(loadCurrentMember());
     };
     const timer = setInterval(syncSecurityState, 2000);
     window.addEventListener('storage', syncSecurityState);
@@ -132,6 +132,18 @@ export default function App() {
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [currentMember, setCurrentMember] = useState(() => loadCurrentMember());
   const [isMemberPortalOpen, setIsMemberPortalOpen] = useState(false);
+
+  // 訂閱全站聯通雲端會員狀態 (Supabase Auth 核心與跨分頁 BroadcastChannel SSO)
+  useEffect(() => {
+    const unsubscribe = initAuthListener((member) => {
+      setCurrentMember(member);
+    });
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
+  }, []);
   const [sdkModalState, setSdkModalState] = useState({
     open: false,
     mode: 'sdk',
@@ -905,7 +917,7 @@ export default function App() {
         verifyPin={verifyAdminPin}
       />
 
-      {/* 全站聯通會員專區視窗 (方案一 × 方案二 雙引擎融合) */}
+      {/* 全站聯通雲端會員專區視窗 (Supabase Auth 方案二) */}
       <MemberPortalModal
         isOpen={isMemberPortalOpen}
         onClose={() => setIsMemberPortalOpen(false)}

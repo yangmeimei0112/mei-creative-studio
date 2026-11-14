@@ -455,7 +455,14 @@
         const raw =
           window.localStorage &&
           window.localStorage.getItem('mei_universal_member_sso_v1');
-        return raw ? JSON.parse(raw) : null;
+        if (!raw || typeof raw !== 'string' || raw.startsWith('MEI-SSO-')) {
+          return null;
+        }
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object' && parsed.unionId) {
+          return parsed;
+        }
+        return null;
       } catch {
         return null;
       }
@@ -495,7 +502,11 @@
         const ssoChannel = new BroadcastChannel('mei_universal_sso_channel_v1');
         ssoChannel.onmessage = (evt) => {
           if (evt && evt.data) {
-            notifySsoListeners(evt.data.member || readSharedMember());
+            if ('member' in evt.data) {
+              notifySsoListeners(evt.data.member);
+            } else {
+              notifySsoListeners(readSharedMember());
+            }
           }
         };
       } catch {

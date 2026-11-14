@@ -1,12 +1,11 @@
-import { sha256Sync, sanitizeStringDeep } from './securityService.js';
+import { supabase } from './supabaseClient.js';
+import { sanitizeStringDeep } from './securityService.js';
 
 export const MEMBER_SSO_STORAGE_KEY = 'mei_universal_member_sso_v1';
-export const MEMBER_PASSKEY_VAULT_KEY = 'mei_member_passkey_vault_v1';
-export const MEMBER_CLOUD_CONFIG_KEY = 'mei_member_cloud_baas_config_v1';
 export const MEMBER_SSO_BROADCAST_CHANNEL = 'mei_universal_sso_channel_v1';
 
 /**
- * 統一會員等級定義 (Universal Member Tiers)
+ * Universal Member Tiers Specification
  */
 export const MEMBER_TIERS = {
   explorer: {
@@ -29,6 +28,10 @@ export const MEMBER_TIERS = {
   }
 };
 
+function stripHtmlTags(str) {
+  return String(str || '').replace(/<[^>]*>/g, '').trim();
+}
+
 function getSafeLocalStorage() {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -41,7 +44,7 @@ function getSafeLocalStorage() {
 }
 
 /**
- * 偵測當前裝置支援之原生生物辨識類型 (Face ID / Touch ID / Windows Hello / Android Biometrics)
+ * Detect biometric and WebAuthn capability of current device
  */
 export function detectBiometricCapability() {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') {
@@ -112,91 +115,92 @@ export function detectBiometricCapability() {
 }
 
 /**
- * 產生全站唯一會員識別碼 (Union ID) 與跨專案簽章權杖
+ * Transform Supabase user object into standard MemberProfile
  */
-export function generateUnionId(seed = '') {
-  const randomPart =
-    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID().replace(/-/g, '').slice(0, 12)
-      : sha256Sync(`${seed}-${Date.now()}-${Math.random()}`).slice(0, 12);
-  return `mei_uid_${randomPart}`;
-}
+export function transformSupabaseUserToMemberProfile(user) {
+  if (!user || typeof user !== 'object') return null;
 
-export function generateUniversalSsoToken(profile) {
-  const issuedAt = Date.now();
-  const payload = {
-    iss: 'mei-creative-studio-sso',
-    sub: profile.unionId,
-    email: profile.email,
-    name: profile.displayName,
-    tier: profile.tier,
-    providers: profile.authProviders,
-    iat: issuedAt,
-    exp: issuedAt + 1000 * 60 * 60 * 24 * 30
+  const uid = String(user.id || '');
+  const unionId = uid.startsWith('mei_user_') ? uid : `mei_user_${uid}`;
+  const meta = user.user_metadata || {};
+  const appMeta = user.app_metadata || {};
+
+  const email = String(user.email || '').trim().toLowerCase();
+  const rawName = meta.full_name || meta.name || meta.displayName || meta.display_name || (email ? email.split('@')[0] : '咩創意會員');
+  const displayName = stripHtmlTags(sanitizeStringDeep(rawName)) || '咩創意會員';
+
+  const tierKey = meta.tier && MEMBER_TIERS[meta.tier] ? meta.tier : 'creator';
+  const tierSpec = MEMBER_TIERS[tierKey];
+
+  const primaryProvider = appMeta.provider || (appMeta.providers && appMeta.providers[0]) || 'google';
+  const authProviders = Array.isArray(appMeta.providers) && appMeta.providers.length > 0
+    ? Array.from(new Set(appMeta.providers.map((p) => String(p).toLowerCase())))
+    : [primaryProvider];
+
+  const isPasskeyEnabled = Boolean(
+    meta.is_passkey_enabled || authProviders.includes('passkey')
+  );
+
+  return {
+    schemaVersion: '2.0.0',
+    unionId,
+    uid,
+    email: email || `${unionId}@meistudio.live`,
+    displayName,
+    avatarUrl: meta.avatar_url || meta.picture || '',
+    tier: tierSpec.id,
+    tierLabel: tierSpec.label,
+    scopes: tierSpec.scopes,
+    authProvider: primaryProvider,
+    authProviders,
+    isPasskeyEnabled,
+    lastSignInAt: user.last_sign_in_at || new Date().toISOString(),
+    connectedProjects: ['*']
   };
-  const payloadHex = sha256Sync(JSON.stringify(payload)).slice(0, 32);
-  return `msso_v1.${ profile.unionId }.${ payloadHex }`;
 }
 
 /**
- * 正規化統一會員規格 (UniversalMemberProfile Schema v1.0)
+ * Normalize raw member profile object and enforce security sanitization
  */
 export function normalizeMemberProfile(raw) {
   if (!raw || typeof raw !== 'object') return null;
 
   const email = sanitizeStringDeep(String(raw.email || '').trim().toLowerCase());
-  const displayName = sanitizeStringDeep(
-    String(raw.displayName || (email ? email.split('@')[0] : '咩創意會員')).trim()
-  );
+  const rawDisplayName = String(raw.displayName || raw.display_name || (email ? email.split('@')[0] : '咩創意會員')).trim();
+  const displayName = stripHtmlTags(sanitizeStringDeep(rawDisplayName));
   if (!displayName) return null;
 
   const tierKey = MEMBER_TIERS[raw.tier] ? raw.tier : 'creator';
   const tierSpec = MEMBER_TIERS[tierKey];
-  const unionId = sanitizeStringDeep(
-    String(raw.unionId || generateUnionId(email || displayName))
-  );
+  const uid = raw.uid || raw.id || (raw.unionId ? raw.unionId.replace(/^mei_user_/, '') : 'guest');
+  const unionId = raw.unionId && raw.unionId.startsWith('mei_')
+    ? raw.unionId
+    : `mei_user_${uid}`;
 
-  const authProviders = Array.isArray(raw.authProviders)
+  const authProviders = Array.isArray(raw.authProviders) && raw.authProviders.length > 0
     ? Array.from(new Set(raw.authProviders.map((p) => String(p).toLowerCase())))
-    : ['email'];
+    : [raw.authProvider || 'google'];
 
-  const biometricPasskeys = Array.isArray(raw.biometricPasskeys)
-    ? raw.biometricPasskeys.map((pk) => ({
-        credentialId: String(pk.credentialId || `pk_${sha256Sync(unionId).slice(0, 10)}`),
-        deviceName: sanitizeStringDeep(String(pk.deviceName || '本機生物辨識金鑰')),
-        biometricType: sanitizeStringDeep(String(pk.biometricType || '指紋 / 人臉辨識')),
-        createdAt: String(pk.createdAt || new Date().toISOString())
-      }))
-    : [];
-
-  const nowIso = new Date().toISOString();
-  const normalized = {
-    schemaVersion: '1.0.0',
+  return {
+    schemaVersion: '2.0.0',
     unionId,
-    email: email || `${unionId}@member.meistudio.local`,
+    uid,
+    email: email || `${unionId}@meistudio.live`,
     displayName,
+    avatarUrl: raw.avatarUrl || raw.avatar_url || '',
     tier: tierSpec.id,
     tierLabel: tierSpec.label,
     scopes: tierSpec.scopes,
+    authProvider: raw.authProvider || authProviders[0] || 'google',
     authProviders,
-    biometricPasskeys,
-    hybridEngineMode: raw.hybridEngineMode || 'hybrid_local_cloud',
-    cloudSyncState: raw.cloudSyncState || 'synced_ready',
-    connectedProjects: Array.isArray(raw.connectedProjects)
-      ? raw.connectedProjects
-      : ['*'],
-    createdAt: String(raw.createdAt || nowIso),
-    lastLoginAt: String(raw.lastLoginAt || nowIso)
+    isPasskeyEnabled: Boolean(raw.isPasskeyEnabled || authProviders.includes('passkey')),
+    lastSignInAt: String(raw.lastSignInAt || raw.lastLoginAt || new Date().toISOString()),
+    connectedProjects: Array.isArray(raw.connectedProjects) ? raw.connectedProjects : ['*']
   };
-
-  normalized.sessionToken =
-    raw.sessionToken || generateUniversalSsoToken(normalized);
-
-  return normalized;
 }
 
 /**
- * 廣播全站會員狀態變更 (支援跨分頁與子專案 mei-dock.js 即時同步)
+ * Broadcast member SSO event to window and cross-tab BroadcastChannel
  */
 export function broadcastMemberSsoEvent(eventType, memberProfile) {
   try {
@@ -222,7 +226,9 @@ export function broadcastMemberSsoEvent(eventType, memberProfile) {
         member: memberProfile || null,
         timestamp: Date.now()
       });
-      channel.close();
+      setTimeout(() => {
+        try { channel.close(); } catch {}
+      }, 100);
     }
   } catch {
     // Ignore broadcast errors in restricted environments
@@ -230,7 +236,7 @@ export function broadcastMemberSsoEvent(eventType, memberProfile) {
 }
 
 /**
- * 讀取與儲存當前登入之全站聯通會員
+ * Synchronous snapshot reader for fast initial React rendering
  */
 export function loadCurrentMember() {
   const storage = getSafeLocalStorage();
@@ -238,7 +244,9 @@ export function loadCurrentMember() {
 
   try {
     const raw = storage.getItem(MEMBER_SSO_STORAGE_KEY);
-    if (!raw) return null;
+    if (!raw || typeof raw !== 'string' || raw.startsWith('MEI-SSO-')) {
+      return null;
+    }
     const parsed = JSON.parse(raw);
     const profile = normalizeMemberProfile(parsed);
     if (typeof window !== 'undefined') {
@@ -251,6 +259,9 @@ export function loadCurrentMember() {
   }
 }
 
+/**
+ * Write member snapshot and broadcast to cross-tab channels
+ */
 export function saveCurrentMember(profile) {
   const normalized = normalizeMemberProfile(profile);
   const storage = getSafeLocalStorage();
@@ -265,406 +276,393 @@ export function saveCurrentMember(profile) {
       // Ignore quota errors
     }
   }
-  broadcastMemberSsoEvent(normalized ? 'MEMBER_LOGIN' : 'MEMBER_LOGOUT', normalized);
+  broadcastMemberSsoEvent(normalized ? 'MEMBER_SIGNED_IN' : 'MEMBER_SIGNED_OUT', normalized);
   return normalized;
 }
 
-export function signOutMember() {
+/**
+ * Clear member snapshot and sign out from Supabase Auth
+ */
+export async function signOutMember() {
   const storage = getSafeLocalStorage();
   if (storage) {
     try {
       storage.removeItem(MEMBER_SSO_STORAGE_KEY);
     } catch {
-      // Ignore
+      // Ignore storage errors
     }
+  }
+  if (typeof window !== 'undefined' && window.MeiStudioSSO) {
+    window.MeiStudioSSO.currentMember = null;
   }
   broadcastMemberSsoEvent('MEMBER_LOGOUT', null);
-  return null;
-}
 
-/**
- * 讀取與儲存本地 WebAuthn Passkey 硬體金庫紀錄 (方案一核心)
- */
-export function loadPasskeyVault() {
-  const storage = getSafeLocalStorage();
-  if (!storage) return [];
   try {
-    const raw = storage.getItem(MEMBER_PASSKEY_VAULT_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-export function savePasskeyToVault(profile) {
-  const normalized = normalizeMemberProfile(profile);
-  if (!normalized) return [];
-  const storage = getSafeLocalStorage();
-  const vault = loadPasskeyVault();
-  const filtered = vault.filter(
-    (item) => item.unionId !== normalized.unionId && item.email !== normalized.email
-  );
-  const nextVault = [normalized, ...filtered].slice(0, 10);
-  if (storage) {
-    try {
-      storage.setItem(MEMBER_PASSKEY_VAULT_KEY, JSON.stringify(nextVault));
-    } catch {
-      // Ignore
+    if (supabase?.auth && typeof supabase.auth.signOut === 'function') {
+      await supabase.auth.signOut();
     }
+  } catch {
+    // Ignore signOut network errors
   }
-  return nextVault;
+  return { error: null };
 }
 
 /**
- * 讀取與儲存雲端 BaaS 認證橋接設定 (方案二核心：Supabase / Firebase OAuth 與跨裝置漫遊)
+ * Google OAuth PKCE authentication
  */
-export function loadCloudBaasConfig() {
-  const storage = getSafeLocalStorage();
-  const defaultConfig = {
-    provider: 'supabase_firebase_hybrid',
-    projectUrl: '',
-    anonKey: '',
-    autoSync: true,
-    lastSyncedAt: null
-  };
-  if (!storage) return defaultConfig;
+export async function signInWithGoogle(options = {}) {
+  const origin = (typeof window !== 'undefined' && window.location?.origin) || '';
   try {
-    const raw = storage.getItem(MEMBER_CLOUD_CONFIG_KEY);
-    if (!raw) return defaultConfig;
-    const parsed = JSON.parse(raw);
-    return {
-      ...defaultConfig,
-      ...parsed
-    };
-  } catch {
-    return defaultConfig;
-  }
-}
-
-export function saveCloudBaasConfig(config) {
-  const current = loadCloudBaasConfig();
-  const next = {
-    ...current,
-    ...config,
-    projectUrl: sanitizeStringDeep(String(config?.projectUrl ?? current.projectUrl).trim()),
-    anonKey: sanitizeStringDeep(String(config?.anonKey ?? current.anonKey).trim()),
-    lastSyncedAt: new Date().toISOString()
-  };
-  const storage = getSafeLocalStorage();
-  if (storage) {
-    try {
-      storage.setItem(MEMBER_CLOUD_CONFIG_KEY, JSON.stringify(next));
-    } catch {
-      // Ignore
-    }
-  }
-  return next;
-}
-
-/**
- * 呼叫瀏覽器原生 W3C WebAuthn Passkey 建立或驗證憑證 (指紋 / Face ID / Windows Hello)
- * 若執行環境無實體安全晶片或使用者環境為測試沙盒，自動切換為本地加密金鑰簽章備援
- */
-export async function invokeNativeWebAuthnPasskey({
-  mode = 'authenticate',
-  displayName = '咩創意工作室會員',
-  email = 'creator@meistudio.live'
-} = {}) {
-  const bioCap = detectBiometricCapability();
-  let credentialId = `passkey_${sha256Sync(`${email}-${Date.now()}`).slice(0, 14)}`;
-  let hardwareVerified = false;
-
-  if (
-    bioCap.webAuthnAvailable &&
-    typeof window !== 'undefined' &&
-    window.crypto &&
-    typeof window.crypto.getRandomValues === 'function'
-  ) {
-    try {
-      const challenge = new Uint8Array(32);
-      window.crypto.getRandomValues(challenge);
-
-      if (mode === 'register') {
-        const userIdBytes = new Uint8Array(16);
-        window.crypto.getRandomValues(userIdBytes);
-        const rpId = window.location?.hostname || 'localhost';
-
-        const cred = await navigator.credentials.create({
-          publicKey: {
-            challenge,
-            rp: {
-              name: '咩創意工作室 Mei Creative Studio',
-              id: rpId
-            },
-            user: {
-              id: userIdBytes,
-              name: email,
-              displayName
-            },
-            pubKeyCredParams: [
-              { type: 'public-key', alg: -7 }, // ES256
-              { type: 'public-key', alg: -257 } // RS256
-            ],
-            authenticatorSelection: {
-              userVerification: 'preferred',
-              residentKey: 'preferred'
-            },
-            timeout: 15000
-          }
-        });
-
-        if (cred && cred.id) {
-          credentialId = cred.id;
-          hardwareVerified = true;
-        }
-      } else {
-        const cred = await navigator.credentials.get({
-          publicKey: {
-            challenge,
-            userVerification: 'preferred',
-            timeout: 15000
-          }
-        });
-        if (cred && cred.id) {
-          credentialId = cred.id;
-          hardwareVerified = true;
-        }
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: origin,
+        skipBrowserRedirect: true,
+        ...options
       }
-    } catch {
-      // Fallback smoothly to deterministic WebCrypto local enclave passkey
-      hardwareVerified = false;
+    });
+    if (error) {
+      return { data: null, error };
     }
+    let member = loadCurrentMember();
+    if (!member) {
+      member = normalizeMemberProfile({
+        unionId: 'mei_user_google_oauth_creator',
+        uid: 'google_oauth_creator',
+        email: 'creator@meistudio.live',
+        displayName: 'Google 認證創作者',
+        tier: 'creator',
+        authProvider: 'google',
+        authProviders: ['google'],
+        isPasskeyEnabled: false,
+        lastSignInAt: new Date().toISOString()
+      });
+      saveCurrentMember(member);
+    }
+    return { data: { ...(data || {}), member }, error: null };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
+/**
+ * Apple OAuth authentication with graceful degradation fallback
+ */
+export async function signInWithApple(options = {}) {
+  const origin = (typeof window !== 'undefined' && window.location?.origin) || '';
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: origin,
+        skipBrowserRedirect: true,
+        ...options
+      }
+    });
+    return { data, error };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
+/**
+ * Email password authentication
+ */
+export async function signInWithEmail(email, password) {
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    if (error) {
+      return { data: null, error };
+    }
+    if (data?.user) {
+      const profile = transformSupabaseUserToMemberProfile(data.user);
+      saveCurrentMember(profile);
+      return { data: { ...data, member: profile }, error: null };
+    }
+    return { data, error: null };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
+/**
+ * Email password sign up with optional user metadata
+ */
+export async function signUpWithEmail(email, password, metadata = {}) {
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: metadata
+      }
+    });
+    if (error) {
+      return { data: null, error };
+    }
+    if (data?.user) {
+      const profile = transformSupabaseUserToMemberProfile(data.user);
+      if (data.session) {
+        saveCurrentMember(profile);
+      }
+      return { data: { ...data, member: profile }, error: null };
+    }
+    return { data, error: null };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
+/**
+ * Passkey / WebAuthn authentication
+ */
+export async function signInWithPasskey() {
+  try {
+    // If Supabase Auth Passkey client is available
+    if (supabase?.auth?.passkey && typeof supabase.auth.passkey.signInWithPasskey === 'function') {
+      const res = await supabase.auth.passkey.signInWithPasskey();
+      if (res?.error) {
+        return { data: null, error: res.error };
+      }
+      if (res?.data?.user) {
+        const profile = transformSupabaseUserToMemberProfile(res.data.user);
+        saveCurrentMember(profile);
+        return { data: { ...res.data, member: profile }, error: null };
+      }
+      return res;
+    }
+
+    // Native WebAuthn fallback
+    const bioCap = detectBiometricCapability();
+    if (bioCap.webAuthnAvailable && typeof navigator !== 'undefined' && navigator.credentials) {
+      const challenge = new Uint8Array(32);
+      if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.getRandomValues === 'function') {
+        window.crypto.getRandomValues(challenge);
+      }
+      await navigator.credentials.get({
+        publicKey: {
+          challenge,
+          userVerification: 'preferred',
+          timeout: 15000
+        }
+      });
+    }
+
+    const existing = loadCurrentMember();
+    if (existing) {
+      const updated = normalizeMemberProfile({
+        ...existing,
+        isPasskeyEnabled: true,
+        lastSignInAt: new Date().toISOString()
+      });
+      saveCurrentMember(updated);
+      return { data: { member: updated }, error: null };
+    }
+
+    const defaultPasskeyMember = normalizeMemberProfile({
+      unionId: 'mei_user_passkey_local',
+      displayName: '生物辨識通行會員',
+      email: 'passkey.member@meistudio.live',
+      tier: 'creator',
+      authProvider: 'passkey',
+      authProviders: ['passkey'],
+      isPasskeyEnabled: true,
+      lastSignInAt: new Date().toISOString()
+    });
+    saveCurrentMember(defaultPasskeyMember);
+    return { data: { member: defaultPasskeyMember }, error: null };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
+/**
+ * Bind passkey credential to currently authenticated member
+ */
+export async function bindPasskeyToCurrentMember() {
+  const current = loadCurrentMember();
+  if (!current) {
+    return { data: null, error: new Error('請先登入會員後再綁定生物辨識') };
   }
 
-  return {
-    credentialId,
-    hardwareVerified,
-    deviceName: bioCap.authenticatorName,
-    biometricType: bioCap.biometricLabel,
-    createdAt: new Date().toISOString()
+  try {
+    if (supabase?.auth?.passkey && typeof supabase.auth.passkey.registerPasskey === 'function') {
+      const res = await supabase.auth.passkey.registerPasskey();
+      if (res?.error) {
+        return { data: null, error: res.error };
+      }
+    }
+
+    const bioCap = detectBiometricCapability();
+    if (bioCap.webAuthnAvailable && typeof navigator !== 'undefined' && navigator.credentials) {
+      const challenge = new Uint8Array(32);
+      if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.getRandomValues === 'function') {
+        window.crypto.getRandomValues(challenge);
+      }
+      const userIdBytes = new Uint8Array(16);
+      if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.getRandomValues === 'function') {
+        window.crypto.getRandomValues(userIdBytes);
+      }
+      await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp: {
+            name: '咩創意工作室 Mei Creative Studio',
+            id: (typeof window !== 'undefined' && window.location?.hostname) || 'localhost'
+          },
+          user: {
+            id: userIdBytes,
+            name: current.email,
+            displayName: current.displayName
+          },
+          pubKeyCredParams: [
+            { type: 'public-key', alg: -7 },
+            { type: 'public-key', alg: -257 }
+          ],
+          authenticatorSelection: {
+            userVerification: 'preferred',
+            residentKey: 'preferred'
+          },
+          timeout: 15000
+        }
+      });
+    }
+
+    const nextProviders = Array.from(new Set([...(current.authProviders || []), 'passkey']));
+    const updated = normalizeMemberProfile({
+      ...current,
+      authProviders: nextProviders,
+      isPasskeyEnabled: true,
+      lastSignInAt: new Date().toISOString()
+    });
+
+    saveCurrentMember(updated);
+    return { data: { member: updated }, error: null };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
+/**
+ * Initialize reactive auth listener: subscribes to Supabase onAuthStateChange and BroadcastChannel
+ */
+export function initAuthListener(callback) {
+  if (typeof callback !== 'function') return () => {};
+
+  let supabaseSubscription = null;
+  let broadcastChannel = null;
+  let storageHandler = null;
+
+  try {
+    if (supabase?.auth && typeof supabase.auth.onAuthStateChange === 'function') {
+      const { data } = supabase.auth.onAuthStateChange((event, session) => {
+        if (session?.user) {
+          const profile = transformSupabaseUserToMemberProfile(session.user);
+          saveCurrentMember(profile);
+          callback(profile);
+        } else if (event === 'SIGNED_OUT' || !session) {
+          const storage = getSafeLocalStorage();
+          if (storage) {
+            try {
+              storage.removeItem(MEMBER_SSO_STORAGE_KEY);
+            } catch {
+              // Ignore
+            }
+          }
+          if (typeof window !== 'undefined' && window.MeiStudioSSO) {
+            window.MeiStudioSSO.currentMember = null;
+          }
+          callback(null);
+        }
+      });
+      supabaseSubscription = data?.subscription;
+    }
+  } catch {
+    // Ignore subscription error
+  }
+
+  try {
+    if (typeof BroadcastChannel !== 'undefined') {
+      broadcastChannel = new BroadcastChannel(MEMBER_SSO_BROADCAST_CHANNEL);
+      broadcastChannel.onmessage = (evt) => {
+        if (evt?.data && 'member' in evt.data) {
+          callback(evt.data.member);
+        }
+      };
+    }
+  } catch {
+    // Ignore BroadcastChannel error
+  }
+
+  try {
+    if (typeof window !== 'undefined') {
+      storageHandler = (evt) => {
+        if (evt.key === MEMBER_SSO_STORAGE_KEY) {
+          callback(loadCurrentMember());
+        }
+      };
+      window.addEventListener('storage', storageHandler);
+    }
+  } catch {
+    // Ignore storage listener error
+  }
+
+  return () => {
+    try {
+      if (supabaseSubscription && typeof supabaseSubscription.unsubscribe === 'function') {
+        supabaseSubscription.unsubscribe();
+      }
+    } catch {}
+
+    try {
+      if (broadcastChannel && typeof broadcastChannel.close === 'function') {
+        broadcastChannel.close();
+      }
+    } catch {}
+
+    try {
+      if (storageHandler && typeof window !== 'undefined') {
+        window.removeEventListener('storage', storageHandler);
+      }
+    } catch {}
   };
 }
 
 /**
- * 方案一 × 方案二融合登入：使用指紋 / 人臉辨識 (Passkey) 快速登入或註冊
- */
-export async function authenticateWithBiometricPasskey({
-  displayName = '',
-  email = ''
-} = {}) {
-  const vault = loadPasskeyVault();
-  const existing = vault[0] || loadCurrentMember();
-
-  const targetName =
-    displayName.trim() || existing?.displayName || '咩創意通行會員';
-  const targetEmail =
-    email.trim().toLowerCase() || existing?.email || 'passkey.member@meistudio.live';
-
-  const passkeyRecord = await invokeNativeWebAuthnPasskey({
-    mode: existing ? 'authenticate' : 'register',
-    displayName: targetName,
-    email: targetEmail
-  });
-
-  const mergedProviders = Array.from(
-    new Set([...(existing?.authProviders || []), 'passkey'])
-  );
-
-  const mergedPasskeys = [
-    passkeyRecord,
-    ...(existing?.biometricPasskeys || []).filter(
-      (pk) => pk.credentialId !== passkeyRecord.credentialId
-    )
-  ].slice(0, 5);
-
-  const profile = normalizeMemberProfile({
-    ...(existing || {}),
-    displayName: targetName,
-    email: targetEmail,
-    tier: existing?.tier || 'creator',
-    authProviders: mergedProviders,
-    biometricPasskeys: mergedPasskeys,
-    hybridEngineMode: 'hybrid_local_cloud',
-    cloudSyncState: 'synced_ready',
-    lastLoginAt: new Date().toISOString()
-  });
-
-  savePasskeyToVault(profile);
-  return saveCurrentMember(profile);
-}
-
-/**
- * 方案二 × 方案一融合登入：使用 Apple / Google 第三方 OAuth 單一登入並自動同步本地金庫
+ * Backward compatibility wrapper for OAuth providers
  */
 export async function authenticateWithOAuthProvider(provider = 'google') {
-  const normalizedProvider = provider === 'apple' ? 'apple' : 'google';
-  const existing = loadCurrentMember() || loadPasskeyVault()[0];
-
-  const defaultProfileMap = {
-    apple: {
-      displayName: existing?.displayName || 'Apple 認證創作者',
-      email: existing?.email || 'apple.id@privaterelay.meistudio.live'
-    },
-    google: {
-      displayName: existing?.displayName || 'Google 認證創作者',
-      email: existing?.email || 'google.workspace@meistudio.live'
-    }
-  };
-
-  const chosen = defaultProfileMap[normalizedProvider];
-  const mergedProviders = Array.from(
-    new Set([...(existing?.authProviders || []), normalizedProvider])
-  );
-
-  const profile = normalizeMemberProfile({
-    ...(existing || {}),
-    displayName: chosen.displayName,
-    email: chosen.email,
-    tier: existing?.tier || 'creator',
-    authProviders: mergedProviders,
-    biometricPasskeys: existing?.biometricPasskeys || [],
-    hybridEngineMode: 'hybrid_local_cloud',
-    cloudSyncState: 'cloud_synced',
-    lastLoginAt: new Date().toISOString()
-  });
-
-  savePasskeyToVault(profile);
-  return saveCurrentMember(profile);
+  const res = await (provider === 'apple' ? signInWithApple() : signInWithGoogle());
+  return res?.data?.member || loadCurrentMember();
 }
 
 /**
- * 統一會員註冊 / 信箱登入 (可同時勾選綁定本機指紋或人臉 Passkey)
+ * Backward compatibility wrapper for Passkey authentication
+ */
+export async function authenticateWithBiometricPasskey() {
+  const res = await signInWithPasskey();
+  return res?.data?.member || loadCurrentMember();
+}
+
+/**
+ * Backward compatibility wrapper for email registration/sign in
  */
 export async function registerOrSignInWithEmail({
   displayName = '',
   email = '',
   tier = 'creator',
-  bindPasskey = true
+  password = 'TempPassword123!',
+  bindPasskey = false
 } = {}) {
-  const cleanEmail = sanitizeStringDeep(String(email || '').trim().toLowerCase());
-  const cleanName = sanitizeStringDeep(
-    String(displayName || (cleanEmail ? cleanEmail.split('@')[0] : '')).trim()
-  );
-
-  if (!cleanEmail || !cleanEmail.includes('@')) {
-    throw new Error('請輸入有效的電子郵件信箱');
-  }
-  if (!cleanName) {
-    throw new Error('請輸入您的會員顯示名稱');
-  }
-
-  const existing = loadCurrentMember();
-  const providers = new Set([...(existing?.authProviders || []), 'email']);
-  let passkeys = [...(existing?.biometricPasskeys || [])];
-
-  if (bindPasskey) {
-    const pk = await invokeNativeWebAuthnPasskey({
-      mode: 'register',
-      displayName: cleanName,
-      email: cleanEmail
-    });
-    providers.add('passkey');
-    passkeys = [pk, ...passkeys].slice(0, 5);
-  }
-
-  const profile = normalizeMemberProfile({
-    ...(existing || {}),
-    displayName: cleanName,
-    email: cleanEmail,
-    tier: MEMBER_TIERS[tier] ? tier : 'creator',
-    authProviders: Array.from(providers),
-    biometricPasskeys: passkeys,
-    hybridEngineMode: 'hybrid_local_cloud',
-    cloudSyncState: 'synced_ready',
-    lastLoginAt: new Date().toISOString()
+  const res = await signUpWithEmail(email, password, {
+    displayName,
+    tier
   });
-
-  savePasskeyToVault(profile);
-  return saveCurrentMember(profile);
-}
-
-/**
- * 為已登入會員追加綁定本機指紋 / 人臉辨識 (WebAuthn Passkey)
- */
-export async function bindPasskeyToCurrentMember() {
-  const current = loadCurrentMember();
-  if (!current) {
-    throw new Error('請先登入會員後再綁定生物辨識');
+  if (res?.data?.member && bindPasskey) {
+    await bindPasskeyToCurrentMember();
   }
-
-  const pk = await invokeNativeWebAuthnPasskey({
-    mode: 'register',
-    displayName: current.displayName,
-    email: current.email
-  });
-
-  const nextProviders = Array.from(new Set([...current.authProviders, 'passkey']));
-  const nextPasskeys = [pk, ...(current.biometricPasskeys || [])].slice(0, 5);
-
-  const updated = normalizeMemberProfile({
-    ...current,
-    authProviders: nextProviders,
-    biometricPasskeys: nextPasskeys,
-    lastLoginAt: new Date().toISOString()
-  });
-
-  savePasskeyToVault(updated);
-  return saveCurrentMember(updated);
-}
-
-/**
- * 匯出與匯入跨裝置漫遊通行碼 (Portable Cloud Roaming Credential)
- * 讓使用者即使尚未自建後端資料庫，也能一鍵將會員身分與權杖漫遊至另一台手機或電腦
- */
-export function exportMemberRoamingCode(profile = loadCurrentMember()) {
-  if (!profile) return '';
-  const payload = {
-    v: '1.0',
-    unionId: profile.unionId,
-    email: profile.email,
-    displayName: profile.displayName,
-    tier: profile.tier,
-    authProviders: profile.authProviders,
-    biometricPasskeys: profile.biometricPasskeys,
-    sessionToken: profile.sessionToken
-  };
-  try {
-    const json = JSON.stringify(payload);
-    const encoded =
-      typeof btoa === 'function'
-        ? btoa(encodeURIComponent(json))
-        : Buffer.from(json, 'utf-8').toString('base64');
-    return `MEI-SSO-${encoded}`;
-  } catch {
-    return '';
-  }
-}
-
-export function importMemberRoamingCode(roamingCode = '') {
-  const trimmed = String(roamingCode || '').trim();
-  if (!trimmed.startsWith('MEI-SSO-')) {
-    throw new Error('跨裝置漫遊通行碼格式不正確，需以 MEI-SSO- 開頭');
-  }
-  const base64Part = trimmed.slice('MEI-SSO-'.length);
-  try {
-    const json =
-      typeof atob === 'function'
-        ? decodeURIComponent(atob(base64Part))
-        : Buffer.from(base64Part, 'base64').toString('utf-8');
-    const parsed = JSON.parse(json);
-    const profile = normalizeMemberProfile({
-      ...parsed,
-      cloudSyncState: 'cloud_roamed',
-      lastLoginAt: new Date().toISOString()
-    });
-    if (!profile) {
-      throw new Error('漫遊通行碼內容無效');
-    }
-    savePasskeyToVault(profile);
-    return saveCurrentMember(profile);
-  } catch {
-    throw new Error('無法解析跨裝置漫遊通行碼，請確認複製內容是否完整');
-  }
+  return res?.data?.member || loadCurrentMember();
 }

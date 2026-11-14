@@ -13,6 +13,8 @@ import AdminChatWidget from '../components/AdminChatWidget';
 import { AdminUnlockModal } from '../components/AdminProjectModal';
 import QRCodeModal from '../components/QRCodeModal';
 import CommandPalette from '../components/CommandPalette';
+import MemberPortalModal from '../components/MemberPortalModal';
+import App from '../App';
 
 const EMOJI_REGEX = /[\u{1F300}-\u{1FAFF}\u{2300}-\u{23FF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/u;
 const LOGO_SIZES = ['2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl'];
@@ -425,6 +427,53 @@ describe('Mei Creative Studio - Brand Logo (StudioLogo) E2E Specification & Endp
         const text = fs.readFileSync(path.resolve(rel), 'utf-8');
         expect(EMOJI_REGEX.test(text)).toBe(false);
       }
+    });
+
+    it('T4-L4-09: MemberPortalModal (全站聯通會員專區) 端點在開啟時正確渲染 StudioLogo (size=md)', () => {
+      const { container } = render(
+        <MemberPortalModal
+          isOpen={true}
+          onClose={() => {}}
+          currentMember={null}
+          onMemberChange={() => {}}
+          onNotify={() => {}}
+        />
+      );
+      const modal = container.querySelector('[data-testid="member-portal-modal"]');
+      expect(modal).toBeInTheDocument();
+      expect(modal).toHaveAttribute('role', 'dialog');
+      expect(modal).toHaveAttribute('aria-label', '全站聯通會員專區');
+
+      const modalLogo = modal.querySelector('[data-testid="studio-brand-logo"]');
+      expect(modalLogo).toBeInTheDocument();
+      expect(modalLogo).toHaveAttribute('data-logo-size', 'md');
+
+      const badge = modalLogo.querySelector('.squircle-icon-badge');
+      expect(badge).toBeInTheDocument();
+      expect(badge).toHaveClass('w-[44px]', 'h-[44px]');
+
+      const sparkle = modalLogo.querySelector('.studio-logo-sparkle');
+      expect(sparkle).toBeInTheDocument();
+      expect(sparkle).toHaveAttribute('aria-hidden', 'true');
+    });
+
+    it('T4-L4-10: App footer (主頁面頁尾) 端點正確渲染 StudioLogo (size=sm)', () => {
+      window.sessionStorage.setItem('mei_studio_intro_seen_v1', 'true');
+      const { container } = render(<App />);
+      const footer = container.querySelector('footer');
+      expect(footer).toBeInTheDocument();
+
+      const footerLogo = footer.querySelector('[data-testid="studio-brand-logo"]');
+      expect(footerLogo).toBeInTheDocument();
+      expect(footerLogo).toHaveAttribute('data-logo-size', 'sm');
+
+      const badge = footerLogo.querySelector('.squircle-icon-badge');
+      expect(badge).toBeInTheDocument();
+      expect(badge).toHaveClass('w-9', 'h-9');
+
+      const sparkle = footerLogo.querySelector('.studio-logo-sparkle');
+      expect(sparkle).toBeInTheDocument();
+      expect(sparkle).toHaveAttribute('aria-hidden', 'true');
     });
   });
 });

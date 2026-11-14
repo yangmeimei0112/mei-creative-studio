@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>咩創意工作室 · Brand Logo 向量預覽與快篩大廳</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <style>
+    :root {
+      --bg-primary: #0F172A;
+      --bg-secondary: #1E293B;
+      --bg-card: rgba(30, 41, 59, 0.7);
+      --border-color: rgba(56, 189, 248, 0.25);
+      --border-hover: rgba(56, 189, 248, 0.6);
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+      --accent: #38BDF8;
+      --accent-deep: #0284C7;
+      --canvas-bg: #0B1120;
+      --grid-line: rgba(56, 189, 248, 0.1);
+    }
+
+    html.light {
+      --bg-primary: #F8FAFC;
+      --bg-secondary: #FFFFFF;
+      --bg-card: rgba(255, 255, 255, 0.85);
+      --border-color: rgba(56, 189, 248, 0.3);
+      --border-hover: rgba(2, 132, 199, 0.6);
+      --text-primary: #0F172A;
+      --text-secondary: #64748B;
+      --accent: #0284C7;
+      --accent-deep: #0369A1;
+      --canvas-bg: #F0F9FF;
+      --grid-line: rgba(2, 132, 199, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+      padding: 24px;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* 頂部標頭與操作列 */
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 32px;
+    }
+
+    .brand-title-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-title-group h1 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-title-group p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .controls-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #FFFFFF;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-deep);
+      color: #FFFFFF;
+    }
+
+    /* 規範標章列 */
+    .compliance-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .compliance-badge {
+      padding: 6px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid var(--border-color);
+      color: var(--accent);
+    }
+
+    /* 互動放大鏡檢驗區 */
+    .inspector-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 40px;
+      backdrop-filter: blur(12px);
+    }
+
+    .inspector-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .inspector-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .inspector-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .zoom-btn {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .zoom-btn.active {
+      background: var(--accent);
+      color: #FFFFFF;
+      border-color: var(--accent);
+    }
+
+    .inspector-stage-wrapper {
+      position: relative;
+      min-height: 280px;
+      background: var(--canvas-bg);
+      border-radius: 12px;
+      border: 1px dashed var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .inspector-stage-wrapper.show-grid {
+      background-image: 
+        linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+
+    .inspector-target {
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-origin: center center;
+    }
+
+    /* 7 階尺寸卡片格線 */
+    .tiers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    .tier-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      backdrop-filter: blur(12px);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .tier-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+
+    .tier-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .tier-badge-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: var(--accent);
+      color: #FFFFFF;
+      letter-spacing: 0.05em;
+    }
+
+    .tier-meta {
+      text-align: right;
+    }
+
+    .tier-name {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .tier-dimensions {
+      display: block;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .tier-canvas-preview {
+      min-height: 160px;
+      background: var(--canvas-bg);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--grid-line);
+      position: relative;
+    }
+
+    .preview-stage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tier-details {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+      padding: 10px 12px;
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+    }
+
+    html.light .tier-details {
+      background: rgba(240, 249, 255, 0.6);
+    }
+
+    .spec-row {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .spec-label {
+      color: var(--text-secondary);
+    }
+
+    .spec-value {
+      font-weight: 600;
+      font-family: monospace;
+    }
+
+    .spec-value.highlight {
+      color: var(--accent);
+    }
+
+    .tier-usage {
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .usage-tag {
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-secondary);
+      letter-spacing: 0.05em;
+    }
+
+    .usage-text {
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    .tier-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: auto;
+    }
+
+    .action-btn {
+      flex: 1;
+      text-align: center;
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand-title-group">
+        <div>
+          <h1>咩創意工作室 · Brand Logo 向量預覽與快篩大廳</h1>
+          <p>Candidate F (靈感雲朵 × 雙極正交無限環 + Sparkles 徽章) · 全站 7 階響應式向量規格</p>
+        </div>
+      </div>
+      <div class="controls-group">
+        <button class="btn" id="themeToggleBtn" onclick="toggleTheme()">
+          切換深淺色主題
+        </button>
+        <button class="btn" id="gridToggleBtn" onclick="toggleGrid()">
+          切換對齊輔助格線
+        </button>
+        <a class="btn btn-primary" href="./previews/logo-md.svg" download="logo-md.svg">
+          下載預設標準商標 (MD)
+        </a>
+      </div>
+    </header>
+
+    <div class="compliance-bar">
+      <span class="compliance-badge">幾何規範: Candidate F (Refined Orthogonal Lemniscate)</span>
+      <span class="compliance-badge">線寬標準: Lucide 1.75 (stroke-width="1.75")</span>
+      <span class="compliance-badge">雲朵輪廓錨點: M17.5 19H9</span>
+      <span class="compliance-badge">無限環幾何: M12 14.5c-1.2-1.2</span>
+      <span class="compliance-badge">靈感火花幾何: M9.937 15.5</span>
+      <span class="compliance-badge">全站政策: 100% 向量化 · 嚴格 0 Emoji</span>
+    </div>
+
+    <!-- 互動向量放大鏡檢驗區 -->
+    <section class="inspector-section">
+      <div class="inspector-header">
+        <div class="inspector-title">高精準向量對齊放大鏡 (Vector Alignment Inspector)</div>
+        <div class="inspector-controls">
+          <span style="font-size: 12px; color: var(--text-secondary);">縮放倍率:</span>
+          <button class="zoom-btn active" onclick="setZoom(1, this)">1x</button>
+          <button class="zoom-btn" onclick="setZoom(2, this)">2x</button>
+          <button class="zoom-btn" onclick="setZoom(4, this)">4x</button>
+          <button class="zoom-btn" onclick="setZoom(8, this)">8x</button>
+          <button class="zoom-btn" onclick="setZoom(16, this)">16x</button>
+        </div>
+      </div>
+      <div class="inspector-stage-wrapper show-grid" id="inspectorStageWrapper">
+        <div class="inspector-target" id="inspectorTarget">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color: #0284C7;">
+  <defs>
+    <linearGradient id="cloudGrad_md" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+    <linearGradient id="bgGlow_md" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F0F9FF" />
+      <stop offset="100%" stop-color="#E0F2FE" />
+    </linearGradient>
+    <linearGradient id="sparkleGrad_md" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+  </defs>
+  <!-- 咩創意工作室統一品牌標誌底座 (Squircle Base) -->
+  <rect x="0.5" y="0.5" width="43" height="43" rx="14" fill="url(#bgGlow_md)" stroke="#38BDF8" stroke-width="1.75" stroke-opacity="0.45" />
+  <!-- 正統 Lucide Cloud x Infinity 純粹極簡線性向量 (Candidate F) -->
+  <g transform="translate(11, 11) scale(0.9167)" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+    <path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z" />
+  </g>
+  <!-- 右上角微型靈感火花圓形徽章 -->
+  <circle cx="35.5" cy="8.5" r="8.5" fill="url(#sparkleGrad_md)" stroke="#FFFFFF" stroke-width="1.75" />
+  <!-- 正統 Lucide Sparkles 向量 -->
+  <g transform="translate(30, 3) scale(0.4583)" stroke="#FFFFFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+    <path d="M20 3v4" />
+    <path d="M22 5h-4" />
+    <path d="M4 17v2" />
+    <path d="M5 18H3" />
+  </g>
+</svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 階尺寸矩陣展示 -->
+    <section>
+      <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 20px;">
+        7 階完整響應式尺寸展演矩陣 (7-Tier Responsive Sizing Matrix)
+      </h2>
+      <div class="tiers-grid">
+        
+      <div class="tier-card" data-tier="2xs">
+        <div class="tier-header">
+          <div class="tier-badge-pill">2XS</div>
+          <div class="tier-meta">
+            <span class="tier-name">超微縮型</span>
+            <span class="tier-dimensions">20x20 px</span>
+          </div>
+        </div>
+        <div class="tier-canvas-preview">
+          <div class="preview-stage">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color: #0284C7;">
+  <defs>
+    <linearGradient id="cloudGrad_2xs" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+    <linearGradient id="bgGlow_2xs" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F0F9FF" />
+      <stop offset="100%" stop-color="#E0F2FE" />
+    </linearGradient>
+    <linearGradient id="sparkleGrad_2xs" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+  </defs>
+  <!-- 咩創意工作室統一品牌標誌底座 (Squircle Base) -->
+  <rect x="0.5" y="0.5" width="19" height="19" rx="6" fill="url(#bgGlow_2xs)" stroke="#38BDF8" stroke-width="1.75" stroke-opacity="0.45" />
+  <!-- 正統 Lucide Cloud x Infinity 純粹極簡線性向量 (Candidate F) -->
+  <g transform="translate(4.5, 4.5) scale(0.4583)" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+    <path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z" />
+  </g>
+  <!-- 右上角微型靈感火花圓形徽章 -->
+  <circle cx="16" cy="4" r="4" fill="url(#sparkleGrad_2xs)" stroke="#FFFFFF" stroke-width="1.75" />
+  <!-- 正統 Lucide Sparkles 向量 -->
+  <g transform="translate(13, 1) scale(0.25)" stroke="#FFFFFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+    <path d="M20 3v4" />
+    <path d="M22 5h-4" />
+    <path d="M4 17v2" />
+    <path d="M5 18H3" />
+  </g>
+</svg>
+          </div>
+        </div>
+        <div class="tier-details">
+          <div class="spec-row">
+            <span class="spec-label">底座圓角 (rx):</span>
+            <span class="spec-value">6px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">核心圖示 (icon):</span>
+            <span class="spec-value">11px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">星芒徽章 (sparkle):</span>
+            <span class="spec-value">6px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">線寬規範:</span>
+            <span class="spec-value highlight">Lucide 1.75</span>
+          </div>
+        </div>
+        <div class="tier-usage">
+          <span class="usage-tag">應用端點</span>
+          <p class="usage-text">超微縮行內標籤、極致微型狀態指示點</p>
+        </div>
+        <div class="tier-actions">
+          <a class="action-btn" href="./previews/logo-2xs.svg" target="_blank" download="logo-2xs.svg">
+            下載獨立 SVG
+          </a>
+          <button class="action-btn inspect-btn" onclick="inspectTier('2xs')">
+            置入放大鏡檢驗
+          </button>
+        </div>
+      </div>
+    
+
+      <div class="tier-card" data-tier="xs">
+        <div class="tier-header">
+          <div class="tier-badge-pill">XS</div>
+          <div class="tier-meta">
+            <span class="tier-name">緊湊型</span>
+            <span class="tier-dimensions">24x24 px</span>
+          </div>
+        </div>
+        <div class="tier-canvas-preview">
+          <div class="preview-stage">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color: #0284C7;">
+  <defs>
+    <linearGradient id="cloudGrad_xs" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+    <linearGradient id="bgGlow_xs" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F0F9FF" />
+      <stop offset="100%" stop-color="#E0F2FE" />
+    </linearGradient>
+    <linearGradient id="sparkleGrad_xs" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+  </defs>
+  <!-- 咩創意工作室統一品牌標誌底座 (Squircle Base) -->
+  <rect x="0.5" y="0.5" width="23" height="23" rx="8" fill="url(#bgGlow_xs)" stroke="#38BDF8" stroke-width="1.75" stroke-opacity="0.45" />
+  <!-- 正統 Lucide Cloud x Infinity 純粹極簡線性向量 (Candidate F) -->
+  <g transform="translate(5.5, 5.5) scale(0.5417)" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+    <path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z" />
+  </g>
+  <!-- 右上角微型靈感火花圓形徽章 -->
+  <circle cx="19" cy="5" r="5" fill="url(#sparkleGrad_xs)" stroke="#FFFFFF" stroke-width="1.75" />
+  <!-- 正統 Lucide Sparkles 向量 -->
+  <g transform="translate(15, 1) scale(0.3333)" stroke="#FFFFFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+    <path d="M20 3v4" />
+    <path d="M22 5h-4" />
+    <path d="M4 17v2" />
+    <path d="M5 18H3" />
+  </g>
+</svg>
+          </div>
+        </div>
+        <div class="tier-details">
+          <div class="spec-row">
+            <span class="spec-label">底座圓角 (rx):</span>
+            <span class="spec-value">8px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">核心圖示 (icon):</span>
+            <span class="spec-value">13px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">星芒徽章 (sparkle):</span>
+            <span class="spec-value">8px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">線寬規範:</span>
+            <span class="spec-value highlight">Lucide 1.75</span>
+          </div>
+        </div>
+        <div class="tier-usage">
+          <span class="usage-tag">應用端點</span>
+          <p class="usage-text">MobileBottomNav 行動底欄、AdminChatWidget 客服頂欄、CommandPalette 頁尾</p>
+        </div>
+        <div class="tier-actions">
+          <a class="action-btn" href="./previews/logo-xs.svg" target="_blank" download="logo-xs.svg">
+            下載獨立 SVG
+          </a>
+          <button class="action-btn inspect-btn" onclick="inspectTier('xs')">
+            置入放大鏡檢驗
+          </button>
+        </div>
+      </div>
+    
+
+      <div class="tier-card" data-tier="sm">
+        <div class="tier-header">
+          <div class="tier-badge-pill">SM</div>
+          <div class="tier-meta">
+            <span class="tier-name">小型</span>
+            <span class="tier-dimensions">36x36 px</span>
+          </div>
+        </div>
+        <div class="tier-canvas-preview">
+          <div class="preview-stage">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color: #0284C7;">
+  <defs>
+    <linearGradient id="cloudGrad_sm" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+    <linearGradient id="bgGlow_sm" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F0F9FF" />
+      <stop offset="100%" stop-color="#E0F2FE" />
+    </linearGradient>
+    <linearGradient id="sparkleGrad_sm" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+  </defs>
+  <!-- 咩創意工作室統一品牌標誌底座 (Squircle Base) -->
+  <rect x="0.5" y="0.5" width="35" height="35" rx="12" fill="url(#bgGlow_sm)" stroke="#38BDF8" stroke-width="1.75" stroke-opacity="0.45" />
+  <!-- 正統 Lucide Cloud x Infinity 純粹極簡線性向量 (Candidate F) -->
+  <g transform="translate(9, 9) scale(0.75)" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+    <path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z" />
+  </g>
+  <!-- 右上角微型靈感火花圓形徽章 -->
+  <circle cx="29" cy="7" r="7" fill="url(#sparkleGrad_sm)" stroke="#FFFFFF" stroke-width="1.75" />
+  <!-- 正統 Lucide Sparkles 向量 -->
+  <g transform="translate(24.5, 2.5) scale(0.375)" stroke="#FFFFFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+    <path d="M20 3v4" />
+    <path d="M22 5h-4" />
+    <path d="M4 17v2" />
+    <path d="M5 18H3" />
+  </g>
+</svg>
+          </div>
+        </div>
+        <div class="tier-details">
+          <div class="spec-row">
+            <span class="spec-label">底座圓角 (rx):</span>
+            <span class="spec-value">12px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">核心圖示 (icon):</span>
+            <span class="spec-value">18px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">星芒徽章 (sparkle):</span>
+            <span class="spec-value">9px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">線寬規範:</span>
+            <span class="spec-value highlight">Lucide 1.75</span>
+          </div>
+        </div>
+        <div class="tier-usage">
+          <span class="usage-tag">應用端點</span>
+          <p class="usage-text">CommandPalette 全域命令列、App Footer 頁尾品牌列</p>
+        </div>
+        <div class="tier-actions">
+          <a class="action-btn" href="./previews/logo-sm.svg" target="_blank" download="logo-sm.svg">
+            下載獨立 SVG
+          </a>
+          <button class="action-btn inspect-btn" onclick="inspectTier('sm')">
+            置入放大鏡檢驗
+          </button>
+        </div>
+      </div>
+    
+
+      <div class="tier-card" data-tier="md">
+        <div class="tier-header">
+          <div class="tier-badge-pill">MD</div>
+          <div class="tier-meta">
+            <span class="tier-name">標準型 (預設)</span>
+            <span class="tier-dimensions">44x44 px</span>
+          </div>
+        </div>
+        <div class="tier-canvas-preview">
+          <div class="preview-stage">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color: #0284C7;">
+  <defs>
+    <linearGradient id="cloudGrad_md" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+    <linearGradient id="bgGlow_md" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F0F9FF" />
+      <stop offset="100%" stop-color="#E0F2FE" />
+    </linearGradient>
+    <linearGradient id="sparkleGrad_md" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+  </defs>
+  <!-- 咩創意工作室統一品牌標誌底座 (Squircle Base) -->
+  <rect x="0.5" y="0.5" width="43" height="43" rx="14" fill="url(#bgGlow_md)" stroke="#38BDF8" stroke-width="1.75" stroke-opacity="0.45" />
+  <!-- 正統 Lucide Cloud x Infinity 純粹極簡線性向量 (Candidate F) -->
+  <g transform="translate(11, 11) scale(0.9167)" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+    <path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z" />
+  </g>
+  <!-- 右上角微型靈感火花圓形徽章 -->
+  <circle cx="35.5" cy="8.5" r="8.5" fill="url(#sparkleGrad_md)" stroke="#FFFFFF" stroke-width="1.75" />
+  <!-- 正統 Lucide Sparkles 向量 -->
+  <g transform="translate(30, 3) scale(0.4583)" stroke="#FFFFFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+    <path d="M20 3v4" />
+    <path d="M22 5h-4" />
+    <path d="M4 17v2" />
+    <path d="M5 18H3" />
+  </g>
+</svg>
+          </div>
+        </div>
+        <div class="tier-details">
+          <div class="spec-row">
+            <span class="spec-label">底座圓角 (rx):</span>
+            <span class="spec-value">14px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">核心圖示 (icon):</span>
+            <span class="spec-value">22px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">星芒徽章 (sparkle):</span>
+            <span class="spec-value">11px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">線寬規範:</span>
+            <span class="spec-value highlight">Lucide 1.75</span>
+          </div>
+        </div>
+        <div class="tier-usage">
+          <span class="usage-tag">應用端點</span>
+          <p class="usage-text">HeaderHero 主導覽列、MemberPortalModal 會員專區、QRCodeModal、AdminUnlockModal</p>
+        </div>
+        <div class="tier-actions">
+          <a class="action-btn" href="./previews/logo-md.svg" target="_blank" download="logo-md.svg">
+            下載獨立 SVG
+          </a>
+          <button class="action-btn inspect-btn" onclick="inspectTier('md')">
+            置入放大鏡檢驗
+          </button>
+        </div>
+      </div>
+    
+
+      <div class="tier-card" data-tier="lg">
+        <div class="tier-header">
+          <div class="tier-badge-pill">LG</div>
+          <div class="tier-meta">
+            <span class="tier-name">增強型</span>
+            <span class="tier-dimensions">56x56 px</span>
+          </div>
+        </div>
+        <div class="tier-canvas-preview">
+          <div class="preview-stage">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color: #0284C7;">
+  <defs>
+    <linearGradient id="cloudGrad_lg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+    <linearGradient id="bgGlow_lg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F0F9FF" />
+      <stop offset="100%" stop-color="#E0F2FE" />
+    </linearGradient>
+    <linearGradient id="sparkleGrad_lg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+  </defs>
+  <!-- 咩創意工作室統一品牌標誌底座 (Squircle Base) -->
+  <rect x="0.5" y="0.5" width="55" height="55" rx="18" fill="url(#bgGlow_lg)" stroke="#38BDF8" stroke-width="1.75" stroke-opacity="0.45" />
+  <!-- 正統 Lucide Cloud x Infinity 純粹極簡線性向量 (Candidate F) -->
+  <g transform="translate(14, 14) scale(1.1667)" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+    <path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z" />
+  </g>
+  <!-- 右上角微型靈感火花圓形徽章 -->
+  <circle cx="45.5" cy="10.5" r="10.5" fill="url(#sparkleGrad_lg)" stroke="#FFFFFF" stroke-width="1.75" />
+  <!-- 正統 Lucide Sparkles 向量 -->
+  <g transform="translate(39, 4) scale(0.5417)" stroke="#FFFFFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+    <path d="M20 3v4" />
+    <path d="M22 5h-4" />
+    <path d="M4 17v2" />
+    <path d="M5 18H3" />
+  </g>
+</svg>
+          </div>
+        </div>
+        <div class="tier-details">
+          <div class="spec-row">
+            <span class="spec-label">底座圓角 (rx):</span>
+            <span class="spec-value">18px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">核心圖示 (icon):</span>
+            <span class="spec-value">28px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">星芒徽章 (sparkle):</span>
+            <span class="spec-value">13px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">線寬規範:</span>
+            <span class="spec-value highlight">Lucide 1.75</span>
+          </div>
+        </div>
+        <div class="tier-usage">
+          <span class="usage-tag">應用端點</span>
+          <p class="usage-text">專案焦點看板、特性卡片徽章</p>
+        </div>
+        <div class="tier-actions">
+          <a class="action-btn" href="./previews/logo-lg.svg" target="_blank" download="logo-lg.svg">
+            下載獨立 SVG
+          </a>
+          <button class="action-btn inspect-btn" onclick="inspectTier('lg')">
+            置入放大鏡檢驗
+          </button>
+        </div>
+      </div>
+    
+
+      <div class="tier-card" data-tier="xl">
+        <div class="tier-header">
+          <div class="tier-badge-pill">XL</div>
+          <div class="tier-meta">
+            <span class="tier-name">主視覺型</span>
+            <span class="tier-dimensions">96x96 px</span>
+          </div>
+        </div>
+        <div class="tier-canvas-preview">
+          <div class="preview-stage">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color: #0284C7;">
+  <defs>
+    <linearGradient id="cloudGrad_xl" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+    <linearGradient id="bgGlow_xl" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F0F9FF" />
+      <stop offset="100%" stop-color="#E0F2FE" />
+    </linearGradient>
+    <linearGradient id="sparkleGrad_xl" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+  </defs>
+  <!-- 咩創意工作室統一品牌標誌底座 (Squircle Base) -->
+  <rect x="0.5" y="0.5" width="95" height="95" rx="30" fill="url(#bgGlow_xl)" stroke="#38BDF8" stroke-width="1.75" stroke-opacity="0.45" />
+  <!-- 正統 Lucide Cloud x Infinity 純粹極簡線性向量 (Candidate F) -->
+  <g transform="translate(25, 25) scale(1.9167)" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+    <path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z" />
+  </g>
+  <!-- 右上角微型靈感火花圓形徽章 -->
+  <circle cx="81" cy="15" r="15" fill="url(#sparkleGrad_xl)" stroke="#FFFFFF" stroke-width="1.75" />
+  <!-- 正統 Lucide Sparkles 向量 -->
+  <g transform="translate(72, 6) scale(0.75)" stroke="#FFFFFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+    <path d="M20 3v4" />
+    <path d="M22 5h-4" />
+    <path d="M4 17v2" />
+    <path d="M5 18H3" />
+  </g>
+</svg>
+          </div>
+        </div>
+        <div class="tier-details">
+          <div class="spec-row">
+            <span class="spec-label">底座圓角 (rx):</span>
+            <span class="spec-value">30px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">核心圖示 (icon):</span>
+            <span class="spec-value">46px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">星芒徽章 (sparkle):</span>
+            <span class="spec-value">18px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">線寬規範:</span>
+            <span class="spec-value highlight">Lucide 1.75</span>
+          </div>
+        </div>
+        <div class="tier-usage">
+          <span class="usage-tag">應用端點</span>
+          <p class="usage-text">PortalEntrance 載入大廳開場核心</p>
+        </div>
+        <div class="tier-actions">
+          <a class="action-btn" href="./previews/logo-xl.svg" target="_blank" download="logo-xl.svg">
+            下載獨立 SVG
+          </a>
+          <button class="action-btn inspect-btn" onclick="inspectTier('xl')">
+            置入放大鏡檢驗
+          </button>
+        </div>
+      </div>
+    
+
+      <div class="tier-card" data-tier="2xl">
+        <div class="tier-header">
+          <div class="tier-badge-pill">2XL</div>
+          <div class="tier-meta">
+            <span class="tier-name">旗艦展示型</span>
+            <span class="tier-dimensions">128x128 px</span>
+          </div>
+        </div>
+        <div class="tier-canvas-preview">
+          <div class="preview-stage">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color: #0284C7;">
+  <defs>
+    <linearGradient id="cloudGrad_2xl" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+    <linearGradient id="bgGlow_2xl" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F0F9FF" />
+      <stop offset="100%" stop-color="#E0F2FE" />
+    </linearGradient>
+    <linearGradient id="sparkleGrad_2xl" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+  </defs>
+  <!-- 咩創意工作室統一品牌標誌底座 (Squircle Base) -->
+  <rect x="0.5" y="0.5" width="127" height="127" rx="36" fill="url(#bgGlow_2xl)" stroke="#38BDF8" stroke-width="1.75" stroke-opacity="0.45" />
+  <!-- 正統 Lucide Cloud x Infinity 純粹極簡線性向量 (Candidate F) -->
+  <g transform="translate(35, 35) scale(2.4167)" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+    <path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z" />
+  </g>
+  <!-- 右上角微型靈感火花圓形徽章 -->
+  <circle cx="109" cy="19" r="19" fill="url(#sparkleGrad_2xl)" stroke="#FFFFFF" stroke-width="1.75" />
+  <!-- 正統 Lucide Sparkles 向量 -->
+  <g transform="translate(98, 8) scale(0.9167)" stroke="#FFFFFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+    <path d="M20 3v4" />
+    <path d="M22 5h-4" />
+    <path d="M4 17v2" />
+    <path d="M5 18H3" />
+  </g>
+</svg>
+          </div>
+        </div>
+        <div class="tier-details">
+          <div class="spec-row">
+            <span class="spec-label">底座圓角 (rx):</span>
+            <span class="spec-value">36px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">核心圖示 (icon):</span>
+            <span class="spec-value">58px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">星芒徽章 (sparkle):</span>
+            <span class="spec-value">22px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">線寬規範:</span>
+            <span class="spec-value highlight">Lucide 1.75</span>
+          </div>
+        </div>
+        <div class="tier-usage">
+          <span class="usage-tag">應用端點</span>
+          <p class="usage-text">大螢幕劇院展演、品牌發布會、高解析度旗艦展示</p>
+        </div>
+        <div class="tier-actions">
+          <a class="action-btn" href="./previews/logo-2xl.svg" target="_blank" download="logo-2xl.svg">
+            下載獨立 SVG
+          </a>
+          <button class="action-btn inspect-btn" onclick="inspectTier('2xl')">
+            置入放大鏡檢驗
+          </button>
+        </div>
+      </div>
+    
+      </div>
+    </section>
+
+    <footer>
+      咩創意工作室 Mei Creative Studio · 創意無限∞咩有極限 · 版權所有 © 2026
+    </footer>
+  </div>
+
+  <script>
+    // 主題切換
+    function toggleTheme() {
+      const html = document.documentElement;
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        html.classList.add('light');
+      } else {
+        html.classList.remove('light');
+        html.classList.add('dark');
+      }
+    }
+
+    // 格線切換
+    function toggleGrid() {
+      const wrapper = document.getElementById('inspectorStageWrapper');
+      wrapper.classList.toggle('show-grid');
+    }
+
+    // 放大鏡縮放
+    function setZoom(factor, btn) {
+      document.querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      const target = document.getElementById('inspectorTarget');
+      target.style.transform = 'scale(' + factor + ')';
+    }
+
+    // 置入指定尺寸於放大鏡
+    function inspectTier(tier) {
+      const card = document.querySelector('[data-tier="' + tier + '"]');
+      if (!card) return;
+      const svg = card.querySelector('.preview-stage svg');
+      if (!svg) return;
+      const inspectorTarget = document.getElementById('inspectorTarget');
+      inspectorTarget.innerHTML = svg.outerHTML;
+      window.scrollTo({ top: 120, behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>
