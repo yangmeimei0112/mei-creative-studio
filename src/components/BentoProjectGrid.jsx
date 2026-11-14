@@ -82,14 +82,14 @@ export default function BentoProjectGrid({
     <section
       aria-label="專案列表"
       key={`grid-wave-${entranceWaveKey}`}
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 theme-stagger-bento"
+      className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-3 sm:py-4 narrow-compact-px theme-stagger-bento"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-5 foldable-inner-grid">
         {sortedProjects.map((project, index) => {
           const isSpotlight = Boolean(project.featured) && index < 2;
           const colSpanClass = isSpotlight
-            ? 'md:col-span-2 lg:col-span-6'
-            : 'md:col-span-1 lg:col-span-4';
+            ? 'sm:col-span-2 lg:col-span-6'
+            : 'sm:col-span-1 lg:col-span-4';
           const statusMeta =
             PROJECT_STATUS_META[project.status] || PROJECT_STATUS_META.online;
           const categoryMeta = getCategoryMeta(project.category);
@@ -100,7 +100,7 @@ export default function BentoProjectGrid({
               key={project.id}
               data-testid={`project-card-${project.id}`}
               style={{ animationDelay: staggerDelay }}
-              className={`${colSpanClass} bento-glass-card bento-card-interactive bento-wave-reveal group relative p-6 flex flex-col justify-between overflow-hidden`}
+              className={`${colSpanClass} bento-glass-card bento-card-interactive bento-wave-reveal group relative p-5 sm:p-6 flex flex-col justify-between overflow-hidden`}
             >
               {/* 置頂精選卡片背景微光裝飾 */}
               {isSpotlight && (
@@ -206,8 +206,8 @@ export default function BentoProjectGrid({
               <div className="mt-1">
                 {/* 管理員專屬操作列（獨立整齊排列，不擠壓主要操作按鈕） */}
                 {isAdmin && (
-                  <div className="mb-3 px-3 py-2 rounded-2xl bg-sky-50/80 dark:bg-slate-900/70 border border-sky-400/20 flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                  <div className="mb-3 px-2.5 sm:px-3 py-2 rounded-2xl bg-sky-50/80 dark:bg-slate-900/70 border border-sky-400/20 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1 shrink-0">
                       <LucideIcon name="sliders-horizontal" size={12} className="text-sky-500" />
                       <span>管理操作</span>
                     </span>
@@ -304,12 +304,12 @@ export default function BentoProjectGrid({
                 )}
 
                 {/* 卡片底部操作列：快速預覽 + QR-code + 立即前往 */}
-                <div className="pt-3.5 border-t border-sky-400/20 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
+                <div className="pt-3.5 border-t border-sky-400/20 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                     <button
                       type="button"
                       onClick={() => onPreviewProject(project)}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full btn-sky-secondary text-xs font-semibold"
+                      className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-full btn-sky-secondary text-xs font-semibold whitespace-nowrap"
                     >
                       <LucideIcon name="panel-right-open" size={15} />
                       <span>快速預覽</span>
@@ -320,7 +320,7 @@ export default function BentoProjectGrid({
                       onClick={() => onOpenQrModal(project)}
                       title="展開專案 QR-code"
                       aria-label={`${project.title} QR-code`}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full btn-sky-secondary text-xs font-semibold"
+                      className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-full btn-sky-secondary text-xs font-semibold whitespace-nowrap"
                     >
                       <LucideIcon name="qr-code" size={15} />
                       <span className="hidden sm:inline">QR-code</span>
@@ -330,7 +330,7 @@ export default function BentoProjectGrid({
                   <button
                     type="button"
                     onClick={() => onDirectLaunchProject(project)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full btn-sky-primary text-xs font-semibold"
+                    className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full btn-sky-primary text-xs font-semibold whitespace-nowrap"
                   >
                     <span>立即前往</span>
                     <LucideIcon

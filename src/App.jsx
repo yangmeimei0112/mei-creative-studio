@@ -656,7 +656,7 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-screen sky-ambient-bg flex flex-col pb-24 md:pb-10 ${
+      className={`min-h-screen min-h-dvh-screen sky-ambient-bg flex flex-col pb-24 md:pb-10 ${
         isGatheringIntro ? 'intro-gathering' : ''
       }`}
     >
@@ -812,10 +812,10 @@ export default function App() {
       </main>
 
       {/* 頁尾品牌資訊 */}
-      <footer className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-28 md:pb-8 theme-stagger-footer">
-        <div className="bento-glass-card px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
-          <div className="flex items-center gap-3">
-            <StudioLogo size="sm" />
+      <footer className="max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 pt-6 pb-28 md:pb-8 narrow-compact-px theme-stagger-footer">
+        <div className="bento-glass-card px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-3 text-center sm:text-left">
+            <StudioLogo size="sm" className="shrink-0" />
             <div>
               <span className="font-bold text-slate-800 dark:text-slate-100">
                 {STUDIO_CONFIG.studioNameZh} {STUDIO_CONFIG.studioNameEn}
@@ -825,8 +825,8 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 text-slate-400 dark:text-slate-500">
-            <span>
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2.5 sm:gap-3 text-slate-400 dark:text-slate-500">
+            <span className="text-center">
               © {new Date().getFullYear()} {STUDIO_CONFIG.studioNameZh}. All rights reserved.
             </span>
             {isAdmin ? (
@@ -971,19 +971,21 @@ export default function App() {
           data-testid="studio-toast"
           onClick={dismissToast}
           title="點擊關閉通知"
-          className={`fixed bottom-20 md:bottom-6 right-4 z-50 inline-flex items-center gap-2.5 px-4 py-3 rounded-full bg-sky-100/95 dark:bg-sky-950/95 text-slate-900 dark:text-white border border-sky-300/80 dark:border-sky-400/40 shadow-xl shadow-sky-950/10 dark:shadow-sky-950/50 backdrop-blur-xl text-xs font-semibold select-none cursor-pointer ${
+          className={`fixed ${
+            isAdmin ? 'bottom-36 sm:bottom-24 md:bottom-24 max-md:bottom-36' : 'bottom-20 md:bottom-6'
+          } left-4 right-4 sm:left-auto sm:right-6 mx-auto w-fit max-w-[calc(100vw-2rem)] sm:max-w-md z-50 inline-flex items-center gap-2.5 px-4 py-3 rounded-full bg-sky-100/95 dark:bg-sky-950/95 text-slate-900 dark:text-white border border-sky-300/80 dark:border-sky-400/40 shadow-xl shadow-sky-950/10 dark:shadow-sky-950/50 backdrop-blur-xl text-xs font-semibold select-none cursor-pointer ${
             toast.isExiting ? 'toast-slide-exit' : 'toast-spring-enter'
           }`}
         >
           <span
             key={`toast-icon-${toast.icon}-${toast.timestamp}`}
-            className="toast-content-fade flex items-center justify-center text-sky-600 dark:text-sky-400"
+            className="toast-content-fade flex items-center justify-center text-sky-600 dark:text-sky-400 shrink-0"
           >
             <LucideIcon name={toast.icon} size={16} />
           </span>
           <span
             key={`toast-msg-${toast.message}-${toast.timestamp}`}
-            className="toast-content-fade tracking-wide"
+            className="toast-content-fade tracking-wide break-words"
           >
             {toast.message}
           </span>

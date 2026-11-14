@@ -808,6 +808,7 @@ html.theme-transitioning .theme-stagger-footer button {
 /* ==========================================================================
    品牌標題與海報標語左右極致等寬對齊容器 (Brand Title & Tagline Full-Width Justify)
    - 標題與標語採自適應貼合容器，使標語文字均勻展開、首尾字切齊標題兩端
+   - 針對窄屏/摺疊機外螢幕 (≤374px) 自動降級為自然間距，避免換行後標語字距過度拉寬
    ========================================================================== */
 .studio-title-align-box {
   width: -moz-fit-content;
@@ -817,11 +818,129 @@ html.theme-transitioning .theme-stagger-footer button {
   flex-direction: column;
 }
 
+.studio-hero-title-zh {
+  font-size: clamp(1.375rem, 4.8vw, 2.25rem);
+}
+
+.studio-hero-title-en {
+  font-size: clamp(1.15rem, 4.3vw, 2.25rem);
+}
+
 .studio-tagline-justify {
   width: 100%;
   text-align: justify;
   text-align-last: justify;
   text-justify: inter-ideograph;
+}
+
+@media (max-width: 374px) {
+  .studio-tagline-justify {
+    text-align: left;
+    text-align-last: auto;
+    letter-spacing: 0.04em;
+  }
+}
+
+/* ==========================================================================
+   多比例裝置與動態視窗高度適配系統 (Multi-Aspect-Ratio & Dynamic Viewport dvh System)
+   - 涵蓋：
+     1. 窄屏 / 摺疊機外螢幕 (21:9 ~ 22:9, 320px - 360px)
+     2. 主流直向手機 (16:9 ~ 20:9, 375px - 430px)
+     3. 摺疊機展開內螢幕 / 小平板 (4:3 ~ 1:1, 600px - 840px)
+     4. 手機橫向短高模式 (Landscape, orientation: landscape and max-height: 500px)
+   ========================================================================== */
+.min-h-dvh-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.h-dvh-90 {
+  height: 90vh;
+  height: 90dvh;
+}
+
+.max-h-dvh-92 {
+  max-height: 92vh;
+  max-height: 92dvh;
+}
+
+.max-h-dvh-90 {
+  max-height: 90vh;
+  max-height: 90dvh;
+}
+
+.max-h-dvh-85 {
+  max-height: 85vh;
+  max-height: 85dvh;
+}
+
+.max-h-dvh-60 {
+  max-height: 60vh;
+  max-height: 60dvh;
+}
+
+/* 1. 窄屏與摺疊機外螢幕 (320px ~ 360px, 21:9 超長比例) 精緻緊湊防溢位 */
+@media (max-width: 360px) {
+  .bento-glass-card {
+    border-radius: 20px;
+  }
+  .narrow-compact-px {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+}
+
+/* 2. 摺疊機內螢幕與近正方形比例 (4:3 ~ 1:1, 600px ~ 840px) 雙欄空間最佳化 */
+@media (min-width: 600px) and (max-width: 860px) and (min-aspect-ratio: 3/4) and (max-aspect-ratio: 4/3) {
+  .foldable-inner-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* 3. 手機橫向短高模式 (Mobile Landscape: max-height <= 500px) 自動收斂頂底導覽列與彈窗高度 */
+@media (orientation: landscape) and (max-height: 500px) {
+  .mobile-header-bar {
+    height: 3.125rem !important;
+  }
+
+  .mobile-bottom-nav {
+    padding-bottom: max(0.35rem, env(safe-area-inset-bottom, 0.35rem)) !important;
+  }
+
+  .mobile-bottom-nav-grid {
+    padding-top: 0.25rem !important;
+  }
+
+  .mobile-nav-primary-btn {
+    margin-top: -0.5rem !important;
+  }
+
+  .mobile-nav-primary-badge {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    border-radius: 0.75rem !important;
+  }
+
+  .portal-center-core {
+    max-height: 90dvh;
+    overflow-y: auto;
+    padding: 1rem 1.5rem !important;
+  }
+
+  .portal-aurora-ring-container {
+    width: 5.25rem !important;
+    height: 5.25rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .landscape-compact-modal {
+    max-height: 94dvh !important;
+    padding: 1rem 1.25rem !important;
+  }
+
+  .landscape-compact-sandbox {
+    min-height: 220px !important;
+  }
 }
 
 /* 細緻捲軸樣式 */

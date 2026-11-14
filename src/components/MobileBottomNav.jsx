@@ -62,9 +62,10 @@ export default function MobileBottomNav({
   return (
     <nav
       aria-label="手機端底部快速導覽列"
-      className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/88 dark:bg-slate-950/88 backdrop-blur-2xl border-t border-sky-400/25 pb-safe-bottom theme-stagger-footer"
+      data-testid="mobile-bottom-nav"
+      className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/88 dark:bg-slate-950/88 backdrop-blur-2xl border-t border-sky-400/25 pb-safe-bottom mobile-bottom-nav theme-stagger-footer"
     >
-      <div className="grid grid-cols-5 items-center px-2 pt-2">
+      <div className="grid grid-cols-5 items-center px-1.5 sm:px-2 pt-2 mobile-bottom-nav-grid">
         {navItems.map((item) => {
           const isActive = activeSection === item.id;
           if (item.isPrimary) {
@@ -73,12 +74,12 @@ export default function MobileBottomNav({
                 key={item.id}
                 type="button"
                 onClick={item.onClick}
-                className="flex flex-col items-center justify-center -mt-4"
+                className="flex flex-col items-center justify-center -mt-4 mobile-nav-primary-btn"
               >
-                <span className="w-11 h-11 rounded-2xl btn-sky-primary flex items-center justify-center shadow-lg">
+                <span className="w-11 h-11 rounded-2xl btn-sky-primary flex items-center justify-center shadow-lg mobile-nav-primary-badge">
                   <LucideIcon name={item.icon} size={20} />
                 </span>
-                <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400 mt-1">
+                <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400 mt-1 truncate max-w-full">
                   {item.label}
                 </span>
               </button>

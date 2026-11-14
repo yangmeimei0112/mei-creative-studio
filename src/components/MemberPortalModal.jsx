@@ -151,7 +151,7 @@ export default function MemberPortalModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-md animate-fadeIn"
       role="dialog"
       aria-modal="true"
       aria-label="全站聯通會員專區"
@@ -160,7 +160,7 @@ export default function MemberPortalModal({
         if (e.target === e.currentTarget) onClose?.();
       }}
     >
-      <div className="bento-glass-card w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 sm:p-7 border border-sky-400/35 shadow-2xl relative">
+      <div className="bento-glass-card w-full max-w-xl max-h-[90vh] max-h-dvh-90 landscape-compact-modal overflow-y-auto p-4 sm:p-7 border border-sky-400/35 shadow-2xl relative">
         {/* 頂部標題列 */}
         <div className="flex items-start justify-between gap-4 pb-5 border-b border-sky-400/20">
           <div className="flex items-center gap-3.5">

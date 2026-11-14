@@ -49,7 +49,7 @@ export default function QRCodeModal({ project, onClose }) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md bento-glass-card bg-white/95 dark:bg-slate-900/95 p-6 sm:p-7 relative overflow-hidden"
+        className="w-full max-w-md max-h-[90vh] max-h-dvh-90 landscape-compact-modal overflow-y-auto bento-glass-card bg-white/95 dark:bg-slate-900/95 p-5 sm:p-7 relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 頂部標題 */}

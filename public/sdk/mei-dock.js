@@ -277,6 +277,35 @@
       background: #E0F2FE;
       color: #0284C7;
     }
+    @media (max-width: 480px) {
+      #mei-studio-dock-root.pos-bottom-right {
+        right: 12px;
+        bottom: max(14px, env(safe-area-inset-bottom, 14px));
+      }
+      #mei-studio-dock-root.pos-bottom-left {
+        left: 12px;
+        bottom: max(14px, env(safe-area-inset-bottom, 14px));
+      }
+      .mei-dock-capsule {
+        max-width: calc(100vw - 24px);
+        padding: 6px 10px 6px 8px;
+        gap: 6px;
+      }
+      #mei-dock-project-label {
+        max-width: 82px !important;
+      }
+      .mei-dock-popover {
+        width: min(260px, calc(100vw - 24px));
+        max-height: 60dvh;
+        overflow-y: auto;
+      }
+    }
+    @media (orientation: landscape) and (max-height: 500px) {
+      .mei-dock-popover {
+        max-height: 70dvh;
+        overflow-y: auto;
+      }
+    }
   `;
 
   function mount() {

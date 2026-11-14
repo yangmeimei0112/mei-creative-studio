@@ -62,24 +62,24 @@ export default function HeaderHero({
     <header className="w-full theme-stagger-hero">
       {/* 頂部毛玻璃導覽列 */}
       <div className="sticky top-0 z-30 border-b border-sky-400/20 bg-white/82 dark:bg-slate-950/82 backdrop-blur-xl transition-colors pt-[env(safe-area-inset-top,0px)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 mobile-header-bar narrow-compact-px flex items-center justify-between gap-2 sm:gap-3">
           {/* 品牌主標誌 */}
           <a
             href="#top"
-            className="flex items-center gap-3 group focus:outline-none shrink-0"
+            className="flex items-center gap-2 sm:gap-3 group focus:outline-none min-w-0 shrink"
             aria-label="咩創意工作室首頁"
           >
-            <StudioLogo size="md" className="group-hover:scale-105 transition-transform" />
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-base sm:text-lg tracking-tight text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors font-heading-lg">
+            <StudioLogo size="md" className="group-hover:scale-105 transition-transform shrink-0 max-[360px]:scale-90 max-[360px]:-mr-1" />
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                <span className="font-bold text-[15px] sm:text-lg tracking-tight text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors font-heading-lg whitespace-nowrap">
                   {STUDIO_CONFIG.studioNameZh}
                 </span>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sky-500/12 text-sky-700 dark:text-sky-300 border border-sky-400/30">
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sky-500/12 text-sky-700 dark:text-sky-300 border border-sky-400/30 shrink-0">
                   {STUDIO_CONFIG.version}
                 </span>
               </div>
-              <span className="text-[11px] font-medium tracking-wider uppercase text-sky-700/80 dark:text-sky-300/80 font-en">
+              <span className="hidden min-[380px]:block text-[10px] sm:text-[11px] font-medium tracking-wider uppercase text-sky-700/80 dark:text-sky-300/80 font-en truncate">
                 {STUDIO_CONFIG.studioNameEn}
               </span>
             </div>
@@ -103,7 +103,7 @@ export default function HeaderHero({
           </button>
 
           {/* 右側工具控制組 */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* 即時狀態巡檢按鈕 */}
             <button
               type="button"
@@ -127,7 +127,8 @@ export default function HeaderHero({
               type="button"
               onClick={onOpenInstallGuide}
               title="安裝至桌面或主畫面指南"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full btn-sky-secondary text-xs font-medium"
+              aria-label="安裝應用指南"
+              className="inline-flex items-center justify-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-full btn-sky-secondary text-xs font-medium"
             >
               <LucideIcon name="smartphone" size={15} />
               <span className="hidden lg:inline">安裝應用</span>
@@ -154,19 +155,20 @@ export default function HeaderHero({
                   ? `全站聯通會員：${currentMember.displayName}（${currentMember.tierLabel}）`
                   : '開啟全站聯通會員專區（支援 Apple / Google / 指紋與人臉快速登入）'
               }
-              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all max-w-[124px] sm:max-w-[200px] ${
                 currentMember ? 'btn-sky-primary' : 'btn-sky-secondary'
               }`}
             >
               <LucideIcon
                 name={currentMember ? 'user-check' : 'fingerprint'}
                 size={15}
+                className="shrink-0"
               />
-              <span>
+              <span className="truncate">
                 {currentMember ? currentMember.displayName : '會員專區'}
               </span>
               {currentMember && (
-                <span className="hidden xl:inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/20 text-[10px] font-bold">
+                <span className="hidden xl:inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/20 text-[10px] font-bold shrink-0">
                   會員專區
                 </span>
               )}
@@ -174,11 +176,13 @@ export default function HeaderHero({
 
             {/* 管理員專屬快速操作 (管理員解鎖按鈕已移至頁面底部頁尾) */}
             {isAdmin && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 sm:gap-1.5">
                 <button
                   type="button"
                   onClick={onOpenAddProject}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full btn-sky-primary text-xs font-semibold"
+                  title="新增連接專案"
+                  aria-label="新增專案"
+                  className="inline-flex items-center justify-center gap-1.5 p-2 sm:px-3.5 sm:py-1.5 rounded-full btn-sky-primary text-xs font-semibold"
                 >
                   <LucideIcon name="plus" size={16} />
                   <span className="hidden sm:inline">新增專案</span>
@@ -202,11 +206,11 @@ export default function HeaderHero({
       <div
         id="top"
         key={`hero-wave-${entranceWaveKey}`}
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4"
+        className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4 narrow-compact-px"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
           {/* 左側主視覺大卡片 (訪客視角 12 cols，管理員視角 8 cols) */}
-          <div className={`${isAdmin ? 'lg:col-span-8' : 'lg:col-span-12'} bento-glass-card bento-wave-reveal p-6 sm:p-8 relative overflow-hidden flex flex-col justify-between`}>
+          <div className={`${isAdmin ? 'lg:col-span-8' : 'lg:col-span-12'} bento-glass-card bento-wave-reveal p-5 sm:p-8 relative overflow-hidden flex flex-col justify-between`}>
             {/* 背景柔光裝飾 */}
             <div
               aria-hidden="true"
@@ -218,15 +222,15 @@ export default function HeaderHero({
             />
 
             <div className="relative z-10">
-              <div className="studio-title-align-box mb-4">
-                <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight mb-2.5 font-heading-lg flex flex-wrap sm:flex-nowrap items-baseline gap-x-3">
+              <div className="studio-title-align-box mb-2 sm:mb-4">
+                <h1 className="studio-hero-title-zh font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight mb-2 sm:mb-2.5 font-heading-lg flex flex-wrap sm:flex-nowrap items-baseline gap-x-2.5 sm:gap-x-3 gap-y-1">
                   <span className="shrink-0">{STUDIO_CONFIG.studioNameZh}</span>
-                  <span className="text-2xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 dark:from-sky-300 dark:to-sky-500 bg-clip-text text-transparent font-en whitespace-nowrap">
+                  <span className="studio-hero-title-en font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 dark:from-sky-300 dark:to-sky-500 bg-clip-text text-transparent font-en whitespace-nowrap">
                     {STUDIO_CONFIG.studioNameEn}
                   </span>
                 </h1>
 
-                <p className="studio-tagline-justify text-base sm:text-lg md:text-xl font-bold text-slate-600 dark:text-slate-300 tracking-[0.04em] sm:tracking-normal leading-relaxed">
+                <p className="studio-tagline-justify text-sm min-[380px]:text-base sm:text-lg md:text-xl font-bold text-slate-600 dark:text-slate-300 tracking-[0.04em] sm:tracking-normal leading-relaxed">
                   {STUDIO_CONFIG.description}
                 </p>
               </div>
@@ -237,10 +241,10 @@ export default function HeaderHero({
           {isAdmin && (
             <div
               style={{ animationDelay: '70ms' }}
-              className="lg:col-span-4 bento-glass-card bento-wave-reveal p-6 flex flex-col justify-between gap-4"
+              className="lg:col-span-4 bento-glass-card bento-wave-reveal p-4 sm:p-6 flex flex-col justify-between gap-4"
             >
               <div>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-3.5 sm:mb-4">
                   <div className="flex items-center gap-2.5">
                     <SquircleIconBadge name="activity" size="sm" iconSize={18} />
                     <div>
@@ -259,12 +263,12 @@ export default function HeaderHero({
                 </div>
 
                 {/* 三格關鍵數據 */}
-                <div className="grid grid-cols-3 gap-2.5 mb-4">
-                  <div className="p-3 rounded-2xl bg-sky-50/80 dark:bg-slate-900/70 border border-sky-400/20">
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
+                <div className="grid grid-cols-3 gap-2 sm:gap-2.5 mb-4">
+                  <div className="p-2.5 sm:p-3 rounded-2xl bg-sky-50/80 dark:bg-slate-900/70 border border-sky-400/20">
+                    <div className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mb-0.5 truncate">
                       已連接專案
                     </div>
-                    <div className="text-xl font-extrabold text-sky-700 dark:text-sky-300">
+                    <div className="text-lg sm:text-xl font-extrabold text-sky-700 dark:text-sky-300">
                       {visibleProjects.length}
                       {!isAdmin && privateCount > 0 && (
                         <span
@@ -276,26 +280,26 @@ export default function HeaderHero({
                       )}
                     </div>
                   </div>
-                  <div className="p-3 rounded-2xl bg-sky-50/80 dark:bg-slate-900/70 border border-sky-400/20">
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
+                  <div className="p-2.5 sm:p-3 rounded-2xl bg-sky-50/80 dark:bg-slate-900/70 border border-sky-400/20">
+                    <div className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mb-0.5 truncate">
                       平均延遲
                     </div>
-                    <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                    <div className="text-lg sm:text-xl font-extrabold text-emerald-600 dark:text-emerald-400">
                       {avgLatency}
                       <span className="text-xs font-semibold ml-0.5">ms</span>
                     </div>
                   </div>
-                  <div className="p-3 rounded-2xl bg-sky-50/80 dark:bg-slate-900/70 border border-sky-400/20">
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
+                  <div className="p-2.5 sm:p-3 rounded-2xl bg-sky-50/80 dark:bg-slate-900/70 border border-sky-400/20">
+                    <div className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mb-0.5 truncate">
                       當前視角
                     </div>
-                    <div className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-1 flex items-center gap-1">
+                    <div className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mt-1 flex items-center gap-1 truncate">
                       <LucideIcon
                         name={isAdmin ? 'lock-open' : 'globe'}
                         size={14}
-                        className="text-sky-500"
+                        className="text-sky-500 shrink-0"
                       />
-                      <span>{isAdmin ? '管理員' : '公開訪客'}</span>
+                      <span className="truncate">{isAdmin ? '管理員' : '公開訪客'}</span>
                     </div>
                   </div>
                 </div>
@@ -389,7 +393,7 @@ export default function HeaderHero({
             </div>
 
             {/* 即時搜尋框 + 排序選單 */}
-            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5">
+            <div className="flex flex-col min-[420px]:flex-row sm:flex-nowrap items-stretch min-[420px]:items-center gap-2 sm:gap-2.5">
               <div className="relative flex-1 sm:w-64">
                 <LucideIcon
                   name="search"
@@ -425,7 +429,7 @@ export default function HeaderHero({
                     aria-label="專案排序方式"
                     value={sortBy}
                     onChange={(e) => onSelectSortBy(e.target.value)}
-                    className="px-3.5 py-2 rounded-full text-xs font-semibold bg-sky-50/90 dark:bg-slate-900/90 border border-sky-400/30 text-sky-700 dark:text-sky-300 focus:border-sky-500 focus:outline-none cursor-pointer"
+                    className="w-full min-[420px]:w-auto px-3.5 py-2 rounded-full text-xs font-semibold bg-sky-50/90 dark:bg-slate-900/90 border border-sky-400/30 text-sky-700 dark:text-sky-300 focus:border-sky-500 focus:outline-none cursor-pointer"
                   >
                     <option value="default">預設置頂與自訂順序</option>
                     <option value="updated">最新更新優先</option>

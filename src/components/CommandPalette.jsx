@@ -225,7 +225,7 @@ export default function CommandPalette({
         </div>
 
         {/* 搜尋結果列表 */}
-        <div className="max-h-[60vh] overflow-y-auto p-2 space-y-1">
+        <div className="max-h-[60vh] max-h-dvh-60 overflow-y-auto p-2 space-y-1">
           {items.length === 0 ? (
             <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
               <div>查無符合的專案或指令</div>

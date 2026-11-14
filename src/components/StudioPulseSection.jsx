@@ -60,7 +60,7 @@ export function ChangelogEditModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-sky-400/35 rounded-3xl p-6 shadow-2xl space-y-5"
+        className="w-full max-w-xl max-h-[90vh] max-h-dvh-90 landscape-compact-modal overflow-y-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-sky-400/35 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-3 border-b border-sky-400/20">

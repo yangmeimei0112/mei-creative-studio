@@ -172,9 +172,9 @@ export default function PortalEntrance({
       </div>
 
       {/* 4. 中央毛玻璃浮島卡片自適應佈局 (Glassmorphic Adaptive Island Card) */}
-      <div className="portal-center-core relative z-10 flex flex-col items-center text-center w-[92%] max-w-lg mx-auto p-6 sm:p-9 rounded-3xl bg-white/75 dark:bg-slate-900/80 backdrop-blur-2xl border border-sky-300/40 dark:border-sky-500/25 shadow-2xl ring-1 ring-white/60 dark:ring-white/10 transition-all duration-300">
+      <div className="portal-center-core relative z-10 flex flex-col items-center text-center w-[92%] max-w-lg mx-auto p-5 sm:p-9 rounded-3xl bg-white/75 dark:bg-slate-900/80 backdrop-blur-2xl border border-sky-300/40 dark:border-sky-500/25 shadow-2xl ring-1 ring-white/60 dark:ring-white/10 transition-all duration-300">
         {/* 雙層反向旋轉極光能量環 */}
-        <div className="relative flex items-center justify-center w-32 h-32 sm:w-44 sm:h-44 mb-5 sm:mb-6">
+        <div className="portal-aurora-ring-container relative flex items-center justify-center w-28 h-28 min-[380px]:w-32 min-[380px]:h-32 sm:w-44 sm:h-44 mb-4 sm:mb-6">
           <div
             aria-hidden="true"
             className="portal-aurora-ring-outer absolute inset-0 rounded-full"

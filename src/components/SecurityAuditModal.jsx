@@ -114,7 +114,7 @@ export default function SecurityAuditModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-4xl max-h-[92vh] flex flex-col bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-sky-400/40 rounded-3xl shadow-2xl overflow-hidden"
+        className="w-full max-w-4xl max-h-[92vh] max-h-dvh-92 landscape-compact-modal flex flex-col bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-sky-400/40 rounded-3xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 彈窗頂部 */}

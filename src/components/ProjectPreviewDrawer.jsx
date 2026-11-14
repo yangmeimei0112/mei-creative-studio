@@ -43,42 +43,42 @@ export default function ProjectPreviewDrawer({
       onClick={onClose}
     >
       <div
-        className="w-full sm:max-w-3xl lg:max-w-4xl h-[90vh] sm:h-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-t sm:border-t-0 sm:border-l border-sky-400/30 rounded-t-3xl sm:rounded-none shadow-2xl flex flex-col overflow-hidden"
+        className="w-full sm:max-w-3xl lg:max-w-4xl h-dvh-90 sm:h-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-t sm:border-t-0 sm:border-l border-sky-400/30 rounded-t-3xl sm:rounded-none shadow-2xl flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 手機端頂部下滑手勢指示條 */}
-        <div className="sm:hidden flex justify-center pt-2.5 pb-1">
+        <div className="sm:hidden flex justify-center pt-2.5 pb-1 shrink-0">
           <div className="w-12 h-1.5 rounded-full bg-sky-300/60 dark:bg-slate-700" />
         </div>
 
         {/* 抽屜頂部標題與操作列 */}
-        <div className="px-5 py-4 border-b border-sky-400/20 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <SquircleIconBadge name={project.icon || categoryMeta.icon} size="md" />
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+        <div className="px-3.5 sm:px-5 py-3 sm:py-4 border-b border-sky-400/20 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+            <SquircleIconBadge name={project.icon || categoryMeta.icon} size="md" className="shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h2 className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white truncate">
                   {project.title}
                 </h2>
                 <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${statusMeta.badgeClass}`}
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border shrink-0 ${statusMeta.badgeClass}`}
                 >
                   <LucideIcon name={statusMeta.icon} size={12} />
                   <span>{statusMeta.label}</span>
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-mono truncate max-w-xs sm:max-w-md">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-mono truncate max-w-[200px] sm:max-w-md">
                 {project.url}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* QR-code 按鈕 */}
             <button
               type="button"
               onClick={() => onOpenQrModal(project)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full btn-sky-secondary text-xs font-semibold"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full btn-sky-secondary text-xs font-semibold"
             >
               <LucideIcon name="qr-code" size={15} />
               <span className="hidden sm:inline">QR-code</span>
@@ -88,7 +88,7 @@ export default function ProjectPreviewDrawer({
             <button
               type="button"
               onClick={() => onDirectLaunch(project)}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full btn-sky-primary text-xs font-semibold"
+              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full btn-sky-primary text-xs font-semibold whitespace-nowrap"
             >
               <span>全螢幕開啟</span>
               <LucideIcon name="arrow-up-right" size={15} />
@@ -105,9 +105,9 @@ export default function ProjectPreviewDrawer({
           </div>
         </div>
 
-        {/* 抽屜功能分頁與電腦/手機視角切換器 */}
-        <div className="px-5 py-2.5 bg-sky-50/80 dark:bg-slate-950/60 border-b border-sky-400/20 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5">
+        {/* 抽屜功能分頁與電腦/摺疊平板/手機視角切換器 */}
+        <div className="px-3.5 sm:px-5 py-2 sm:py-2.5 bg-sky-50/80 dark:bg-slate-950/60 border-b border-sky-400/20 flex flex-wrap items-center justify-between gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-full">
             {[
               { id: 'sandbox', label: '互動沙盒預覽', icon: 'panel-right-open' },
               { id: 'details', label: '專案規格與亮點', icon: 'info' },
@@ -117,7 +117,7 @@ export default function ProjectPreviewDrawer({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                   activeTab === tab.id
                     ? 'bg-sky-500 text-white shadow-sm'
                     : 'text-slate-600 dark:text-slate-300 hover:bg-sky-500/10'
@@ -130,11 +130,11 @@ export default function ProjectPreviewDrawer({
           </div>
 
           {activeTab === 'sandbox' && (
-            <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-full border border-sky-400/25">
+            <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-full border border-sky-400/25 overflow-x-auto no-scrollbar max-w-full">
               <button
                 type="button"
                 onClick={() => setViewportMode('desktop')}
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                   viewportMode === 'desktop'
                     ? 'bg-sky-500 text-white'
                     : 'text-slate-500 dark:text-slate-400'
@@ -145,8 +145,20 @@ export default function ProjectPreviewDrawer({
               </button>
               <button
                 type="button"
+                onClick={() => setViewportMode('foldable')}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                  viewportMode === 'foldable'
+                    ? 'bg-sky-500 text-white'
+                    : 'text-slate-500 dark:text-slate-400'
+                }`}
+              >
+                <LucideIcon name="tablet" size={13} />
+                <span>摺疊/平板</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => setViewportMode('mobile')}
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                   viewportMode === 'mobile'
                     ? 'bg-sky-500 text-white'
                     : 'text-slate-500 dark:text-slate-400'
@@ -160,14 +172,18 @@ export default function ProjectPreviewDrawer({
         </div>
 
         {/* 抽屜主內容區 */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-[max(1.5rem,env(safe-area-inset-bottom,1.5rem))] bg-sky-50/40 dark:bg-slate-950/40 flex flex-col">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 pb-[max(1.5rem,env(safe-area-inset-bottom,1.5rem))] bg-sky-50/40 dark:bg-slate-950/40 flex flex-col">
           {activeTab === 'sandbox' && (
-            <div className="flex-1 flex flex-col items-center justify-center min-h-[420px]">
+            <div className="flex-1 flex flex-col items-center justify-center min-h-[260px] sm:min-h-[420px] landscape-compact-sandbox">
               <div
+                data-testid="sandbox-viewport-frame"
+                data-viewport-mode={viewportMode}
                 className={`transition-all duration-300 bg-white dark:bg-slate-900 border-2 border-sky-400/35 shadow-xl overflow-hidden flex flex-col ${
                   viewportMode === 'mobile'
-                    ? 'w-[375px] max-w-full h-[640px] rounded-[36px] border-4 border-slate-800 dark:border-slate-700'
-                    : 'w-full h-full min-h-[460px] rounded-2xl'
+                    ? 'w-full max-w-[375px] aspect-[9/16] max-h-[calc(90dvh-13rem)] sm:h-[640px] rounded-[28px] sm:rounded-[36px] border-4 border-slate-800 dark:border-slate-700'
+                    : viewportMode === 'foldable'
+                      ? 'w-full max-w-[680px] aspect-[4/3] max-h-[calc(90dvh-13rem)] sm:h-[520px] rounded-[24px] sm:rounded-[28px] border-4 border-slate-800 dark:border-slate-700'
+                      : 'w-full h-full min-h-[260px] sm:min-h-[460px] rounded-2xl'
                 }`}
               >
                 {/* 模擬瀏覽器狀態列 */}

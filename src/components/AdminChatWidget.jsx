@@ -151,7 +151,7 @@ export default function AdminChatWidget({
         data-testid="admin-chat-fab"
         aria-label="開啟咩創意 AI 專屬客服"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="fixed bottom-20 mb-[env(safe-area-inset-bottom,0px)] sm:bottom-8 sm:mb-0 right-5 sm:right-8 z-40 flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 border border-white/20"
+        className="fixed bottom-20 mb-[env(safe-area-inset-bottom,0px)] sm:bottom-8 sm:mb-0 right-4 sm:right-6 md:right-8 z-40 flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 border border-white/20"
       >
         <LucideIcon name="bot" size={24} strokeWidth={1.75} absoluteStrokeWidth={true} />
       </button>
@@ -162,7 +162,7 @@ export default function AdminChatWidget({
           data-testid="admin-chat-window"
           role="dialog"
           aria-label="咩創意 AI 助手對話視窗"
-          className="fixed inset-x-0 bottom-0 sm:inset-x-auto sm:right-8 sm:bottom-24 sm:w-[420px] max-h-[85vh] sm:max-h-[640px] flex flex-col z-40 bento-glass-card bg-white/95 dark:bg-slate-900/95 border border-sky-300/40 dark:border-sky-500/25 shadow-2xl rounded-t-3xl sm:rounded-3xl backdrop-blur-2xl overflow-hidden transition-all duration-300"
+          className="fixed inset-x-0 bottom-0 sm:inset-x-auto sm:right-8 sm:bottom-24 sm:w-[420px] max-h-[85vh] max-h-dvh-85 sm:max-h-[640px] flex flex-col z-40 bento-glass-card bg-white/95 dark:bg-slate-900/95 border border-sky-300/40 dark:border-sky-500/25 shadow-2xl rounded-t-3xl sm:rounded-3xl backdrop-blur-2xl overflow-hidden transition-all duration-300"
         >
           {/* 對話視窗頂部 Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/60 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/70 shrink-0">

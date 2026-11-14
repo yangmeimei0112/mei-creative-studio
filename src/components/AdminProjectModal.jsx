@@ -127,7 +127,7 @@ export default function AdminProjectModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-3xl my-auto bento-glass-card bg-white/95 dark:bg-slate-900/95 border border-sky-400/40 overflow-hidden shadow-2xl flex flex-col max-h-[92vh]"
+        className="w-full max-w-3xl my-auto bento-glass-card bg-white/95 dark:bg-slate-900/95 border border-sky-400/40 overflow-hidden shadow-2xl flex flex-col max-h-[92vh] max-h-dvh-92 landscape-compact-modal"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 頂部標題列 */}
@@ -633,7 +633,7 @@ export function StudioBackupModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl bento-glass-card bg-white/95 dark:bg-slate-900/95 p-6 border border-sky-400/40 space-y-5"
+        className="w-full max-w-xl max-h-[90vh] max-h-dvh-90 landscape-compact-modal overflow-y-auto bento-glass-card bg-white/95 dark:bg-slate-900/95 p-5 sm:p-6 border border-sky-400/40 space-y-5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3">
@@ -959,7 +959,7 @@ export function SdkAndInstallModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl bento-glass-card bg-white/95 dark:bg-slate-900/95 p-6 border border-sky-400/40 space-y-5"
+        className="w-full max-w-2xl max-h-[92vh] max-h-dvh-92 landscape-compact-modal overflow-y-auto bento-glass-card bg-white/95 dark:bg-slate-900/95 p-5 sm:p-6 border border-sky-400/40 space-y-5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3">
