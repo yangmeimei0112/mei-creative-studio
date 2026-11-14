@@ -5,43 +5,25 @@
       <stop offset="50%" stop-color="#E0F2FE" />
       <stop offset="100%" stop-color="#BAE6FD" />
     </linearGradient>
-    <linearGradient id="pwaCardGrad" x1="116" y1="134" x2="376" y2="394" gradientUnits="userSpaceOnUse">
+    <linearGradient id="pwaCardGrad" x1="126" y1="126" x2="386" y2="386" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#FFFFFF" />
       <stop offset="100%" stop-color="#F0F9FF" />
     </linearGradient>
-    <linearGradient id="pwaSkyGrad" x1="116" y1="134" x2="376" y2="394" gradientUnits="userSpaceOnUse">
+    <linearGradient id="pwaSkyGrad" x1="126" y1="126" x2="386" y2="386" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#38BDF8" />
       <stop offset="100%" stop-color="#0284C7" />
     </linearGradient>
-    <linearGradient id="pwaSparkleGrad" x1="306" y1="106" x2="406" y2="206" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#38BDF8" />
-      <stop offset="50%" stop-color="#0EA5E9" />
-      <stop offset="100%" stop-color="#0284C7" />
-    </linearGradient>
-    <filter id="pwaSparkleShadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#0284C7" flood-opacity="0.35" />
-    </filter>
     <filter id="pwaCardShadow" x="-15%" y="-15%" width="130%" height="130%">
       <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#0284C7" flood-opacity="0.22" />
     </filter>
   </defs>
   <!-- Full-bleed 背景確保任何形狀圓角裁切 (Maskable Safe Area) 皆無透明破綻 -->
   <rect width="512" height="512" fill="url(#pwaBgGrad)" />
-  <!-- 咩創意工作室統一品牌標誌底座 (Squircle Base 嚴格收容於 80% 安全可視區內，外緣半徑最大 162.3px < 204.8px) -->
-  <rect x="116" y="134" width="260" height="260" rx="78" fill="url(#pwaCardGrad)" stroke="#38BDF8" stroke-width="7.5" stroke-opacity="0.5" filter="url(#pwaCardShadow)" />
+  <!-- 咩創意工作室統一品牌標誌底座 (Squircle Base 嚴格收容於 80% 安全可視區內) -->
+  <rect x="126" y="126" width="260" height="260" rx="78" fill="url(#pwaCardGrad)" stroke="#38BDF8" stroke-width="7.5" stroke-opacity="0.5" filter="url(#pwaCardShadow)" />
   <!-- 正統 Lucide Cloud × Infinity 純粹極簡線性向量 (Candidate F 幾何，居中於底座) -->
-  <g transform="translate(176.4, 194.4) scale(5.8)" stroke="url(#pwaSkyGrad)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
+  <g transform="translate(186.4, 186.4) scale(5.8)" stroke="url(#pwaSkyGrad)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
     <path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z" />
-  </g>
-  <!-- 右上角微型靈感火花圓形徽章 (外緣最遠點距中心 193.2px < 204.8px 安全半徑，具備 11.6px 安全餘裕) -->
-  <circle cx="356" cy="156" r="48" fill="url(#pwaSparkleGrad)" stroke="#FFFFFF" stroke-width="7.5" filter="url(#pwaSparkleShadow)" />
-  <!-- 正統 Lucide Sparkles 向量 (居中於火花圓形徽章) -->
-  <g transform="translate(329.6, 129.6) scale(2.2)" stroke="#FFFFFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
-    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
-    <path d="M20 3v4" />
-    <path d="M22 5h-4" />
-    <path d="M4 17v2" />
-    <path d="M5 18H3" />
   </g>
 </svg>

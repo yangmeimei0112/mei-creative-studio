@@ -92,8 +92,6 @@
   const LUCIDE_SVGS = {
     cloud:
       '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/><path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z"/></svg>',
-    sparkles:
-      '<svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>',
     arrowLeft:
       '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>',
     layoutGrid:
@@ -157,21 +155,6 @@
       color: #0284C7;
       flex-shrink: 0;
       position: relative;
-    }
-    .mei-dock-sparkles-badge {
-      position: absolute;
-      top: -3px;
-      right: -3px;
-      width: 14px;
-      height: 14px;
-      border-radius: 9999px;
-      background: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 50%, #0284C7 100%);
-      color: #FFFFFF;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 8px -1px rgba(14, 165, 233, 0.45);
-      border: 1px solid rgba(255, 255, 255, 0.85);
     }
     .mei-dock-btn {
       display: inline-flex;
@@ -338,7 +321,7 @@
         ${quickLinksHtml}
       </div>
       <div class="mei-dock-capsule" title="可拖曳移動位置">
-        <span class="mei-dock-badge" title="咩創意工作室">${LUCIDE_SVGS.cloud}<span class="mei-dock-sparkles-badge">${LUCIDE_SVGS.sparkles}</span></span>
+        <span class="mei-dock-badge" title="咩創意工作室">${LUCIDE_SVGS.cloud}</span>
         <div class="mei-dock-details" style="display:flex;align-items:center;gap:7px;">
           <div style="display:flex;flex-direction:column;line-height:1.2;padding-right:2px;">
             <span style="font-size:10px;color:#0284C7;font-weight:700;letter-spacing:0.03em;">MEI CREATIVE HUB</span>

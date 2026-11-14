@@ -152,15 +152,15 @@ test('2. 全站原始碼與 Lucide 圖示規範靜態與結構檢查 (strokeWidt
     );
   }
 
-  // 驗證 favicon.svg 與 mei-dock.js 採用正統 Lucide Sparkles 與 Cloud 向量結構，無非官方手繪相異圖形
+  // 驗證 favicon.svg 與 mei-dock.js 採用正統 Lucide Cloud × Infinity 向量結構，無非官方手繪相異圖形
   const faviconContent = fs.readFileSync(path.resolve('public/favicon.svg'), 'utf-8');
-  assert.match(faviconContent, /M9\.937 15\.5/);
   assert.match(faviconContent, /M17\.5 19H9/);
+  assert.match(faviconContent, /M12 14\.5c/);
   assert.equal(faviconContent.includes('m12 3-1.912'), false);
 
   const dockContent = fs.readFileSync(path.resolve('public/sdk/mei-dock.js'), 'utf-8');
-  assert.match(dockContent, /M9\.937 15\.5/);
   assert.match(dockContent, /M17\.5 19H9/);
+  assert.match(dockContent, /M12 14\.5c/);
   assert.equal(dockContent.includes('m12 3-1.912'), false);
 
   // Verify UI components and data files do not expose internal design-spec commentary or technical tags UI

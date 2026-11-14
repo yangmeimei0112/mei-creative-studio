@@ -910,8 +910,7 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
       expect(modal).toHaveAttribute('aria-modal', 'true');
       expect(modal).toHaveAttribute('aria-label', '全站聯通會員專區');
 
-      const sparklesBadge = modal.querySelector('.studio-logo-sparkle');
-      expect(sparklesBadge).toHaveAttribute('aria-hidden', 'true');
+      expect(modal.querySelector('.studio-logo-sparkle')).not.toBeInTheDocument();
 
       const closeBtn = screen.getByLabelText('關閉會員專區視窗');
       fireEvent.click(closeBtn);

@@ -28,7 +28,7 @@ describe('Mei Creative Studio - Brand Logo (StudioLogo) E2E Specification & Endp
   // Tier 1: 核心幾何向量與 7 階響應式尺寸規範 (Feature Coverage)
   // =========================================================================
   describe('Tier 1: 核心幾何向量與 7 階響應式尺寸規範 (Feature Coverage)', () => {
-    it('T1-L1-01: StudioLogo 預設渲染標準結構 (Squircle 底座 + 靈感雲朵無限環向量 + 右上角火花徽章)', () => {
+    it('T1-L1-01: StudioLogo 預設渲染標準結構 (Squircle 底座 + 靈感雲朵無限環向量，無右上角火花徽章)', () => {
       const { container } = render(<StudioLogo size="md" />);
       const logoRoot = container.querySelector('[data-testid="studio-brand-logo"]');
       expect(logoRoot).toBeInTheDocument();
@@ -41,12 +41,10 @@ describe('Mei Creative Studio - Brand Logo (StudioLogo) E2E Specification & Endp
       expect(cloudSvg).toBeInTheDocument();
       expect(cloudSvg).toHaveClass('studio-infinity-cloud');
 
-      const sparkleBadge = logoRoot.querySelector('.studio-logo-sparkle');
-      expect(sparkleBadge).toBeInTheDocument();
-      expect(sparkleBadge.querySelector('[data-lucide-name="sparkles"]')).toBeInTheDocument();
+      expect(logoRoot.querySelector('.studio-logo-sparkle')).not.toBeInTheDocument();
     });
 
-    it('T1-L1-02: 向量幾何嚴格遵循 Lucide 規範 (strokeWidth=1.75, absoluteStrokeWidth, strokeLinecap="round", strokeLinejoin="round")', () => {
+    it('T1-L1-02: 向量幾何嚴格遵循 Lucide 規範 (strokeWidth=1.75, strokeLinecap="round", strokeLinejoin="round")', () => {
       const { container } = render(<StudioLogo size="md" />);
       const cloudSvg = container.querySelector('.studio-infinity-cloud');
       expect(cloudSvg.getAttribute('stroke-width')).toBe('1.75');
@@ -57,23 +55,17 @@ describe('Mei Creative Studio - Brand Logo (StudioLogo) E2E Specification & Endp
 
       const paths = cloudSvg.querySelectorAll('path');
       expect(paths.length).toBeGreaterThanOrEqual(2); // 雲朵外框 + 無限符號創意環
-
-      // Sparkle badge 內建 LucideIcon 具備 absoluteStrokeWidth ((1.75 * 24) / iconSize)
-      const sparkleSvg = container.querySelector('.studio-logo-sparkle svg');
-      expect(sparkleSvg).toBeInTheDocument();
-      const sparkleStrokeWidth = parseFloat(sparkleSvg.getAttribute('stroke-width'));
-      expect(sparkleStrokeWidth).toBeCloseTo((1.75 * 24) / 11, 2);
     });
 
     it('T1-L1-03: 完整支援 7 階響應式尺寸規格 (2xs, xs, sm, md, lg, xl, 2xl)', () => {
       const EXPECTED_SPECS = {
-        '2xs': { widthClass: 'w-5', iconWidth: '11', sparkleIcon: 6 },
-        'xs': { widthClass: 'w-6', iconWidth: '13', sparkleIcon: 8 },
-        'sm': { widthClass: 'w-9', iconWidth: '18', sparkleIcon: 9 },
-        'md': { widthClass: 'w-[44px]', iconWidth: '22', sparkleIcon: 11 },
-        'lg': { widthClass: 'w-[56px]', iconWidth: '28', sparkleIcon: 13 },
-        'xl': { widthClass: 'w-20', iconWidth: '46', sparkleIcon: 18 },
-        '2xl': { widthClass: 'w-28', iconWidth: '58', sparkleIcon: 22 }
+        '2xs': { widthClass: 'w-5', iconWidth: '11' },
+        'xs': { widthClass: 'w-6', iconWidth: '13' },
+        'sm': { widthClass: 'w-9', iconWidth: '18' },
+        'md': { widthClass: 'w-[44px]', iconWidth: '22' },
+        'lg': { widthClass: 'w-[56px]', iconWidth: '28' },
+        'xl': { widthClass: 'w-20', iconWidth: '46' },
+        '2xl': { widthClass: 'w-28', iconWidth: '58' }
       };
 
       LOGO_SIZES.forEach((sz) => {
@@ -91,24 +83,18 @@ describe('Mei Creative Studio - Brand Logo (StudioLogo) E2E Specification & Endp
         expect(cloudSvg).toHaveAttribute('width', spec.iconWidth);
         expect(cloudSvg).toHaveAttribute('height', spec.iconWidth);
 
-        const sparkleBadge = el.querySelector('.studio-logo-sparkle');
-        expect(sparkleBadge).toBeInTheDocument();
-
-        const sparkleSvg = sparkleBadge.querySelector('svg');
-        expect(sparkleSvg).toBeInTheDocument();
-        const strokeWidth = parseFloat(sparkleSvg.getAttribute('stroke-width'));
-        expect(strokeWidth).toBeCloseTo((1.75 * 24) / spec.sparkleIcon, 2);
+        expect(el.querySelector('.studio-logo-sparkle')).not.toBeInTheDocument();
       });
     });
 
-    it('T1-L1-04: 靜態圖示 public/favicon.svg 具備 64x64 視口與正統 Lucide 雲朵火花路徑', () => {
+    it('T1-L1-04: 靜態圖示 public/favicon.svg 具備 64x64 視口與正統 Lucide 雲朵無限路徑', () => {
       const faviconPath = path.resolve('public/favicon.svg');
       expect(fs.existsSync(faviconPath)).toBe(true);
       const content = fs.readFileSync(faviconPath, 'utf-8');
       expect(content).toContain('viewBox="0 0 64 64"');
       expect(content).toContain('stroke-width="1.75"');
       expect(content).toMatch(/M17\.5 19H9/); // Lucide Cloud path
-      expect(content).toMatch(/M9\.937 15\.5/); // Lucide Sparkles path
+      expect(content).toMatch(/M12 14\.5c/); // Infinity loop path
       expect(content).not.toContain('m12 3-1.912'); // 杜絕手繪舊版路徑
     });
 
@@ -119,7 +105,7 @@ describe('Mei Creative Studio - Brand Logo (StudioLogo) E2E Specification & Endp
       expect(content).toContain('viewBox="0 0 512 512"');
       expect(content).toContain('stroke-width="1.75"');
       expect(content).toMatch(/M17\.5 19H9/);
-      expect(content).toMatch(/M9\.937 15\.5/);
+      expect(content).toMatch(/M12 14\.5c/);
     });
 
     it('T1-L1-06: 跨專案 SDK public/sdk/mei-dock.js 內嵌之 SVG 與 StudioLogo 保持向量一致', () => {
@@ -128,7 +114,7 @@ describe('Mei Creative Studio - Brand Logo (StudioLogo) E2E Specification & Endp
       const content = fs.readFileSync(dockPath, 'utf-8');
       expect(content).toContain('stroke-width="1.75"');
       expect(content).toMatch(/M17\.5 19H9/);
-      expect(content).toMatch(/M9\.937 15\.5/);
+      expect(content).toMatch(/M12 14\.5c/);
       expect(content).not.toContain('m12 3-1.912');
     });
   });
@@ -181,19 +167,17 @@ describe('Mei Creative Studio - Brand Logo (StudioLogo) E2E Specification & Endp
       expect(svg2xl).toHaveAttribute('viewBox', '0 0 24 24');
     });
 
-    it('T2-L2-04: 自訂類別名稱 (className, badgeClassName, sparkleClassName) 精確透傳無覆蓋遺失', () => {
+    it('T2-L2-04: 自訂類別名稱 (className, badgeClassName) 精確透傳無覆蓋遺失', () => {
       const { container } = render(
         <StudioLogo
           size="sm"
           className="custom-root-class"
           badgeClassName="custom-badge-class"
-          sparkleClassName="custom-sparkle-class"
         />
       );
       const root = container.querySelector('[data-testid="studio-brand-logo"]');
       expect(root).toHaveClass('custom-root-class');
       expect(root.querySelector('.squircle-icon-badge')).toHaveClass('custom-badge-class');
-      expect(root.querySelector('.studio-logo-sparkle')).toHaveClass('custom-sparkle-class');
     });
 
     it('T2-L2-05: 原生屬性透傳與無障礙標籤 (aria-label, data-*) 完整支援', () => {
@@ -209,7 +193,6 @@ describe('Mei Creative Studio - Brand Logo (StudioLogo) E2E Specification & Endp
       expect(root).toBeInTheDocument();
       expect(root).toHaveAttribute('aria-label', '咩創意工作室品牌商標');
       expect(root).toHaveAttribute('data-custom-id', 'logo-brand-test');
-      expect(root.querySelector('.studio-logo-sparkle')).toHaveAttribute('aria-hidden', 'true');
     });
   });
 
@@ -451,10 +434,7 @@ describe('Mei Creative Studio - Brand Logo (StudioLogo) E2E Specification & Endp
       const badge = modalLogo.querySelector('.squircle-icon-badge');
       expect(badge).toBeInTheDocument();
       expect(badge).toHaveClass('w-[44px]', 'h-[44px]');
-
-      const sparkle = modalLogo.querySelector('.studio-logo-sparkle');
-      expect(sparkle).toBeInTheDocument();
-      expect(sparkle).toHaveAttribute('aria-hidden', 'true');
+      expect(modalLogo.querySelector('.studio-logo-sparkle')).not.toBeInTheDocument();
     });
 
     it('T4-L4-10: App footer (主頁面頁尾) 端點正確渲染 StudioLogo (size=sm)', () => {
@@ -470,10 +450,7 @@ describe('Mei Creative Studio - Brand Logo (StudioLogo) E2E Specification & Endp
       const badge = footerLogo.querySelector('.squircle-icon-badge');
       expect(badge).toBeInTheDocument();
       expect(badge).toHaveClass('w-9', 'h-9');
-
-      const sparkle = footerLogo.querySelector('.studio-logo-sparkle');
-      expect(sparkle).toBeInTheDocument();
-      expect(sparkle).toHaveAttribute('aria-hidden', 'true');
+      expect(footerLogo.querySelector('.studio-logo-sparkle')).not.toBeInTheDocument();
     });
   });
 });

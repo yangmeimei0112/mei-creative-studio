@@ -401,57 +401,41 @@ export function StudioLogo({
   size = 'md',
   className = '',
   badgeClassName = '',
-  sparkleClassName = '',
   'data-testid': testId = 'studio-brand-logo',
   ...rest
 }) {
   const sizeMap = {
     '2xs': {
       box: 'w-5 h-5 rounded-[6px]',
-      icon: 11,
-      sparkleBox: 'w-2.5 h-2.5 -top-0.5 -right-0.5',
-      sparkleIcon: 6
+      icon: 11
     },
     xs: {
       box: 'w-6 h-6 rounded-[8px]',
-      icon: 13,
-      sparkleBox: 'w-3.5 h-3.5 -top-1 -right-1',
-      sparkleIcon: 8
+      icon: 13
     },
     sm: {
       box: 'w-9 h-9 rounded-[12px]',
-      icon: 18,
-      sparkleBox: 'w-4 h-4 -top-1 -right-1',
-      sparkleIcon: 9
+      icon: 18
     },
     md: {
       box: 'w-[44px] h-[44px] rounded-[14px]',
-      icon: 22,
-      sparkleBox: 'w-5 h-5 -top-1 -right-1',
-      sparkleIcon: 11
+      icon: 22
     },
     lg: {
       box: 'w-[56px] h-[56px] rounded-[18px]',
-      icon: 28,
-      sparkleBox: 'w-6 h-6 -top-1.5 -right-1.5',
-      sparkleIcon: 13
+      icon: 28
     },
     xl: {
       box: 'w-20 h-20 sm:w-24 sm:h-24 rounded-[26px] sm:rounded-[30px]',
-      icon: 46,
-      sparkleBox: 'w-8 h-8 sm:w-9 sm:h-9 -top-2 -right-2',
-      sparkleIcon: 18
+      icon: 46
     },
     '2xl': {
       box: 'w-28 h-28 sm:w-32 sm:h-32 rounded-[32px] sm:rounded-[36px]',
-      icon: 58,
-      sparkleBox: 'w-10 h-10 sm:w-11 sm:h-11 -top-2.5 -right-2.5',
-      sparkleIcon: 22
+      icon: 58
     }
   };
 
   const normalizedSize = sizeMap[size] ? size : 'md';
-  const activeSize = sizeMap[size] ? size : 'md';
   const current = sizeMap[normalizedSize];
 
   return (
@@ -484,17 +468,6 @@ export function StudioLogo({
           <path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z" />
         </svg>
       </div>
-      <span
-        aria-hidden="true"
-        className={`studio-logo-sparkle absolute rounded-full bg-sky-500 text-white flex items-center justify-center shadow-sm border border-white/90 dark:border-slate-900/90 ${current.sparkleBox} ${sparkleClassName}`.trim()}
-      >
-        <LucideIcon
-          name="sparkles"
-          size={current.sparkleIcon}
-          strokeWidth={1.75}
-          absoluteStrokeWidth={true}
-        />
-      </span>
     </div>
   );
 }

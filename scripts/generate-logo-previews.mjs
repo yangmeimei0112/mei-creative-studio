@@ -152,7 +152,6 @@ function generateTierSvg(t) {
   const iconScale = +(t.iconSize / 24).toFixed(4);
   const iconX = +((t.boxSize - t.iconSize) / 2).toFixed(2);
   const iconY = +((t.boxSize - t.iconSize) / 2).toFixed(2);
-  const sparkleScale = +(t.sparkleSize / 24).toFixed(4);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${t.boxSize} ${t.boxSize}" width="${t.boxSize}" height="${t.boxSize}" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color: #0284C7;">
   <defs>
@@ -164,10 +163,6 @@ function generateTierSvg(t) {
       <stop offset="0%" stop-color="#F0F9FF" />
       <stop offset="100%" stop-color="#E0F2FE" />
     </linearGradient>
-    <linearGradient id="sparkleGrad_${t.tier}" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38BDF8" />
-      <stop offset="100%" stop-color="#0284C7" />
-    </linearGradient>
   </defs>
   <!-- 咩創意工作室統一品牌標誌底座 (Squircle Base) -->
   <rect x="0.5" y="0.5" width="${t.boxSize - 1}" height="${t.boxSize - 1}" rx="${t.rx}" fill="url(#bgGlow_${t.tier})" stroke="#38BDF8" stroke-width="1.75" stroke-opacity="0.45" />
@@ -175,16 +170,6 @@ function generateTierSvg(t) {
   <g transform="translate(${iconX}, ${iconY}) scale(${iconScale})" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <path d="${GEOMETRY.cloudAnchor}" />
     <path d="${GEOMETRY.infinityLoop}" />
-  </g>
-  <!-- 右上角微型靈感火花圓形徽章 -->
-  <circle cx="${t.sparkleCx}" cy="${t.sparkleCy}" r="${t.sparkleR}" fill="url(#sparkleGrad_${t.tier})" stroke="#FFFFFF" stroke-width="1.75" />
-  <!-- 正統 Lucide Sparkles 向量 -->
-  <g transform="translate(${t.sparkleX}, ${t.sparkleY}) scale(${sparkleScale})" stroke="#FFFFFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
-    <path d="${GEOMETRY.sparklesMain}" />
-    <path d="M20 3v4" />
-    <path d="M22 5h-4" />
-    <path d="M4 17v2" />
-    <path d="M5 18H3" />
   </g>
 </svg>
 `.trim();
@@ -218,10 +203,6 @@ function generateShowcaseHtml() {
           <div class="spec-row">
             <span class="spec-label">核心圖示 (icon):</span>
             <span class="spec-value">${t.iconSize}px</span>
-          </div>
-          <div class="spec-row">
-            <span class="spec-label">星芒徽章 (sparkle):</span>
-            <span class="spec-value">${t.sparkleSize}px</span>
           </div>
           <div class="spec-row">
             <span class="spec-label">線寬規範:</span>
@@ -765,13 +746,7 @@ function runStaticCheck() {
       hasErrors = true;
     }
 
-    // 4. 包含 Sparkles 星芒幾何 M9.937 15.5
-    if (!content.includes('M9.937 15.5')) {
-      console.error(`[FAIL] ${relPath} 缺少 Lucide Sparkles 星芒幾何 (未包含 'M9.937 15.5')`);
-      hasErrors = true;
-    }
-
-    // 5. 嚴禁手繪舊版路徑 m12 3-1.912
+    // 4. 嚴禁手繪舊版路徑 m12 3-1.912
     if (content.includes('m12 3-1.912')) {
       console.error(`[FAIL] ${relPath} 含有手繪舊版未規範路徑 'm12 3-1.912'`);
       hasErrors = true;
