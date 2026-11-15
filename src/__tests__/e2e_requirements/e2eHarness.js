@@ -293,7 +293,40 @@ export function createMockSupabaseClient(initialState = {}) {
 
   let currentSession = initialState.session || null;
   let currentUser = initialState.user || null;
-  let projectsTableData = initialState.projects ? [...initialState.projects] : [];
+
+  // Multi-table in-memory storage with seeding
+  const tableDataMap = new Map();
+  const initialProjects = initialState.projects ? [...initialState.projects] : [];
+  tableDataMap.set('mei_member_projects', initialProjects);
+  tableDataMap.set('projects', initialProjects); // backward compatibility alias
+  tableDataMap.set(
+    'mei_member_profiles',
+    initialState.profiles
+      ? [...initialState.profiles]
+      : (initialState.memberProfiles ? [...initialState.memberProfiles] : [])
+  );
+  tableDataMap.set(
+    'mei_member_passkeys',
+    initialState.passkeys
+      ? [...initialState.passkeys]
+      : (initialState.memberPasskeys ? [...initialState.memberPasskeys] : [])
+  );
+
+  const getTableData = (name) => {
+    if (!tableDataMap.has(name)) {
+      tableDataMap.set(name, []);
+    }
+    return tableDataMap.get(name);
+  };
+
+  const setTableData = (name, data) => {
+    tableDataMap.set(name, data);
+    if (name === 'mei_member_projects') {
+      tableDataMap.set('projects', data);
+    } else if (name === 'projects') {
+      tableDataMap.set('mei_member_projects', data);
+    }
+  };
 
   const authListeners = new Set();
 
@@ -308,20 +341,29 @@ export function createMockSupabaseClient(initialState = {}) {
       data: { user: currentUser },
       error: null
     })),
-    signInWithOAuth: vi.fn().mockImplementation(async ({ provider, options }) => {
+    signInWithOAuth: vi.fn().mockImplementation(async ({ provider, options } = {}) => {
       if (initialState.oauthError) {
         return { data: null, error: initialState.oauthError };
       }
+      const customName =
+        options?.queryParams?.customDisplayName ||
+        options?.data?.displayName ||
+        options?.data?.full_name ||
+        'Google 認證創作者';
+
       currentUser = {
-        id: 'google-oauth-user-id-99',
-        email: 'creator@meistudio.live',
+        id: initialState.oauthUser?.id || 'google-oauth-user-id-99',
+        email: initialState.oauthUser?.email || 'creator@meistudio.live',
         user_metadata: {
-          full_name: 'Google 認證創作者',
-          picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+          full_name: customName,
+          picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
+          has_password: false,
+          ...(initialState.oauthUser?.user_metadata || {})
         },
         app_metadata: {
           provider: 'google',
-          providers: ['google']
+          providers: ['google'],
+          ...(initialState.oauthUser?.app_metadata || {})
         }
       };
       currentSession = {
@@ -330,6 +372,153 @@ export function createMockSupabaseClient(initialState = {}) {
       };
       authListeners.forEach((cb) => cb('SIGNED_IN', currentSession));
       return { data: { url: 'https://accounts.google.com/o/oauth2/v2/auth' }, error: null };
+    }),
+    signUp: vi.fn().mockImplementation(async ({ email, password, options = {} } = {}) => {
+      if (initialState.signUpError) {
+        return { data: null, error: initialState.signUpError };
+      }
+      const normEmail = String(email || '').trim().toLowerCase();
+      const newUserId = options?.data?.sub || `user-uuid-${Math.random().toString(36).substring(2, 10)}`;
+      currentUser = {
+        id: newUserId,
+        aud: 'authenticated',
+        role: 'authenticated',
+        email: normEmail,
+        user_metadata: {
+          display_name: options?.data?.displayName || options?.data?.display_name || normEmail.split('@')[0],
+          full_name: options?.data?.displayName || options?.data?.full_name || normEmail.split('@')[0],
+          tier: options?.data?.tier || 'explorer',
+          has_password: true,
+          ...(options?.data || {})
+        },
+        app_metadata: {
+          provider: 'email',
+          providers: ['email']
+        },
+        created_at: new Date().toISOString(),
+        last_sign_in_at: new Date().toISOString()
+      };
+      currentSession = {
+        access_token: `mock-email-access-token-${newUserId}`,
+        token_type: 'bearer',
+        user: currentUser
+      };
+      authListeners.forEach((cb) => cb('SIGNED_IN', currentSession));
+      return {
+        data: {
+          user: currentUser,
+          session: currentSession
+        },
+        error: null
+      };
+    }),
+    signInWithPassword: vi.fn().mockImplementation(async ({ email, password } = {}) => {
+      if (initialState.signInError || initialState.signInWithPasswordError) {
+        return { data: null, error: initialState.signInError || initialState.signInWithPasswordError };
+      }
+      const normEmail = String(email || '').trim().toLowerCase();
+      if (currentUser && currentUser.email === normEmail) {
+        currentSession = {
+          access_token: `mock-session-token-${currentUser.id}`,
+          token_type: 'bearer',
+          user: currentUser
+        };
+      } else {
+        currentUser = {
+          id: 'password-user-id-55',
+          aud: 'authenticated',
+          role: 'authenticated',
+          email: normEmail,
+          user_metadata: {
+            display_name: normEmail.split('@')[0],
+            full_name: normEmail.split('@')[0],
+            tier: 'explorer',
+            has_password: true
+          },
+          app_metadata: {
+            provider: 'email',
+            providers: ['email']
+          },
+          created_at: new Date().toISOString(),
+          last_sign_in_at: new Date().toISOString()
+        };
+        currentSession = {
+          access_token: 'mock-password-access-token',
+          token_type: 'bearer',
+          user: currentUser
+        };
+      }
+      authListeners.forEach((cb) => cb('SIGNED_IN', currentSession));
+      return {
+        data: {
+          user: currentUser,
+          session: currentSession
+        },
+        error: null
+      };
+    }),
+    updateUser: vi.fn().mockImplementation(async (attributes = {}) => {
+      if (initialState.updateUserError) {
+        return { data: null, error: initialState.updateUserError };
+      }
+      if (!currentUser) {
+        return { data: null, error: new Error('User not authenticated') };
+      }
+      if (attributes.data) {
+        currentUser.user_metadata = {
+          ...(currentUser.user_metadata || {}),
+          ...attributes.data
+        };
+      }
+      if (attributes.password) {
+        currentUser.user_metadata = {
+          ...(currentUser.user_metadata || {}),
+          has_password: true
+        };
+      }
+      if (attributes.email) {
+        currentUser.email = String(attributes.email).trim().toLowerCase();
+      }
+      if (currentSession) {
+        currentSession.user = currentUser;
+      }
+      authListeners.forEach((cb) => cb('USER_UPDATED', currentSession));
+      return {
+        data: { user: currentUser },
+        error: null
+      };
+    }),
+    linkIdentity: vi.fn().mockImplementation(async (credentials = {}) => {
+      if (initialState.linkIdentityError) {
+        return { data: null, error: initialState.linkIdentityError };
+      }
+      const provider = credentials?.provider || 'google';
+      if (currentUser) {
+        const existingProviders = currentUser.app_metadata?.providers || [currentUser.app_metadata?.provider || 'email'];
+        if (!existingProviders.includes(provider)) {
+          existingProviders.push(provider);
+        }
+        currentUser.app_metadata = {
+          ...(currentUser.app_metadata || {}),
+          providers: existingProviders
+        };
+        if (currentSession) {
+          currentSession.user = currentUser;
+        }
+      }
+      return {
+        data: {
+          provider,
+          url: `https://accounts.google.com/o/oauth2/v2/auth?provider=${provider}`
+        },
+        error: null
+      };
+    }),
+    resetPasswordForEmail: vi.fn().mockImplementation(async (email, options = {}) => {
+      if (initialState.resetPasswordError) {
+        return { data: null, error: initialState.resetPasswordError };
+      }
+      return { data: {}, error: null };
     }),
     signInWithPasskey: vi.fn().mockImplementation(async () => {
       if (initialState.passkeyError) {
@@ -397,9 +586,51 @@ export function createMockSupabaseClient(initialState = {}) {
   };
 
   const createQueryBuilder = (tableName) => {
-    let filterColumn = null;
-    let filterValue = null;
+    const filters = [];
     let orderByColumns = [];
+    let isUpdate = false;
+    let updatePayload = null;
+
+    const executeSelectOrUpdate = () => {
+      if (isUpdate) {
+        if (initialState.updateError) {
+          return { data: null, error: initialState.updateError };
+        }
+        const tableData = getTableData(tableName);
+        const updatedRows = [];
+        tableData.forEach((row, idx) => {
+          const matches = filters.every((f) => row[f.column] === f.value);
+          if (matches) {
+            tableData[idx] = { ...tableData[idx], ...updatePayload };
+            updatedRows.push(tableData[idx]);
+          }
+        });
+        return { data: updatedRows, error: null };
+      }
+
+      if (initialState.selectError) {
+        return { data: null, error: initialState.selectError };
+      }
+
+      let result = [...getTableData(tableName)];
+      if (filters.length > 0) {
+        result = result.filter((p) => filters.every((f) => p[f.column] === f.value));
+      }
+      if (orderByColumns.length > 0) {
+        result.sort((a, b) => {
+          for (const { column, ascending } of orderByColumns) {
+            const valA = a[column];
+            const valB = b[column];
+            if (valA !== valB) {
+              if (ascending) return valA > valB ? 1 : -1;
+              return valA < valB ? 1 : -1;
+            }
+          }
+          return 0;
+        });
+      }
+      return { data: result, error: null };
+    };
 
     const builder = {
       select: vi.fn().mockImplementation((columns = '*') => {
@@ -410,24 +641,105 @@ export function createMockSupabaseClient(initialState = {}) {
         return builder;
       }),
       eq: vi.fn().mockImplementation((column, value) => {
-        filterColumn = column;
-        filterValue = value;
+        filters.push({ column, value });
         return builder;
       }),
-      upsert: vi.fn().mockImplementation(async (records, options = {}) => {
-        if (initialState.upsertError) {
-          return { data: null, error: initialState.upsertError };
-        }
-        const recordList = Array.isArray(records) ? records : [records];
-        recordList.forEach((rec) => {
-          const idx = projectsTableData.findIndex((p) => p.id === rec.id);
-          if (idx >= 0) {
-            projectsTableData[idx] = { ...projectsTableData[idx], ...rec };
-          } else {
-            projectsTableData.push(rec);
+      update: vi.fn().mockImplementation((updates, options = {}) => {
+        isUpdate = true;
+        updatePayload = updates;
+        return builder;
+      }),
+      insert: vi.fn().mockImplementation((records, options = {}) => {
+        const executeInsert = () => {
+          if (initialState.insertError) {
+            return { data: null, error: initialState.insertError };
           }
+          const tableData = getTableData(tableName);
+          const recordList = (Array.isArray(records) ? records : [records]).map((r) => ({
+            id: r.id || `${tableName}-${Math.random().toString(36).substring(2, 9)}`,
+            ...r
+          }));
+          recordList.forEach((rec) => tableData.push(rec));
+          return { data: recordList, error: null };
+        };
+
+        const insertPromise = Promise.resolve().then(executeInsert);
+        insertPromise.select = vi.fn().mockImplementation(() => insertPromise);
+        insertPromise.single = vi.fn().mockImplementation(async () => {
+          const res = await insertPromise;
+          if (res.error) return res;
+          return { data: res.data?.[0] || null, error: null };
         });
-        return { data: recordList, error: null };
+        insertPromise.maybeSingle = vi.fn().mockImplementation(async () => {
+          const res = await insertPromise;
+          if (res.error) return res;
+          return { data: res.data?.[0] || null, error: null };
+        });
+        return insertPromise;
+      }),
+      upsert: vi.fn().mockImplementation((records, options = {}) => {
+        const executeUpsert = () => {
+          if (initialState.upsertError) {
+            return { data: null, error: initialState.upsertError };
+          }
+          const tableData = getTableData(tableName);
+          const recordList = Array.isArray(records) ? records : [records];
+          const conflictKey = options.onConflict || 'id';
+
+          recordList.forEach((rec) => {
+            const idx = tableData.findIndex((p) =>
+              (rec[conflictKey] !== undefined && p[conflictKey] === rec[conflictKey]) ||
+              (rec.id !== undefined && p.id === rec.id)
+            );
+            if (idx >= 0) {
+              tableData[idx] = { ...tableData[idx], ...rec };
+            } else {
+              tableData.push(rec);
+            }
+          });
+          return { data: recordList, error: null };
+        };
+
+        const upsertPromise = Promise.resolve().then(executeUpsert);
+        upsertPromise.select = vi.fn().mockImplementation(() => upsertPromise);
+        upsertPromise.single = vi.fn().mockImplementation(async () => {
+          const res = await upsertPromise;
+          if (res.error) return res;
+          return { data: res.data?.[0] || null, error: null };
+        });
+        upsertPromise.maybeSingle = vi.fn().mockImplementation(async () => {
+          const res = await upsertPromise;
+          if (res.error) return res;
+          return { data: res.data?.[0] || null, error: null };
+        });
+        return upsertPromise;
+      }),
+      single: vi.fn().mockImplementation(async () => {
+        const res = executeSelectOrUpdate();
+        if (res.error) return res;
+        const list = res.data || [];
+        if (list.length === 0 || list.length > 1) {
+          return {
+            data: null,
+            error: { message: 'JSON object requested, multiple (or no) rows returned', code: 'PGRST116' }
+          };
+        }
+        return { data: list[0], error: null };
+      }),
+      maybeSingle: vi.fn().mockImplementation(async () => {
+        const res = executeSelectOrUpdate();
+        if (res.error) return res;
+        const list = res.data || [];
+        if (list.length === 0) {
+          return { data: null, error: null };
+        }
+        if (list.length > 1) {
+          return {
+            data: null,
+            error: { message: 'JSON object requested, multiple (or no) rows returned', code: 'PGRST116' }
+          };
+        }
+        return { data: list[0], error: null };
       }),
       delete: vi.fn().mockImplementation(() => {
         return {
@@ -435,33 +747,16 @@ export function createMockSupabaseClient(initialState = {}) {
             if (initialState.deleteError) {
               return { data: null, error: initialState.deleteError };
             }
-            projectsTableData = projectsTableData.filter((p) => p[col] !== val);
+            const tableData = getTableData(tableName);
+            const remaining = tableData.filter((p) => p[col] !== val);
+            setTableData(tableName, remaining);
             return { data: null, error: null };
           })
         };
       }),
       then: (resolve, reject) => {
-        if (initialState.selectError) {
-          return resolve({ data: null, error: initialState.selectError });
-        }
-        let result = [...projectsTableData];
-        if (filterColumn && filterValue !== null) {
-          result = result.filter((p) => p[filterColumn] === filterValue);
-        }
-        if (orderByColumns.length > 0) {
-          result.sort((a, b) => {
-            for (const { column, ascending } of orderByColumns) {
-              const valA = a[column];
-              const valB = b[column];
-              if (valA !== valB) {
-                if (ascending) return valA > valB ? 1 : -1;
-                return valA < valB ? 1 : -1;
-              }
-            }
-            return 0;
-          });
-        }
-        return resolve({ data: result, error: null });
+        const res = executeSelectOrUpdate();
+        return resolve(res);
       }
     };
 
@@ -507,10 +802,19 @@ export function createMockSupabaseClient(initialState = {}) {
         });
       }
     },
-    _getProjectsData: () => projectsTableData,
+    _getProjectsData: () => getTableData('mei_member_projects'),
     _setProjectsData: (newData) => {
-      projectsTableData = [...newData];
-    }
+      setTableData('mei_member_projects', [...newData]);
+    },
+    _getProfilesData: () => getTableData('mei_member_profiles'),
+    _setProfilesData: (newData) => {
+      setTableData('mei_member_profiles', [...newData]);
+    },
+    _getPasskeysData: () => getTableData('mei_member_passkeys'),
+    _setPasskeysData: (newData) => {
+      setTableData('mei_member_passkeys', [...newData]);
+    },
+    _getTableData: (name) => getTableData(name)
   };
 
   return client;

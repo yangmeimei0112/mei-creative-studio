@@ -6,9 +6,480 @@
  * 1. 一鍵返回咩創意工作室大廳
  * 2. 展開快速專案切換清單
  * 3. 支援滑鼠與觸控自由拖曳、視窗邊界自動夾制與折疊收合
+ * 4. 提供全域 window.MeiStudioSSO 跨專案漫遊認證與 Token 驗證 API
  */
 (function initMeiStudioDock() {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+  // =========================================================================
+  // Pure Standalone Browser Cryptography & Utilities (Zero Dependencies)
+  // =========================================================================
+  function stringToUtf8Bytes(str) {
+    if (typeof TextEncoder !== 'undefined') {
+      return new TextEncoder().encode(str);
+    }
+    const bin = unescape(encodeURIComponent(str));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) {
+      bytes[i] = bin.charCodeAt(i);
+    }
+    return bytes;
+  }
+
+  function sha256Sync(input) {
+    function rightRotate(value, amount) {
+      return (value >>> amount) | (value << (32 - amount));
+    }
+    const mathPow = Math.pow;
+    const maxWord = mathPow(2, 32);
+    let i, j;
+    let result = '';
+
+    const bytes =
+      typeof input === 'string'
+        ? stringToUtf8Bytes(input)
+        : input || new Uint8Array(0);
+    const bitLength = bytes.length * 8;
+    const words = [];
+
+    for (i = 0; i < bytes.length; i++) {
+      words[i >> 2] |= bytes[i] << ((3 - (i % 4)) * 8);
+    }
+
+    words[bitLength >> 5] |= 0x80 << (24 - (bitLength % 32));
+    words[(((bitLength + 64) >> 9) << 4) + 15] = bitLength;
+
+    const hash = [];
+    const k = [];
+    let primeCounter = 0;
+
+    const isComposite = {};
+    for (let candidate = 2; primeCounter < 64; candidate++) {
+      if (!isComposite[candidate]) {
+        for (i = 0; i < 313; i += candidate) {
+          isComposite[i] = candidate;
+        }
+        hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+        k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+      }
+    }
+
+    let currentHash = hash.slice(0, 8);
+    for (i = 0; i < words.length; i += 16) {
+      const w = words.slice(i, i + 16);
+      while (w.length < 16) w.push(0);
+      const oldHash = currentHash.slice(0);
+      for (j = 0; j < 64; j++) {
+        const w15 = w[j - 15];
+        const w2 = w[j - 2];
+        const a = currentHash[0];
+        const e = currentHash[4];
+        const temp1 =
+          currentHash[7] +
+          (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) +
+          ((e & currentHash[5]) ^ (~e & currentHash[6])) +
+          k[j] +
+          (w[j] =
+            j < 16
+              ? (w[j] || 0) | 0
+              : (w[j - 16] +
+                  (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) +
+                  w[j - 7] +
+                  (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))) |
+                0);
+        const temp2 =
+          (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) +
+          ((a & currentHash[1]) ^ (a & currentHash[2]) ^ (currentHash[1] & currentHash[2]));
+
+        currentHash = [(temp1 + temp2) | 0].concat(currentHash);
+        currentHash[4] = (currentHash[4] + temp1) | 0;
+        currentHash.pop();
+      }
+
+      for (j = 0; j < 8; j++) {
+        currentHash[j] = (currentHash[j] + oldHash[j]) | 0;
+      }
+    }
+
+    for (i = 0; i < 8; i++) {
+      for (j = 3; j >= 0; j--) {
+        const b = (currentHash[i] >> (8 * j)) & 255;
+        result += (b < 16 ? '0' : '') + b.toString(16);
+      }
+    }
+    return result;
+  }
+
+  function timingSafeEqualStrings(a, b) {
+    if (typeof a !== 'string' || typeof b !== 'string') return false;
+    const maxLen = Math.max(a.length, b.length);
+    let diff = a.length ^ b.length;
+    for (let i = 0; i < maxLen; i++) {
+      const codeA = i < a.length ? a.charCodeAt(i) : 0;
+      const codeB = i < b.length ? b.charCodeAt(i) : 0;
+      diff |= codeA ^ codeB;
+    }
+    return diff === 0;
+  }
+
+  function base64UrlEncode(obj) {
+    const jsonStr = typeof obj === 'string' ? obj : JSON.stringify(obj);
+    const binStr = unescape(encodeURIComponent(jsonStr));
+    const b64 =
+      typeof btoa === 'function'
+        ? btoa(binStr)
+        : typeof Buffer !== 'undefined'
+        ? Buffer.from(binStr, 'binary').toString('base64')
+        : '';
+    return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function base64UrlDecode(str) {
+    let b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    const binStr =
+      typeof atob === 'function'
+        ? atob(b64)
+        : typeof Buffer !== 'undefined'
+        ? Buffer.from(b64, 'base64').toString('binary')
+        : '';
+    return decodeURIComponent(escape(binStr));
+  }
+
+  function normalizeMemberProfile(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const uid = raw.uid || raw.id || (raw.unionId ? raw.unionId.replace(/^mei_user_/, '') : 'guest');
+    const unionId = raw.unionId && raw.unionId.startsWith('mei_') ? raw.unionId : `mei_user_${uid}`;
+    const tier = raw.tier || 'explorer';
+    const tierLabel =
+      raw.tierLabel ||
+      (tier === 'creator'
+        ? '創意造物者'
+        : tier === 'architect'
+        ? '核心架構師'
+        : '靈感探索員');
+    return {
+      schemaVersion: '2.0.0',
+      unionId,
+      uid,
+      email: raw.email || `${unionId}@meistudio.live`,
+      displayName: raw.displayName || raw.display_name || '創意會員',
+      avatarUrl: raw.avatarUrl || raw.avatar_url || '',
+      tier,
+      tierLabel,
+      scopes: Array.isArray(raw.scopes)
+        ? raw.scopes
+        : ['studio:read', 'subprojects:access', 'sso:roaming'],
+      authProvider: raw.authProvider || 'google',
+      authProviders: Array.isArray(raw.authProviders)
+        ? raw.authProviders
+        : [raw.authProvider || 'google'],
+      isPasskeyEnabled: Boolean(raw.isPasskeyEnabled),
+      lastSignInAt: String(raw.lastSignInAt || new Date().toISOString()),
+      connectedProjects: Array.isArray(raw.connectedProjects)
+        ? raw.connectedProjects
+        : ['*'],
+      metadata:
+        typeof raw.metadata === 'object' && raw.metadata !== null
+          ? raw.metadata
+          : { has_password: false }
+    };
+  }
+
+  function createSsoTokenSync(targetMember) {
+    if (!targetMember || !targetMember.unionId) return null;
+    const header = { alg: 'HS256', typ: 'JWT' };
+    const now = Math.floor(Date.now() / 1000);
+    const uid =
+      targetMember.uid ||
+      (targetMember.unionId
+        ? targetMember.unionId.replace(/^mei_user_/, '')
+        : 'guest');
+    const tier = targetMember.tier || 'explorer';
+    const tierLabel =
+      targetMember.tierLabel ||
+      (tier === 'creator'
+        ? '創意造物者'
+        : tier === 'architect'
+        ? '核心架構師'
+        : '靈感探索員');
+    const payload = {
+      unionId: targetMember.unionId,
+      uid: uid,
+      email: targetMember.email || `${targetMember.unionId}@meistudio.live`,
+      displayName: targetMember.displayName || '創意會員',
+      tier: tier,
+      tierLabel: tierLabel,
+      authProvider: targetMember.authProvider || 'google',
+      authProviders:
+        Array.isArray(targetMember.authProviders) &&
+        targetMember.authProviders.length > 0
+          ? targetMember.authProviders
+          : [targetMember.authProvider || 'google'],
+      isPasskeyEnabled: Boolean(targetMember.isPasskeyEnabled),
+      scopes: Array.isArray(targetMember.scopes)
+        ? targetMember.scopes
+        : ['studio:read', 'subprojects:access', 'sso:roaming'],
+      connectedProjects: Array.isArray(targetMember.connectedProjects)
+        ? targetMember.connectedProjects
+        : ['*'],
+      iss: 'mei-creative-studio',
+      iat: now,
+      exp: now + 7 * 86400 // 7 days in seconds
+    };
+    const b64Header = base64UrlEncode(header);
+    const b64Payload = base64UrlEncode(payload);
+    const signingInput = `${b64Header}.${b64Payload}`;
+    const signature = sha256Sync(`mei-sso-salt:${signingInput}`);
+    return `mei_sso_v2.${signingInput}.${signature}`;
+  }
+
+  // =========================================================================
+  // Universal Member SSO Bridge API
+  // =========================================================================
+  const ssoListeners = new Set();
+
+  function readSharedMember() {
+    try {
+      const raw =
+        window.localStorage &&
+        window.localStorage.getItem('mei_universal_member_sso_v1');
+      if (!raw || typeof raw !== 'string' || raw.startsWith('MEI-SSO-')) {
+        return null;
+      }
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && parsed.unionId) {
+        return parsed;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  function getMember() {
+    const raw = readSharedMember();
+    if (raw) {
+      if (window.MeiStudioSSO) {
+        window.MeiStudioSSO.currentMember = raw;
+      }
+      return raw;
+    }
+    const cur = window.MeiStudioSSO && window.MeiStudioSSO.currentMember;
+    if (cur && typeof cur === 'object' && cur.unionId) {
+      try {
+        const rawStorage =
+          window.localStorage &&
+          window.localStorage.getItem('mei_universal_member_sso_v1');
+        if (
+          rawStorage &&
+          typeof rawStorage === 'string' &&
+          rawStorage.startsWith('MEI-SSO-')
+        ) {
+          return null;
+        }
+      } catch {}
+      return cur;
+    }
+    if (window.MeiStudioSSO) {
+      window.MeiStudioSSO.currentMember = null;
+    }
+    return null;
+  }
+
+  function getToken() {
+    const member = getMember();
+    if (!member || !member.unionId) {
+      return null;
+    }
+    try {
+      const cached =
+        window.localStorage &&
+        window.localStorage.getItem('mei_universal_sso_token_v1');
+      if (
+        cached &&
+        typeof cached === 'string' &&
+        cached.startsWith('mei_sso_v2.')
+      ) {
+        const parts = cached.split('.');
+        if (parts.length === 4) {
+          const payload = JSON.parse(base64UrlDecode(parts[2]));
+          const now = Math.floor(Date.now() / 1000);
+          if (
+            payload.exp &&
+            payload.exp > now + 60 &&
+            payload.unionId === member.unionId
+          ) {
+            const expectedSig = sha256Sync(
+              `mei-sso-salt:${parts[1]}.${parts[2]}`
+            );
+            if (timingSafeEqualStrings(parts[3], expectedSig)) {
+              return cached;
+            }
+          }
+        }
+      }
+    } catch {}
+
+    const newToken = createSsoTokenSync(member);
+    try {
+      if (window.localStorage && newToken) {
+        window.localStorage.setItem('mei_universal_sso_token_v1', newToken);
+      }
+    } catch {}
+    return newToken;
+  }
+
+  async function verifyToken(token) {
+    if (typeof token !== 'string' || !token.trim()) {
+      return {
+        valid: false,
+        error: 'Token cannot be empty',
+        payload: null,
+        profile: null,
+        member: null
+      };
+    }
+
+    const cleanToken = token.trim();
+    if (cleanToken.startsWith('MEI-SSO-')) {
+      return {
+        valid: false,
+        error: 'Legacy MEI-SSO token is deprecated and rejected',
+        payload: null,
+        profile: null,
+        member: null
+      };
+    }
+
+    const parts = cleanToken.split('.');
+    if (parts.length !== 4 || parts[0] !== 'mei_sso_v2') {
+      return {
+        valid: false,
+        error: 'Malformed SSO Token structure',
+        payload: null,
+        profile: null,
+        member: null
+      };
+    }
+
+    const [, b64Header, b64Payload, signature] = parts;
+    const expectedSig = sha256Sync(`mei-sso-salt:${b64Header}.${b64Payload}`);
+
+    if (!timingSafeEqualStrings(signature, expectedSig)) {
+      return {
+        valid: false,
+        error: 'Invalid SSO Token signature',
+        payload: null,
+        profile: null,
+        member: null
+      };
+    }
+
+    try {
+      const rawPayload = base64UrlDecode(b64Payload);
+      const payload = JSON.parse(rawPayload);
+
+      const now = Math.floor(Date.now() / 1000);
+      if (payload.exp && now > payload.exp) {
+        return {
+          valid: false,
+          error: 'SSO Token has expired',
+          payload: null,
+          profile: null,
+          member: null
+        };
+      }
+
+      if (!payload.unionId || !payload.unionId.startsWith('mei_user_')) {
+        return {
+          valid: false,
+          error: 'Invalid Union ID in Token',
+          payload: null,
+          profile: null,
+          member: null
+        };
+      }
+
+      const member = normalizeMemberProfile(payload);
+      return {
+        valid: true,
+        payload,
+        member,
+        profile: member,
+        error: null
+      };
+    } catch (err) {
+      return {
+        valid: false,
+        error: 'Failed to decode SSO Token payload',
+        payload: null,
+        profile: null,
+        member: null
+      };
+    }
+  }
+
+  function notifySsoListeners(member) {
+    if (window.MeiStudioSSO) {
+      window.MeiStudioSSO.currentMember = member;
+    }
+    if (!member) {
+      try {
+        if (window.localStorage) {
+          window.localStorage.removeItem('mei_universal_sso_token_v1');
+        }
+      } catch {}
+    }
+    ssoListeners.forEach((cb) => {
+      try {
+        cb(member);
+      } catch {}
+    });
+  }
+
+  // Mount global MeiStudioSSO immediately upon script execution
+  window.MeiStudioSSO = window.MeiStudioSSO || {};
+  window.MeiStudioSSO.currentMember = readSharedMember();
+  window.MeiStudioSSO.getMember = getMember;
+  window.MeiStudioSSO.getToken = getToken;
+  window.MeiStudioSSO.generateToken = async function (targetMember) {
+    return createSsoTokenSync(targetMember || getMember()) || getToken();
+  };
+  window.MeiStudioSSO.verifyToken = verifyToken;
+  window.MeiStudioSSO.onAuthStateChange = function (cb) {
+    if (typeof cb === 'function') {
+      ssoListeners.add(cb);
+      return function unsubscribe() {
+        ssoListeners.delete(cb);
+      };
+    }
+    return function noop() {};
+  };
+  window.MeiStudioSSO._notify = notifySsoListeners;
+
+  window.addEventListener('storage', (evt) => {
+    if (evt.key === 'mei_universal_member_sso_v1') {
+      notifySsoListeners(readSharedMember());
+    }
+  });
+
+  if (typeof BroadcastChannel !== 'undefined') {
+    try {
+      const ssoChannel = new BroadcastChannel('mei_universal_sso_channel_v1');
+      ssoChannel.onmessage = (evt) => {
+        if (evt && evt.data) {
+          if ('member' in evt.data) {
+            notifySsoListeners(evt.data.member);
+          } else {
+            notifySsoListeners(readSharedMember());
+          }
+        }
+      };
+    } catch {}
+  }
+
+  // Guard against duplicate DOM dock mount
   if (window.__MEI_STUDIO_DOCK_MOUNTED__) return;
   window.__MEI_STUDIO_DOCK_MOUNTED__ = true;
 
@@ -73,7 +544,9 @@
 
   function getQuickProjects() {
     try {
-      const raw = window.localStorage && window.localStorage.getItem('mei_studio_projects_v1');
+      const raw =
+        window.localStorage &&
+        window.localStorage.getItem('mei_studio_projects_v1');
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -459,72 +932,6 @@
         labelEl.textContent = String(newTitle);
       }
     };
-
-    // Expose Universal Member SSO Bridge for all connected child projects
-    const ssoListeners = new Set();
-    function readSharedMember() {
-      try {
-        const raw =
-          window.localStorage &&
-          window.localStorage.getItem('mei_universal_member_sso_v1');
-        if (!raw || typeof raw !== 'string' || raw.startsWith('MEI-SSO-')) {
-          return null;
-        }
-        const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === 'object' && parsed.unionId) {
-          return parsed;
-        }
-        return null;
-      } catch {
-        return null;
-      }
-    }
-
-    window.MeiStudioSSO = {
-      currentMember: readSharedMember(),
-      getMember: readSharedMember,
-      onAuthStateChange(cb) {
-        if (typeof cb === 'function') {
-          ssoListeners.add(cb);
-          return () => ssoListeners.delete(cb);
-        }
-        return () => {};
-      }
-    };
-
-    function notifySsoListeners(member) {
-      window.MeiStudioSSO.currentMember = member;
-      ssoListeners.forEach((cb) => {
-        try {
-          cb(member);
-        } catch {
-          // Ignore callback error
-        }
-      });
-    }
-
-    window.addEventListener('storage', (evt) => {
-      if (evt.key === 'mei_universal_member_sso_v1') {
-        notifySsoListeners(readSharedMember());
-      }
-    });
-
-    if (typeof BroadcastChannel !== 'undefined') {
-      try {
-        const ssoChannel = new BroadcastChannel('mei_universal_sso_channel_v1');
-        ssoChannel.onmessage = (evt) => {
-          if (evt && evt.data) {
-            if ('member' in evt.data) {
-              notifySsoListeners(evt.data.member);
-            } else {
-              notifySsoListeners(readSharedMember());
-            }
-          }
-        };
-      } catch {
-        // Ignore broadcast error
-      }
-    }
   }
 
   if (document.readyState === 'loading') {

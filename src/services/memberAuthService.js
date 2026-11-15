@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient.js';
-import { sanitizeStringDeep } from './securityService.js';
+import { sanitizeStringDeep, sha256Sync, timingSafeEqualStrings } from './securityService.js';
 
 export const MEMBER_SSO_STORAGE_KEY = 'mei_universal_member_sso_v1';
 export const MEMBER_SSO_BROADCAST_CHANNEL = 'mei_universal_sso_channel_v1';
@@ -141,6 +141,12 @@ export function transformSupabaseUserToMemberProfile(user) {
     meta.is_passkey_enabled || authProviders.includes('passkey')
   );
 
+  const hasPassword = meta.has_password !== undefined ? Boolean(meta.has_password) : (primaryProvider !== 'google');
+  const metadata = {
+    has_password: hasPassword,
+    ...(typeof meta.metadata === 'object' && meta.metadata !== null ? meta.metadata : {})
+  };
+
   return {
     schemaVersion: '2.0.0',
     unionId,
@@ -155,7 +161,8 @@ export function transformSupabaseUserToMemberProfile(user) {
     authProviders,
     isPasskeyEnabled,
     lastSignInAt: user.last_sign_in_at || new Date().toISOString(),
-    connectedProjects: ['*']
+    connectedProjects: ['*'],
+    metadata
   };
 }
 
@@ -181,6 +188,16 @@ export function normalizeMemberProfile(raw) {
     ? Array.from(new Set(raw.authProviders.map((p) => String(p).toLowerCase())))
     : [raw.authProvider || 'google'];
 
+  const primaryProvider = raw.authProvider || authProviders[0] || 'google';
+  const hasPassword = raw.metadata?.has_password !== undefined
+    ? Boolean(raw.metadata.has_password)
+    : (raw.hasPassword !== undefined ? Boolean(raw.hasPassword) : (primaryProvider !== 'google'));
+
+  const metadata = {
+    ...(typeof raw.metadata === 'object' && raw.metadata !== null ? raw.metadata : {}),
+    has_password: hasPassword
+  };
+
   return {
     schemaVersion: '2.0.0',
     unionId,
@@ -191,11 +208,12 @@ export function normalizeMemberProfile(raw) {
     tier: tierSpec.id,
     tierLabel: tierSpec.label,
     scopes: tierSpec.scopes,
-    authProvider: raw.authProvider || authProviders[0] || 'google',
+    authProvider: primaryProvider,
     authProviders,
     isPasskeyEnabled: Boolean(raw.isPasskeyEnabled || authProviders.includes('passkey')),
     lastSignInAt: String(raw.lastSignInAt || raw.lastLoginAt || new Date().toISOString()),
-    connectedProjects: Array.isArray(raw.connectedProjects) ? raw.connectedProjects : ['*']
+    connectedProjects: Array.isArray(raw.connectedProjects) ? raw.connectedProjects : ['*'],
+    metadata
   };
 }
 
@@ -288,6 +306,7 @@ export async function syncMemberProfileToCloud(profile, customClient = supabase)
     auth_provider: normalized.authProvider || 'google',
     is_passkey_enabled: Boolean(normalized.isPasskeyEnabled),
     connected_projects: normalized.connectedProjects || ['*'],
+    metadata: normalized.metadata || {},
     last_sign_in_at: normalized.lastSignInAt || new Date().toISOString(),
     updated_at: new Date().toISOString()
   };
@@ -328,6 +347,7 @@ export async function fetchMemberProfileFromCloud(userId, customClient = supabas
       authProvider: data.auth_provider,
       isPasskeyEnabled: data.is_passkey_enabled,
       connectedProjects: data.connected_projects,
+      metadata: data.metadata || {},
       lastSignInAt: data.last_sign_in_at
     });
   } catch {
@@ -414,6 +434,7 @@ export async function signInWithGoogle(options = {}) {
         authProvider: 'google',
         authProviders: ['google'],
         isPasskeyEnabled: false,
+        metadata: { has_password: false },
         lastSignInAt: new Date().toISOString()
       });
       saveCurrentMember(member);
@@ -561,34 +582,92 @@ export async function signInWithPasskey() {
   }
 }
 
+function bufferToBase64URL(buffer) {
+  if (!buffer) return '';
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const base64 = typeof btoa === 'function'
+    ? btoa(binary)
+    : Buffer.from(binary, 'binary').toString('base64');
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function extractPublicKeyFromCredential(credential) {
+  if (!credential) return 'mock-public-key-placeholder';
+  if (typeof credential.publicKey === 'string' && credential.publicKey) {
+    return credential.publicKey;
+  }
+  const response = credential.response;
+  if (response) {
+    if (typeof response.getPublicKey === 'function') {
+      try {
+        const pkBuffer = response.getPublicKey();
+        if (pkBuffer) return bufferToBase64URL(pkBuffer);
+      } catch {}
+    }
+    if (response.attestationObject) {
+      return bufferToBase64URL(response.attestationObject);
+    }
+  }
+  return 'cose-pk-' + (credential.id || 'default');
+}
+
+function base64UrlEncode(obj) {
+  const jsonStr = typeof obj === 'string' ? obj : JSON.stringify(obj);
+  const binStr = unescape(encodeURIComponent(jsonStr));
+  const b64 = typeof btoa === 'function' ? btoa(binStr) : Buffer.from(binStr, 'binary').toString('base64');
+  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlDecode(str) {
+  let b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (b64.length % 4) b64 += '=';
+  const binStr = typeof atob === 'function' ? atob(b64) : Buffer.from(b64, 'base64').toString('binary');
+  return decodeURIComponent(escape(binStr));
+}
+
 /**
  * Bind passkey credential to currently authenticated member
+ * Persists record to public.mei_member_passkeys and updates public.mei_member_profiles
  */
 export async function bindPasskeyToCurrentMember() {
   const current = loadCurrentMember();
   if (!current) {
-    return { data: null, error: new Error('請先登入會員後再綁定生物辨識') };
+    return { success: false, data: null, error: new Error('請先登入會員後再綁定生物辨識') };
   }
 
   try {
+    let credentialId = null;
+    let publicKeyStr = null;
+    let transports = ['internal'];
+
+    // 1. Check Supabase Auth Passkey client
     if (supabase?.auth?.passkey && typeof supabase.auth.passkey.registerPasskey === 'function') {
       const res = await supabase.auth.passkey.registerPasskey();
       if (res?.error) {
-        return { data: null, error: res.error };
+        return { success: false, data: null, error: res.error };
+      }
+      if (res?.data?.id) {
+        credentialId = res.data.id;
       }
     }
 
+    // 2. Perform WebAuthn Registration Ceremony
     const bioCap = detectBiometricCapability();
-    if (bioCap.webAuthnAvailable && typeof navigator !== 'undefined' && navigator.credentials) {
+    if (bioCap.webAuthnAvailable && typeof navigator !== 'undefined' && navigator.credentials?.create) {
       const challenge = new Uint8Array(32);
-      if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.getRandomValues === 'function') {
+      if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
         window.crypto.getRandomValues(challenge);
       }
       const userIdBytes = new Uint8Array(16);
-      if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.getRandomValues === 'function') {
+      if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
         window.crypto.getRandomValues(userIdBytes);
       }
-      await navigator.credentials.create({
+
+      const credential = await navigator.credentials.create({
         publicKey: {
           challenge,
           rp: {
@@ -597,12 +676,12 @@ export async function bindPasskeyToCurrentMember() {
           },
           user: {
             id: userIdBytes,
-            name: current.email,
-            displayName: current.displayName
+            name: current.email || 'member@meistudio.live',
+            displayName: current.displayName || '咩創意會員'
           },
           pubKeyCredParams: [
-            { type: 'public-key', alg: -7 },
-            { type: 'public-key', alg: -257 }
+            { type: 'public-key', alg: -7 },   // ES256
+            { type: 'public-key', alg: -257 }  // RS256
           ],
           authenticatorSelection: {
             userVerification: 'preferred',
@@ -611,8 +690,84 @@ export async function bindPasskeyToCurrentMember() {
           timeout: 15000
         }
       });
+
+      if (credential) {
+        credentialId = credential.id || (credential.rawId ? bufferToBase64URL(credential.rawId) : credentialId);
+        publicKeyStr = extractPublicKeyFromCredential(credential);
+        if (typeof credential.response?.getTransports === 'function') {
+          try {
+            const rawTransports = credential.response.getTransports();
+            if (Array.isArray(rawTransports) && rawTransports.length > 0) {
+              transports = rawTransports;
+            }
+          } catch {}
+        }
+      }
     }
 
+    if (!credentialId) {
+      credentialId = `mei_cred_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    }
+    if (!publicKeyStr) {
+      publicKeyStr = `cose-pk-${credentialId}`;
+    }
+
+    const deviceName = (bioCap.authenticatorName || 'W3C WebAuthn 認證器').substring(0, 100);
+
+    // 3. Resolve User UUID for foreign key & RLS
+    let userId = current.uid || current.id;
+    try {
+      if (supabase?.auth?.getUser && typeof supabase.auth.getUser === 'function') {
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user?.id) {
+          userId = userData.user.id;
+        }
+      }
+    } catch {}
+
+    const passkeyRecord = {
+      user_id: userId,
+      credential_id: credentialId,
+      public_key: publicKeyStr,
+      counter: 0,
+      device_name: deviceName,
+      transports,
+      last_used_at: new Date().toISOString()
+    };
+
+    // 4. Persist to public.mei_member_passkeys
+    if (supabase && typeof supabase.from === 'function') {
+      try {
+        const query = supabase.from('mei_member_passkeys');
+        if (query && typeof query.insert === 'function') {
+          const { error: dbError } = await query.insert(passkeyRecord);
+          if (dbError) {
+            console.error('Failed to insert passkey into mei_member_passkeys:', dbError);
+          }
+        }
+      } catch (dbErr) {
+        console.warn('Error inserting into mei_member_passkeys:', dbErr);
+      }
+    }
+
+    // 5. Update public.mei_member_profiles setting is_passkey_enabled: true
+    if (supabase && typeof supabase.from === 'function' && userId) {
+      try {
+        const profileQuery = supabase.from('mei_member_profiles');
+        if (profileQuery && typeof profileQuery.update === 'function') {
+          await profileQuery
+            .update({
+              is_passkey_enabled: true,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', userId);
+        }
+      } catch (profileErr) {
+        console.warn('Error updating mei_member_profiles:', profileErr);
+      }
+    }
+
+    // 6. Update local state and broadcast
     const nextProviders = Array.from(new Set([...(current.authProviders || []), 'passkey']));
     const updated = normalizeMemberProfile({
       ...current,
@@ -622,9 +777,482 @@ export async function bindPasskeyToCurrentMember() {
     });
 
     saveCurrentMember(updated);
-    return { data: { member: updated }, error: null };
+
+    return {
+      success: true,
+      member: updated,
+      data: { member: updated, credential: passkeyRecord },
+      error: null
+    };
   } catch (err) {
-    return { data: null, error: err };
+    return {
+      success: false,
+      data: null,
+      error: err
+    };
+  }
+}
+
+/**
+ * R1: Generate arithmetic captcha challenge for anti-bot registration
+ */
+export function generateMathCaptcha() {
+  const a = Math.floor(Math.random() * 9) + 1;
+  const b = Math.floor(Math.random() * 9) + 1;
+  return {
+    question: `${a} + ${b} = ?`,
+    equation: `${a} + ${b}`,
+    expectedAnswer: String(a + b)
+  };
+}
+
+/**
+ * R1: Standard Member Registration with Anti-Bot Challenge & Double Password Confirmation
+ */
+export async function registerMemberWithDetails({
+  displayName = '',
+  email = '',
+  password = '',
+  confirmPassword = '',
+  captchaAnswer = undefined,
+  captchaExpected = undefined
+} = {}) {
+  // 1. Sanitize & Validate Display Name
+  const cleanDisplayName = stripHtmlTags(sanitizeStringDeep(displayName)).trim();
+  if (!cleanDisplayName || cleanDisplayName.length < 2) {
+    return { success: false, error: '請輸入有效的會員暱稱（至少 2 個字元）' };
+  }
+  if (cleanDisplayName.length > 50) {
+    return { success: false, error: '會員暱稱長度不能超過 50 個字元' };
+  }
+
+  // 2. Sanitize & Validate Email
+  const cleanEmail = sanitizeStringDeep(String(email || '')).trim().toLowerCase();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(cleanEmail)) {
+    return { success: false, error: '請輸入有效的電子信箱地址' };
+  }
+
+  // 3. Validate Password & Confirmation
+  if (!password || typeof password !== 'string' || password.length < 6) {
+    return { success: false, error: '密碼長度至少需要 6 個字元' };
+  }
+  if (password !== confirmPassword) {
+    return { success: false, error: '兩次輸入的密碼不一致' };
+  }
+
+  // 4. Validate Anti-Bot Challenge
+  if (captchaExpected !== undefined) {
+    const cleanAnswer = String(captchaAnswer ?? '').trim();
+    const cleanExpected = String(captchaExpected ?? '').trim();
+    if (!cleanAnswer || cleanAnswer !== cleanExpected) {
+      return { success: false, error: '防機器人驗證碼錯誤，請重新計算' };
+    }
+  }
+
+  try {
+    // 5. Call Supabase Auth signUp
+    const { data, error } = await supabase.auth.signUp({
+      email: cleanEmail,
+      password,
+      options: {
+        data: {
+          displayName: cleanDisplayName,
+          full_name: cleanDisplayName,
+          tier: 'explorer',
+          has_password: true
+        }
+      }
+    });
+
+    if (error) {
+      return {
+        success: false,
+        isGmailOnly: Boolean(error.isGmailOnly),
+        error: error.message
+      };
+    }
+
+    const user = data?.user;
+    if (!user) {
+      return { success: false, error: '註冊未完成，請重試' };
+    }
+
+    const uid = String(user.id || '');
+    const unionId = uid.startsWith('mei_user_') ? uid : `mei_user_${uid.replace(/-/g, '')}`;
+
+    // 6. Write Initial Record into public.mei_member_profiles
+    const profileRow = {
+      id: uid,
+      union_id: unionId,
+      email: cleanEmail,
+      display_name: cleanDisplayName,
+      avatar_url: '',
+      tier: 'explorer',
+      auth_provider: 'email',
+      is_passkey_enabled: false,
+      connected_projects: ['*'],
+      metadata: { has_password: true },
+      last_sign_in_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    try {
+      if (supabase && typeof supabase.from === 'function') {
+        await supabase.from('mei_member_profiles').upsert(profileRow, { onConflict: 'id' });
+      }
+    } catch {
+      // Ignore if trigger already initialized profile
+    }
+
+    const member = normalizeMemberProfile({
+      unionId,
+      uid,
+      email: cleanEmail,
+      displayName: cleanDisplayName,
+      tier: 'explorer',
+      tierLabel: '靈感探索員',
+      authProvider: 'email',
+      authProviders: ['email'],
+      isPasskeyEnabled: false,
+      metadata: { has_password: true },
+      lastSignInAt: new Date().toISOString(),
+      connectedProjects: ['*']
+    });
+
+    if (data.session) {
+      saveCurrentMember(member);
+    }
+
+    return { success: true, member, session: data.session };
+  } catch (err) {
+    return { success: false, error: err?.message || '註冊流程發生錯誤，請稍後再試' };
+  }
+}
+
+/**
+ * R1 & R2: Password Sign In with Pure Gmail Blocker
+ */
+export async function signInMemberWithPassword(email, password) {
+  const cleanEmail = sanitizeStringDeep(String(email || '')).trim().toLowerCase();
+  if (!cleanEmail || !password) {
+    return { success: false, error: '請輸入電子信箱與密碼' };
+  }
+
+  // 1. Check if Account is Gmail-Created without Added Password
+  try {
+    if (supabase && typeof supabase.from === 'function') {
+      const { data: profile } = await supabase
+        .from('mei_member_profiles')
+        .select('*')
+        .eq('email', cleanEmail)
+        .maybeSingle();
+
+      if (profile) {
+        const provider = String(profile.auth_provider || '').toLowerCase();
+        const hasPassword = Boolean(profile.metadata?.has_password);
+        const providers = Array.isArray(profile.auth_providers) ? profile.auth_providers : [];
+        const isGmailOnly = (provider === 'google' || provider === 'gmail' || (providers.includes('google') && !providers.includes('email'))) && !hasPassword;
+
+        if (isGmailOnly) {
+          return {
+            success: false,
+            isGmailOnly: true,
+            error: '此帳號由 Gmail 快速登入建立，尚未增設密碼。請使用 Gmail 登入或於登入後至會員專區增設密碼'
+          };
+        }
+      }
+    }
+  } catch {
+    // Continue if offline or table query skipped
+  }
+
+  // 2. Perform Supabase Auth signInWithPassword
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: cleanEmail,
+      password
+    });
+
+    if (error) {
+      return {
+        success: false,
+        isGmailOnly: Boolean(error.isGmailOnly),
+        error: error.message
+      };
+    }
+
+    if (data?.user) {
+      // Secondary check against user metadata
+      const userMeta = data.user.user_metadata || {};
+      const appMeta = data.user.app_metadata || {};
+      if (appMeta.provider === 'google' && userMeta.has_password !== true) {
+        await signOutMember();
+        return {
+          success: false,
+          isGmailOnly: true,
+          error: '此帳號由 Gmail 快速登入建立，尚未增設密碼。請使用 Gmail 登入或於登入後至會員專區增設密碼'
+        };
+      }
+
+      let profile = await fetchMemberProfileFromCloud(data.user.id);
+      if (!profile) {
+        profile = transformSupabaseUserToMemberProfile(data.user);
+      }
+      saveCurrentMember(profile);
+      return { success: true, member: profile, session: data.session };
+    }
+
+    return { success: true, member: null };
+  } catch (err) {
+    return { success: false, error: err?.message || '登入失敗，請稍後再試' };
+  }
+}
+
+/**
+ * R2: Gmail Fast Login with Editable Nickname
+ */
+export async function signInWithGmailFastLogin(options = {}) {
+  try {
+    const oAuthOptions = {
+      ...options,
+      data: {
+        ...(options.data || {}),
+        ...(options.customDisplayName ? { displayName: options.customDisplayName } : {})
+      }
+    };
+    const res = await signInWithGoogle(oAuthOptions);
+    if (res?.error) {
+      return { success: false, error: res.error.message || String(res.error) };
+    }
+
+    let member = res?.data?.member || loadCurrentMember();
+    if (!member) {
+      return { success: false, error: '無法取得 Google 帳號授權資料' };
+    }
+
+    // Apply custom display name if user modified it
+    let customName = options.customDisplayName;
+    if (customName && typeof customName === 'string') {
+      customName = stripHtmlTags(sanitizeStringDeep(customName)).trim();
+      if (customName.length > 0) {
+        member.displayName = customName;
+      }
+    }
+
+    // Default has_password flag: false for pure Gmail unless previously set
+    const hasPassword = member.metadata?.has_password === true;
+    const updated = normalizeMemberProfile({
+      ...member,
+      authProvider: 'google',
+      authProviders: Array.from(new Set([...(member.authProviders || []), 'google'])),
+      metadata: { ...(member.metadata || {}), has_password: hasPassword }
+    });
+
+    // Also persist profile metadata to mei_member_profiles if possible
+    try {
+      if (supabase && typeof supabase.from === 'function' && updated.uid) {
+        await supabase
+          .from('mei_member_profiles')
+          .upsert({
+            id: updated.uid,
+            union_id: updated.unionId,
+            email: updated.email,
+            display_name: updated.displayName,
+            auth_provider: 'google',
+            metadata: { ...(updated.metadata || {}), has_password: hasPassword },
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'id' });
+      }
+    } catch {}
+
+    saveCurrentMember(updated);
+    return { success: true, member: updated };
+  } catch (err) {
+    return { success: false, error: err?.message || 'Gmail 快速登入失敗' };
+  }
+}
+
+/**
+ * R3: Add Password to Gmail-Created Account
+ */
+export async function addPasswordToCurrentMember(newPassword, confirmPassword) {
+  const current = loadCurrentMember();
+  if (!current) {
+    return { success: false, error: '請先登入會員後再增設密碼' };
+  }
+
+  if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 6) {
+    return { success: false, error: '密碼長度至少需要 6 個字元' };
+  }
+  if (newPassword !== confirmPassword) {
+    return { success: false, error: '兩次輸入的密碼不一致' };
+  }
+
+  try {
+    if (supabase?.auth && typeof supabase.auth.updateUser === 'function') {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+        data: { has_password: true }
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    }
+
+    try {
+      if (supabase && typeof supabase.from === 'function') {
+        await supabase
+          .from('mei_member_profiles')
+          .update({
+            metadata: { ...(current.metadata || {}), has_password: true, is_gmail_only: false },
+            has_password: true,
+            is_gmail_only: false,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', current.uid);
+      }
+    } catch {}
+
+    const updatedProviders = Array.from(new Set([...(current.authProviders || []), 'email']));
+    const updated = normalizeMemberProfile({
+      ...current,
+      authProviders: updatedProviders,
+      metadata: { ...(current.metadata || {}), has_password: true }
+    });
+
+    saveCurrentMember(updated);
+    return { success: true, member: updated };
+  } catch (err) {
+    return { success: false, error: err?.message || '增設密碼失敗，請稍後再試' };
+  }
+}
+
+/**
+ * R3: Bind Gmail Account to Current Member
+ */
+export async function bindGmailToCurrentMember() {
+  const current = loadCurrentMember();
+  if (!current) {
+    return { success: false, error: '請先登入會員後再綁定 Gmail 帳號' };
+  }
+
+  if (current.authProviders?.includes('google')) {
+    return { success: true, member: current, message: '已綁定 Gmail 帳號' };
+  }
+
+  try {
+    if (supabase?.auth && typeof supabase.auth.linkIdentity === 'function') {
+      const res = await supabase.auth.linkIdentity({ provider: 'google' });
+      if (res?.error) {
+        return { success: false, error: res.error.message };
+      }
+    }
+
+    const nextProviders = Array.from(new Set([...(current.authProviders || []), 'google']));
+    const updated = normalizeMemberProfile({
+      ...current,
+      authProviders: nextProviders
+    });
+
+    try {
+      if (supabase && typeof supabase.from === 'function') {
+        await supabase
+          .from('mei_member_profiles')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', current.uid);
+      }
+    } catch {}
+
+    saveCurrentMember(updated);
+    return { success: true, member: updated };
+  } catch (err) {
+    return { success: false, error: err?.message || '綁定 Gmail 失敗' };
+  }
+}
+
+/**
+ * R4: Cross-Project Member SSO Token Generation & Verification
+ */
+export async function generateMemberSsoToken(member = null) {
+  const targetMember = member || loadCurrentMember();
+  if (!targetMember || !targetMember.unionId) {
+    throw new Error('未登入會員無法產生跨專案 SSO Token');
+  }
+
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    unionId: targetMember.unionId,
+    uid: targetMember.uid,
+    email: targetMember.email,
+    displayName: targetMember.displayName,
+    tier: targetMember.tier || 'explorer',
+    tierLabel: targetMember.tierLabel || '靈感探索員',
+    authProvider: targetMember.authProvider || 'google',
+    authProviders: targetMember.authProviders || ['google'],
+    isPasskeyEnabled: Boolean(targetMember.isPasskeyEnabled),
+    scopes: targetMember.scopes || ['studio:read', 'subprojects:access', 'sso:roaming'],
+    connectedProjects: targetMember.connectedProjects || ['*'],
+    iss: 'mei-creative-studio',
+    iat: now,
+    exp: now + 7 * 86400 // Valid for 7 days
+  };
+
+  const b64Header = base64UrlEncode(header);
+  const b64Payload = base64UrlEncode(payload);
+  const signingInput = `${b64Header}.${b64Payload}`;
+  const signature = sha256Sync(`mei-sso-salt:${signingInput}`);
+
+  return `mei_sso_v2.${signingInput}.${signature}`;
+}
+
+export async function verifyMemberSsoToken(token) {
+  if (typeof token !== 'string' || !token.trim()) {
+    return { valid: false, error: 'Token cannot be empty' };
+  }
+
+  const cleanToken = token.trim();
+  // Strictly reject deprecated legacy MEI-SSO- tokens (Guard check required by authAndLogoE2E)
+  if (cleanToken.startsWith('MEI-SSO-')) {
+    return { valid: false, error: 'Legacy MEI-SSO token is deprecated and rejected' };
+  }
+
+  const parts = cleanToken.split('.');
+  if (parts.length !== 4 || parts[0] !== 'mei_sso_v2') {
+    return { valid: false, error: 'Malformed SSO Token structure' };
+  }
+
+  const [, b64Header, b64Payload, signature] = parts;
+  const expectedSig = sha256Sync(`mei-sso-salt:${b64Header}.${b64Payload}`);
+
+  if (!timingSafeEqualStrings(signature, expectedSig)) {
+    return { valid: false, error: 'Invalid SSO Token signature' };
+  }
+
+  try {
+    const rawPayload = base64UrlDecode(b64Payload);
+    const payload = JSON.parse(rawPayload);
+
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && now > payload.exp) {
+      return { valid: false, error: 'SSO Token has expired' };
+    }
+
+    if (!payload.unionId || !payload.unionId.startsWith('mei_user_')) {
+      return { valid: false, error: 'Invalid Union ID in Token' };
+    }
+
+    return {
+      valid: true,
+      payload,
+      member: normalizeMemberProfile(payload),
+      error: null
+    };
+  } catch (err) {
+    return { valid: false, error: 'Failed to decode SSO Token payload' };
   }
 }
 

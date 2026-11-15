@@ -461,6 +461,12 @@ export function sanitizeStringDeep(inputStr) {
         return '[安全過濾：惡意指令已被阻擋]';
       });
     }
+
+    // 3. 零系統 Emoji 規範過濾 (Zero Unicode Emoji Standard)
+    cleaned = cleaned.replace(
+      /[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1FA00}-\u{1FAFF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}]/gu,
+      ''
+    );
   } while (cleaned !== prev && pass < 4);
 
   if (didInterceptXss) {
