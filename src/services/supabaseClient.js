@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Safe fallback constants for testing environments (Vitest/jsdom) without .env.local
-export const DEFAULT_SUPABASE_URL = 'https://mdxnjlhjqskqsndeiepy.supabase.co';
+// Dedicated independent Supabase database for Mei Creative Studio (xtyuyuralrnwzsjvyslp in ap-northeast-1)
+export const DEFAULT_SUPABASE_URL = 'https://xtyuyuralrnwzsjvyslp.supabase.co';
 export const DEFAULT_SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1keG5qbGhqcXNrcXNuZGVpZXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODEzMTAsImV4cCI6MjA5NDk1NzMxMH0.MKu52vp4uoqF48WVTpbD2NxLlOYOGxjG4-m4Pij_L8s';
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0eXV5dXJhbHJud3pzanZ5c2xwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ3MTUxOTgsImV4cCI6MjExMDI5MTE5OH0.a_jvAqs6xH8wUf6-x9pn6uAtbfH6qTjdF3QK3vDQ6FY';
 
 export function isValidHttpUrl(urlString) {
   if (typeof urlString !== 'string') return false;

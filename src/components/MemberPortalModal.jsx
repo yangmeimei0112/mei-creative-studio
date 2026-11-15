@@ -7,38 +7,6 @@ import {
   bindPasskeyToCurrentMember,
   signOutMember
 } from '../services/memberAuthService';
-import * as supabaseClientModule from '../services/supabaseClient';
-
-function safeGetEffectiveConfig() {
-  try {
-    if (typeof supabaseClientModule.getEffectiveSupabaseConfig === 'function') {
-      return supabaseClientModule.getEffectiveSupabaseConfig();
-    }
-  } catch {
-    // Fallback when module is partially mocked in unit tests
-  }
-  return {
-    supabaseUrl:
-      typeof window !== 'undefined'
-        ? window.localStorage?.getItem('mei_custom_supabase_url') || ''
-        : '',
-    supabaseAnonKey:
-      typeof window !== 'undefined'
-        ? window.localStorage?.getItem('mei_custom_supabase_anon_key') || ''
-        : ''
-  };
-}
-
-function safeIsValidHttpUrl(val) {
-  try {
-    if (typeof supabaseClientModule.isValidHttpUrl === 'function') {
-      return supabaseClientModule.isValidHttpUrl(val);
-    }
-  } catch {
-    // Fallback when module is partially mocked
-  }
-  return /^https?:\/\/.+/i.test(String(val || '').trim());
-}
 
 export default function MemberPortalModal({
   isOpen,
@@ -49,62 +17,16 @@ export default function MemberPortalModal({
 }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSupabaseConfig, setShowSupabaseConfig] = useState(false);
-  const [customSupabaseUrl, setCustomSupabaseUrl] = useState('');
-  const [customSupabaseAnonKey, setCustomSupabaseAnonKey] = useState('');
 
   const bioCap = detectBiometricCapability();
 
   useEffect(() => {
     if (isOpen) {
       setErrorMsg('');
-      const effective = safeGetEffectiveConfig();
-      setCustomSupabaseUrl(effective.supabaseUrl || '');
-      setCustomSupabaseAnonKey(effective.supabaseAnonKey || '');
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const handleSaveSupabaseConfig = () => {
-    setErrorMsg('');
-    const trimmedUrl = String(customSupabaseUrl || '').trim();
-    const trimmedKey = String(customSupabaseAnonKey || '').trim();
-    if (!safeIsValidHttpUrl(trimmedUrl) || !trimmedKey) {
-      setErrorMsg('請輸入有效的 Supabase Project URL (https://...) 與 Anon Public Key');
-      return;
-    }
-    try {
-      if (typeof supabaseClientModule.saveCustomSupabaseConfig === 'function') {
-        supabaseClientModule.saveCustomSupabaseConfig(trimmedUrl, trimmedKey);
-      }
-    } catch {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem('mei_custom_supabase_url', trimmedUrl);
-        window.localStorage.setItem('mei_custom_supabase_anon_key', trimmedKey);
-      }
-    }
-    onNotify?.('已儲存自訂 Supabase 雲端資料庫連線設定', 'database');
-    setShowSupabaseConfig(false);
-  };
-
-  const handleResetSupabaseConfig = () => {
-    setErrorMsg('');
-    try {
-      if (typeof supabaseClientModule.clearCustomSupabaseConfig === 'function') {
-        supabaseClientModule.clearCustomSupabaseConfig();
-      }
-    } catch {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.removeItem('mei_custom_supabase_url');
-        window.localStorage.removeItem('mei_custom_supabase_anon_key');
-      }
-    }
-    const effective = safeGetEffectiveConfig();
-    setCustomSupabaseUrl(effective.supabaseUrl || '');
-    setCustomSupabaseAnonKey(effective.supabaseAnonKey || '');
-    onNotify?.('已還原預設 Supabase 雲端連線設定', 'rotate-ccw');
-  };
 
   const handleOAuthLogin = async (provider = 'google') => {
     setErrorMsg('');
@@ -393,91 +315,6 @@ export default function MemberPortalModal({
             </div>
           </div>
         )}
-
-        {/* 進階：自訂 Supabase 雲端連線設定（預設收合） */}
-        <div className="mt-5 pt-4 border-t border-sky-400/20">
-          <button
-            type="button"
-            data-testid="toggle-supabase-config-btn"
-            aria-expanded={showSupabaseConfig}
-            onClick={() => setShowSupabaseConfig((prev) => !prev)}
-            className="w-full flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-300 transition-colors"
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <LucideIcon name="database" size={14} className="text-sky-500" />
-              <span>Supabase 雲端資料庫連線設定</span>
-            </span>
-            <LucideIcon
-              name="chevron-down"
-              size={14}
-              className={`transition-transform duration-200 ${showSupabaseConfig ? 'rotate-180' : ''}`}
-            />
-          </button>
-
-          {showSupabaseConfig && (
-            <div
-              data-testid="supabase-config-panel"
-              className="mt-3 p-3.5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-sky-400/20 space-y-3"
-            >
-              <div>
-                <label
-                  htmlFor="supabase-custom-url-input"
-                  className="block text-[11px] font-semibold text-slate-700 dark:text-slate-200 mb-1"
-                >
-                  Supabase Project URL
-                </label>
-                <input
-                  id="supabase-custom-url-input"
-                  data-testid="supabase-url-input"
-                  type="url"
-                  value={customSupabaseUrl}
-                  onChange={(e) => setCustomSupabaseUrl(e.target.value)}
-                  placeholder="https://your-project.supabase.co"
-                  className="w-full px-3 py-2 rounded-xl text-xs bg-white/90 dark:bg-slate-950/80 border border-sky-400/25 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-400/50"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="supabase-custom-anon-key-input"
-                  className="block text-[11px] font-semibold text-slate-700 dark:text-slate-200 mb-1"
-                >
-                  Supabase Anon Public Key
-                </label>
-                <input
-                  id="supabase-custom-anon-key-input"
-                  data-testid="supabase-anon-key-input"
-                  type="text"
-                  value={customSupabaseAnonKey}
-                  onChange={(e) => setCustomSupabaseAnonKey(e.target.value)}
-                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                  className="w-full px-3 py-2 rounded-xl text-xs font-mono bg-white/90 dark:bg-slate-950/80 border border-sky-400/25 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-400/50"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-1">
-                <button
-                  type="button"
-                  data-testid="reset-supabase-config-btn"
-                  onClick={handleResetSupabaseConfig}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200/80 transition-colors"
-                >
-                  <LucideIcon name="rotate-ccw" size={12} />
-                  <span>還原預設</span>
-                </button>
-                <button
-                  type="button"
-                  data-testid="save-supabase-config-btn"
-                  onClick={handleSaveSupabaseConfig}
-                  className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full text-[11px] font-semibold btn-sky-primary"
-                >
-                  <LucideIcon name="check" size={12} />
-                  <span>套用連線設定</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );

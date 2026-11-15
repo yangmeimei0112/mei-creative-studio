@@ -385,17 +385,17 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
       expect(clientSource).toContain('autoRefreshToken: true');
       expect(clientSource).toContain('persistSession: true');
       expect(clientSource).toContain("storageKey: 'mei_studio_supabase_auth_token_v1'");
-      expect(clientSource).toContain('https://mdxnjlhjqskqsndeiepy.supabase.co');
+      expect(clientSource).toContain('https://xtyuyuralrnwzsjvyslp.supabase.co');
 
       const envExamplePath = path.resolve('.env.example');
       expect(fs.existsSync(envExamplePath)).toBe(true);
       const envSource = fs.readFileSync(envExamplePath, 'utf-8');
-      expect(envSource).toContain('VITE_SUPABASE_URL=https://mdxnjlhjqskqsndeiepy.supabase.co');
+      expect(envSource).toContain('VITE_SUPABASE_URL=https://xtyuyuralrnwzsjvyslp.supabase.co');
       expect(envSource).toContain('VITE_SUPABASE_ANON_KEY=');
 
       // 2. 具現化 Supabase 客戶端實體屬性檢驗 (Live Client Instance Verification)
       expect(supabase).toBeDefined();
-      expect(supabase.supabaseUrl).toBe('https://mdxnjlhjqskqsndeiepy.supabase.co');
+      expect(supabase.supabaseUrl).toBe('https://xtyuyuralrnwzsjvyslp.supabase.co');
       expect(supabase.supabaseKey).toBeDefined();
       expect(supabase.auth).toBeDefined();
       expect(supabase.auth.flowType).toBe('pkce');
@@ -1269,7 +1269,7 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
       }
     });
 
-    it('R1-F1: MemberPortalModal 支援展開自訂 Supabase 連線設定、儲存與還原預設', () => {
+    it('R1-F1: MemberPortalModal 全面原生支援獨立雲端資料庫，不暴露手動設定欄位', () => {
       const onNotify = vi.fn();
       render(
         <MemberPortalModal
@@ -1281,33 +1281,16 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
         />
       );
 
-      const toggleBtn = screen.getByTestId('toggle-supabase-config-btn');
+      // 驗證已徹底移除手動資料庫連線切換介面
+      expect(screen.queryByTestId('toggle-supabase-config-btn')).not.toBeInTheDocument();
       expect(screen.queryByTestId('supabase-config-panel')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('supabase-url-input')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('supabase-anon-key-input')).not.toBeInTheDocument();
 
-      fireEvent.click(toggleBtn);
-      expect(screen.getByTestId('supabase-config-panel')).toBeInTheDocument();
-
-      const urlInput = screen.getByTestId('supabase-url-input');
-      const keyInput = screen.getByTestId('supabase-anon-key-input');
-
-      fireEvent.change(urlInput, { target: { value: 'https://user-studio.supabase.co' } });
-      fireEvent.change(keyInput, { target: { value: 'user-anon-key-xyz' } });
-      fireEvent.click(screen.getByTestId('save-supabase-config-btn'));
-
-      const saved = getEffectiveSupabaseConfig();
-      expect(saved.supabaseUrl).toBe('https://user-studio.supabase.co');
-      expect(saved.supabaseAnonKey).toBe('user-anon-key-xyz');
-      expect(onNotify).toHaveBeenCalledWith(
-        expect.stringContaining('Supabase'),
-        'database'
-      );
-
-      // Re-open panel and reset to default
-      fireEvent.click(screen.getByTestId('toggle-supabase-config-btn'));
-      fireEvent.click(screen.getByTestId('reset-supabase-config-btn'));
-      const restored = getEffectiveSupabaseConfig();
-      expect(restored.supabaseUrl).toBe(DEFAULT_SUPABASE_URL);
-      expect(restored.supabaseAnonKey).toBe(DEFAULT_SUPABASE_ANON_KEY);
+      // 驗證全站預設採用工作室獨立資料庫
+      const effective = getEffectiveSupabaseConfig();
+      expect(effective.supabaseUrl).toBe('https://xtyuyuralrnwzsjvyslp.supabase.co');
+      expect(effective.supabaseAnonKey).toBe(DEFAULT_SUPABASE_ANON_KEY);
     });
   });
 });

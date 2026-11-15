@@ -260,6 +260,82 @@ export function loadCurrentMember() {
 }
 
 /**
+ * 將會員資料雙向同步至 Supabase 雲端獨立資料庫 (public.mei_member_profiles)
+ */
+export async function syncMemberProfileToCloud(profile, customClient = supabase) {
+  if (!profile || typeof profile !== 'object') {
+    return { data: null, error: new Error('Invalid profile payload') };
+  }
+  if (!customClient || typeof customClient.from !== 'function') {
+    return { data: null, error: null };
+  }
+
+  const normalized = normalizeMemberProfile(profile);
+  if (!normalized) return { data: null, error: new Error('Invalid normalized profile') };
+
+  const uid = normalized.uid || normalized.id;
+  if (!uid || uid === 'guest' || !/^[0-9a-fA-F-]{36}$/.test(uid)) {
+    return { data: null, error: null };
+  }
+
+  const row = {
+    id: uid,
+    union_id: normalized.unionId,
+    email: normalized.email,
+    display_name: normalized.displayName,
+    avatar_url: normalized.avatarUrl || '',
+    tier: normalized.tier || 'explorer',
+    auth_provider: normalized.authProvider || 'google',
+    is_passkey_enabled: Boolean(normalized.isPasskeyEnabled),
+    connected_projects: normalized.connectedProjects || ['*'],
+    last_sign_in_at: normalized.lastSignInAt || new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  try {
+    const { data, error } = await customClient
+      .from('mei_member_profiles')
+      .upsert(row, { onConflict: 'id' });
+    return { data, error };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
+/**
+ * 從 Supabase 雲端獨立資料庫載入最新會員個人資料
+ */
+export async function fetchMemberProfileFromCloud(userId, customClient = supabase) {
+  if (!userId || !customClient || typeof customClient.from !== 'function') {
+    return null;
+  }
+  try {
+    const { data, error } = await customClient
+      .from('mei_member_profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    return normalizeMemberProfile({
+      unionId: data.union_id,
+      uid: data.id,
+      email: data.email,
+      displayName: data.display_name,
+      avatarUrl: data.avatar_url,
+      tier: data.tier,
+      authProvider: data.auth_provider,
+      isPasskeyEnabled: data.is_passkey_enabled,
+      connectedProjects: data.connected_projects,
+      lastSignInAt: data.last_sign_in_at
+    });
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Write member snapshot and broadcast to cross-tab channels
  */
 export function saveCurrentMember(profile) {
@@ -277,6 +353,9 @@ export function saveCurrentMember(profile) {
     }
   }
   broadcastMemberSsoEvent(normalized ? 'MEMBER_SIGNED_IN' : 'MEMBER_SIGNED_OUT', normalized);
+  if (normalized?.uid && /^[0-9a-fA-F-]{36}$/.test(normalized.uid)) {
+    syncMemberProfileToCloud(normalized).catch(() => {});
+  }
   return normalized;
 }
 
