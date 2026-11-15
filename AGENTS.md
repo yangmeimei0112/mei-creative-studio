@@ -13,10 +13,11 @@
 - **亮色模式高對比淡藍底色**：`[data-testid="studio-toast"]` 在亮色模式下必須使用淡藍色高對比底色 `bg-sky-100/95`、深色文字 `text-slate-900` 與邊框 `border-sky-300/80`（深色模式為 `dark:bg-sky-950/95 dark:text-white dark:border-sky-400/40`），嚴禁使用透明或純白底色。
 - **行動端浮動元件防重疊**：在手機端當管理員模式解鎖（顯示右下角 `admin-chat-fab`）時，Toast 必須自動上移至 `bottom-36 sm:bottom-24`，並加上 `max-w-[calc(100vw-2rem)]` 防止窄屏溢位。
 
-## 3. 全站聯通雲端會員認證規範 (Supabase Cloud SSO v2.0 — 方案二)
-- 嚴格採用 `@supabase/supabase-js` 真實雲端認證（Google OAuth 主力登入、Apple OAuth 預留介面與降級防護、Email 登入/註冊、Passkey 生物辨識）。
-- 嚴禁重新引入本地假會員產生器、`MEI-SSO-` 跨裝置漫遊碼或雙軌混合分頁。
-- 與 `MeiStudyFlow` 共用 Supabase 實例時，所有工作室資料表必須維持 `mei_member_` 前綴隔離與 `FORCE ROW LEVEL SECURITY`。
+## 3. 全站會員註冊、Gmail快速登入、憑證綁定與跨專案 SSO 規範 (Supabase Cloud SSO v3.0)
+- **正式雲端註冊規範**：會員註冊表單必須包含「暱稱」、「信箱 (Email)」、「密碼」、「密碼雙重確認」與「真人圖形/數學防機器人驗證碼」，經客戶端防護校驗後透過 Supabase Auth 完成正式註冊與 `mei_member_profiles` 檔案建立。
+- **Gmail 快速登入與雙重憑證綁定**：登入介面支援信箱密碼登入與「Gmail 帳號快速登入」；登入後之會員專區必須支援「綁定 Gmail 帳號」與「綁定生物辨識金鑰 (Touch ID / Face ID / Windows Hello Passkey)」。
+- **跨專案聯通架構 (Cross-Project SSO Hub)**：全站架構必須預留旗下所有子專案網站之漫遊授權（`connected_projects TEXT[] DEFAULT ARRAY['*']`、同源 `BroadcastChannel` 廣播、跨域子專案返回大廳 SDK `mei-dock.js` 與 JWT 授權校驗）。
+- **獨立資料庫與列級安全**：嚴格直連「咩創意工作室」專屬獨立資料庫（`xtyuyuralrnwzsjvyslp` in `ap-northeast-1`），全表維持 `FORCE ROW LEVEL SECURITY` 屬主存取防護。
 
 ## 4. 零系統 Emoji 與品牌視覺規範
 - 全站原始碼、SVG、HTML 與測試檔案嚴格禁止任何系統 Unicode Emoji，100% 使用 Lucide 向量圖示（`strokeWidth=1.75`、`absoluteStrokeWidth=true`）。
