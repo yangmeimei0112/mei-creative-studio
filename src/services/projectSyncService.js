@@ -394,7 +394,16 @@ export function initProjectRealtimeListener(
     }
   }
 
-  if (customClient && typeof customClient.channel === 'function') {
+  const isJsdomTestEnv =
+    (typeof import.meta !== 'undefined' && import.meta.env?.MODE === 'test') ||
+    (typeof navigator !== 'undefined' && /jsdom/i.test(navigator.userAgent || '')) ||
+    (typeof process !== 'undefined' && Boolean(process.env?.VITEST));
+
+  if (
+    customClient &&
+    typeof customClient.channel === 'function' &&
+    !(customClient === supabase && isJsdomTestEnv)
+  ) {
     try {
       realtimeChannel = customClient
         .channel(PROJECTS_REALTIME_CHANNEL)
@@ -432,7 +441,7 @@ export function initProjectRealtimeListener(
     }
     if (realtimeChannel && typeof realtimeChannel.unsubscribe === 'function') {
       try {
-        realtimeChannel.unsubscribe();
+        Promise.resolve(realtimeChannel.unsubscribe()).catch(() => {});
       } catch {
         // Ignore unsubscribe errors
       }

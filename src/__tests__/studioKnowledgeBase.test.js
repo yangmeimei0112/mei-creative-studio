@@ -188,12 +188,12 @@ describe('工作室領域知識庫 (studioKnowledgeBase) 規格與提示詞生�
       const hostileProjects = [
         {
           id: 'hostile-1',
-          title: '超級專案 🚀✨',
-          category: '分類 🤖',
-          status: 'online 🟢',
-          visibility: 'public 🔒',
-          url: 'https://example.com/🎉',
-          description: '簡介 ✨🎈',
+          title: '超級專案 \u{1F680}\u{2728}',
+          category: '分類 \u{1F916}',
+          status: 'online \u{1F7E2}',
+          visibility: 'public \u{1F512}',
+          url: 'https://example.com/\u{1F389}',
+          description: '簡介 \u{2728}\u{1F388}',
           pinned: true
         }
       ];
@@ -211,10 +211,10 @@ describe('工作室領域知識庫 (studioKnowledgeBase) 規格與提示詞生�
     it('在更新日誌的所有欄位（日期、版本、標題、摘要）中注入 Emoji，產生的提示詞絕無任何 Emoji 外洩', () => {
       const hostileChangelog = [
         {
-          date: '2026-11-10 📅',
-          version: 'v1.0.0 ⭐',
-          title: '重大發布 🔥',
-          summary: '全面升級 💡'
+          date: '2026-11-10 \u{1F4C5}',
+          version: 'v1.0.0 \u{2B50}',
+          title: '重大發布 \u{1F525}',
+          summary: '全面升級 \u{1F4A1}'
         }
       ];
 
@@ -226,12 +226,12 @@ describe('工作室領域知識庫 (studioKnowledgeBase) 規格與提示詞生�
       expect(prompt).toContain('全面升級');
     });
 
-    it('支援擴展區段符號（如 🪐、🪵、🪟、🪄）與複合表情符號之深度清洗，且保留繁體中文與 ∞', () => {
+    it('支援擴展區段符號（如 \\u{1FA90}、\\u{1FAB5}、\\u{1FA9F}、\\u{1FA84}）與複合表情符號之深度清洗，且保留繁體中文與 ∞', () => {
       const extendedEmojiProjects = [
         {
-          title: '行星探索 🪐',
-          category: '木頭工藝 🪵',
-          description: '魔法視窗 🪟🪄 與國旗 🇹🇼 熔化 🫠'
+          title: '行星探索 \u{1FA90}',
+          category: '木頭工藝 \u{1FAB5}',
+          description: '魔法視窗 \u{1FA9F}\u{1FA84} 與國旗 \u{1F1F9}\u{1F1FC} 熔化 \u{1FAE0}'
         }
       ];
       const prompt = buildStudioSystemPrompt({ projects: extendedEmojiProjects });
@@ -239,7 +239,7 @@ describe('工作室領域知識庫 (studioKnowledgeBase) 規格與提示詞生�
       expect(prompt).toContain('行星探索');
       expect(prompt).toContain('木頭工藝');
       expect(prompt).toContain('魔法視窗');
-      expect(cleanEmoji('創意無限∞咩有極限 🚀✨')).toBe('創意無限∞咩有極限 ');
+      expect(cleanEmoji('創意無限∞咩有極限 \u{1F680}\u{2728}')).toBe('創意無限∞咩有極限 ');
     });
   });
 });

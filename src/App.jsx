@@ -19,7 +19,8 @@ import { STUDIO_CONFIG } from './data/defaultData';
 import {
   loadCurrentMember,
   signOutMember,
-  initAuthListener
+  initAuthListener,
+  diagnoseOAuthError
 } from './services/memberAuthService';
 import {
   fetchCloudProjects,
@@ -221,6 +222,77 @@ export default function App() {
       if (themeTransitionTimerRef.current) clearTimeout(themeTransitionTimerRef.current);
     };
   }, []);
+
+  // 監聽並解析 URL OAuth 回呼錯誤參數 (?error= 或 #error=)，以繁體中文顯示 Toast 並清理網址列
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      let errorParam = null;
+      let errorDescription = null;
+      let errorCode = null;
+
+      // 1. 檢查 URL 查詢參數 (?error=...&error_description=...)
+      if (window.location.search) {
+        const searchParams = new URLSearchParams(window.location.search);
+        if (searchParams.has('error') || searchParams.has('error_description')) {
+          errorParam = searchParams.get('error');
+          errorDescription = searchParams.get('error_description');
+          errorCode = searchParams.get('error_code');
+        }
+      }
+
+      // 2. 若查詢參數無錯誤，檢查 URL Hash 參數 (#error=...&error_description=...)
+      if (!errorParam && !errorDescription && window.location.hash) {
+        const rawHash = window.location.hash.replace(/^#/, '');
+        const hashParams = new URLSearchParams(rawHash);
+        if (hashParams.has('error') || hashParams.has('error_description')) {
+          errorParam = hashParams.get('error');
+          errorDescription = hashParams.get('error_description');
+          errorCode = hashParams.get('error_code');
+        }
+      }
+
+      // 3. 若捕獲 OAuth 錯誤，轉譯為繁體中文並透過 Toast 提示
+      if (errorParam || errorDescription) {
+        const diag = diagnoseOAuthError({
+          error: errorParam,
+          code: errorCode || errorParam,
+          error_description: errorDescription,
+          message: errorDescription || errorParam
+        });
+
+        const displayMessage = diag ? `${diag.title}：${diag.message}` : 'Google 帳號授權流程發生錯誤，請稍後再試';
+        showToast(displayMessage, 'circle-alert');
+
+        // 4. 清除網址列中的 OAuth 錯誤參數，維護乾淨的 URL
+        let newSearch = '';
+        if (window.location.search) {
+          const cleanParams = new URLSearchParams(window.location.search);
+          cleanParams.delete('error');
+          cleanParams.delete('error_description');
+          cleanParams.delete('error_code');
+          newSearch = cleanParams.toString() ? `?${cleanParams.toString()}` : '';
+        }
+
+        let newHash = '';
+        if (window.location.hash) {
+          const cleanHashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+          cleanHashParams.delete('error');
+          cleanHashParams.delete('error_description');
+          cleanHashParams.delete('error_code');
+          newHash = cleanHashParams.toString() ? `#${cleanHashParams.toString()}` : '';
+        }
+
+        const cleanUrl = `${window.location.pathname || '/'}${newSearch}${newHash}`;
+        if (window.history && typeof window.history.replaceState === 'function') {
+          window.history.replaceState(null, document.title || '', cleanUrl);
+        }
+      }
+    } catch {
+      // 容錯防護
+    }
+  }, [showToast]);
 
   // 同步深淺色主題至 html.dark 並啟用全域 750ms 微階梯波浪過渡動畫
   useEffect(() => {
@@ -1024,6 +1096,9 @@ export default function App() {
           setIsAdminModalOpen(true);
         }}
         onOpenBackupModal={() => setIsBackupModalOpen(true)}
+        onOpenInstallGuide={() =>
+          setSdkModalState({ open: true, mode: 'install', project: null })
+        }
         onReplayEntrance={handleReplayEntrance}
       />
 

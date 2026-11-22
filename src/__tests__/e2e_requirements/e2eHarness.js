@@ -7,6 +7,7 @@
  */
 
 import { vi, beforeEach, afterEach, expect } from 'vitest';
+import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -345,19 +346,32 @@ export function createMockSupabaseClient(initialState = {}) {
       if (initialState.oauthError) {
         return { data: null, error: initialState.oauthError };
       }
+      let pendingNickname = null;
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        try {
+          pendingNickname = window.sessionStorage.getItem('mei_pending_oauth_nickname');
+        } catch {}
+      }
       const customName =
+        pendingNickname ||
         options?.queryParams?.customDisplayName ||
         options?.data?.displayName ||
         options?.data?.full_name ||
+        options?.customDisplayName ||
         'Google 認證創作者';
 
+      const oauthUserId = initialState.oauthUser?.id || '00000000-0000-4000-a000-000000000099';
+      const oauthEmail = initialState.oauthUser?.email || 'creator@meistudio.live';
+
       currentUser = {
-        id: initialState.oauthUser?.id || 'google-oauth-user-id-99',
-        email: initialState.oauthUser?.email || 'creator@meistudio.live',
+        id: oauthUserId,
+        email: oauthEmail,
         user_metadata: {
           full_name: customName,
+          displayName: customName,
           picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
           has_password: false,
+          is_gmail_only: true,
           ...(initialState.oauthUser?.user_metadata || {})
         },
         app_metadata: {
@@ -370,8 +384,60 @@ export function createMockSupabaseClient(initialState = {}) {
         access_token: 'mock-google-access-token',
         user: currentUser
       };
+
+      const profilesTable = getTableData('mei_member_profiles');
+      const existingIdx = profilesTable.findIndex((p) => p.id === oauthUserId);
+      const profileRow = {
+        id: oauthUserId,
+        union_id: `mei_user_${oauthUserId.replace(/-/g, '')}`,
+        email: oauthEmail,
+        display_name: customName,
+        avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
+        tier: 'creator',
+        auth_provider: 'google',
+        auth_providers: ['google'],
+        is_passkey_enabled: false,
+        connected_projects: ['*'],
+        metadata: { has_password: false, is_gmail_only: true },
+        last_sign_in_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      if (existingIdx >= 0) {
+        profilesTable[existingIdx] = { ...profilesTable[existingIdx], ...profileRow };
+      } else {
+        profilesTable.push(profileRow);
+      }
+
+      const memberProfile = {
+        schemaVersion: '2.0.0',
+        unionId: `mei_user_${oauthUserId.replace(/-/g, '')}`,
+        uid: oauthUserId,
+        email: oauthEmail,
+        displayName: customName,
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
+        tier: 'creator',
+        tierLabel: '創意造物者',
+        scopes: ['studio:read', 'subprojects:access', 'subprojects:sync', 'sso:roaming', 'passkey:multi-device'],
+        authProvider: 'google',
+        authProviders: ['google'],
+        isPasskeyEnabled: false,
+        lastSignInAt: new Date().toISOString(),
+        connectedProjects: ['*'],
+        metadata: { has_password: false, is_gmail_only: true }
+      };
+
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          window.localStorage.setItem('mei_universal_member_sso_v1', JSON.stringify(memberProfile));
+          if (window.MeiStudioSSO) {
+            window.MeiStudioSSO.currentMember = memberProfile;
+          }
+        } catch {}
+      }
+
       authListeners.forEach((cb) => cb('SIGNED_IN', currentSession));
-      return { data: { url: 'https://accounts.google.com/o/oauth2/v2/auth' }, error: null };
+      return { data: { provider: provider || 'google', url: 'https://accounts.google.com/o/oauth2/v2/auth' }, error: null };
     }),
     signUp: vi.fn().mockImplementation(async ({ email, password, options = {} } = {}) => {
       if (initialState.signUpError) {
@@ -872,9 +938,29 @@ export function setupE2ETestEnvironment(options = {}) {
       }));
     }
 
-    // 5. Setup BroadcastChannel simulation
+    // 5. Setup BroadcastChannel simulation and location mock
     if (typeof window !== 'undefined') {
       window.BroadcastChannel = MemoryBroadcastChannel;
+      try {
+        if (!window.location?.__isMocked) {
+          const loc = window.location;
+          const mockLoc = {
+            origin: loc?.origin || 'http://localhost:3000',
+            pathname: loc?.pathname || '/',
+            search: loc?.search || '',
+            hash: loc?.hash || '',
+            href: loc?.href || 'http://localhost:3000/',
+            assign: vi.fn(),
+            replace: vi.fn(),
+            reload: vi.fn(),
+            __isMocked: true
+          };
+          delete window.location;
+          window.location = mockLoc;
+        } else if (typeof window.location.assign?.mockClear === 'function') {
+          window.location.assign.mockClear();
+        }
+      } catch {}
     }
     MemoryBroadcastChannel.resetAll();
 
@@ -883,6 +969,7 @@ export function setupE2ETestEnvironment(options = {}) {
   });
 
   afterEach(() => {
+    cleanup();
     vi.restoreAllMocks();
     vi.useRealTimers();
     if (cleanDom && typeof document !== 'undefined') {

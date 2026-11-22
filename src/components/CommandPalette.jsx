@@ -14,6 +14,7 @@ export default function CommandPalette({
   onOpenAdminUnlock,
   onOpenAddProject,
   onOpenBackupModal,
+  onOpenInstallGuide,
   onReplayEntrance
 }) {
   const [query, setQuery] = useState('');
@@ -130,6 +131,22 @@ export default function CommandPalette({
               onOpenAdminUnlock();
             }
           },
+      ...(onOpenInstallGuide
+        ? [
+            {
+              id: 'cmd-install-guide',
+              type: 'command',
+              title: '安裝應用指南 (PWA)',
+              subtitle: '將咩創意工作室安裝至手機主畫面或電腦桌面',
+              icon: 'smartphone',
+              badge: '安裝指引',
+              onExecute: () => {
+                onClose();
+                onOpenInstallGuide();
+              }
+            }
+          ]
+        : []),
       {
         id: 'cmd-backup',
         type: 'command',
@@ -163,6 +180,7 @@ export default function CommandPalette({
     onOpenAdminUnlock,
     onOpenAddProject,
     onOpenBackupModal,
+    onOpenInstallGuide,
     onReplayEntrance
   ]);
 

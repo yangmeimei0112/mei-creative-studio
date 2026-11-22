@@ -335,7 +335,7 @@ describe('Tier 2: Boundary & Corner Cases (Features 1 to 15)', () => {
   // Feature 5: Supabase Database Schema & Migration for Projects (R3-F1)
   // =========================================================================
   describe('Feature 5 Boundaries (R3-F1): Database Schema Edge Cases', () => {
-    const schemaSqlPath = path.resolve('schema_migrations.sql');
+    const schemaSqlPath = path.resolve('supabase/schema_migrations.sql');
     const schemaSql = fs.existsSync(schemaSqlPath) ? fs.readFileSync(schemaSqlPath, 'utf-8') : '';
 
     it('T2-F5-01: Schema enforces valid category constraint check', () => {

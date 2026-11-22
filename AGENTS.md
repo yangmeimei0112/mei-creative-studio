@@ -16,6 +16,7 @@
 ## 3. 全站會員註冊、Gmail快速登入、憑證綁定與跨專案 SSO 規範 (Supabase Cloud SSO v3.0)
 - **正式雲端註冊規範**：會員註冊表單必須包含「暱稱」、「信箱 (Email)」、「密碼」、「密碼雙重確認」與「真人圖形/數學防機器人驗證碼」，經客戶端防護校驗後透過 Supabase Auth 完成正式註冊與 `mei_member_profiles` 檔案建立。
 - **Gmail 快速登入與雙重憑證綁定**：登入介面支援信箱密碼登入與「Gmail 帳號快速登入」；登入後之會員專區必須支援「綁定 Gmail 帳號」與「綁定生物辨識金鑰 (Touch ID / Face ID / Windows Hello Passkey)」。
+- **原生 Google OAuth 強制帳號選擇規範**：點擊 Google／Gmail 登入必須調用 `supabase.auth.signInWithOAuth({ provider: 'google', options: { queryParams: { access_type: 'offline', prompt: 'select_account' } } })` 導向真實 Google 官方帳號選擇畫面；嚴禁設定 `skipBrowserRedirect: true` 或在未完成 OAuth 授權前自動合成 `creator@meistudio.live` 等本地假帳號。
 - **跨專案聯通架構 (Cross-Project SSO Hub)**：全站架構必須預留旗下所有子專案網站之漫遊授權（`connected_projects TEXT[] DEFAULT ARRAY['*']`、同源 `BroadcastChannel` 廣播、跨域子專案返回大廳 SDK `mei-dock.js` 與 JWT 授權校驗）。
 - **獨立資料庫與列級安全**：嚴格直連「咩創意工作室」專屬獨立資料庫（`xtyuyuralrnwzsjvyslp` in `ap-northeast-1`），全表維持 `FORCE ROW LEVEL SECURITY` 屬主存取防護。
 
@@ -29,3 +30,19 @@
 - **子軌道閘門直讀查核**：彙整多代理（Teamwork）進度前，必須直接核對所有活躍子協調員的 `GATE_STATUS.md`（不可只看頂層 `progress.md`）；凡出現 `FAIL`、`REQUEST_CHANGES` 或 `INTEGRITY VIOLATION`，必須如實標註「審查退回／待修復項目」及影響檔案。
 - **佇列合併與單一固定狀態看板**：多條非同步通知同時抵達或系統重啟恢復時，必須合併去重為**單一結構化狀態看板**，固定分四欄呈現：`已完成`、`進行中`、`待處理／阻礙與退回原因`、`需要您配合或輸入的事項`。
 - **防刷屏派遣規範**：啟動 `teamwork` 等長駐背景協調器時，必須明確指定 Sentinel 僅在事件觸發（里程碑完成／閘門退回／需要使用者輸入／停滯超過 20 分鐘異常）時主動回報，禁止定時發送純健康確認訊息。
+
+## 6. 全站檔案分類標準、AI 代理檢索索引與無用檔案清理規範 (Workspace File Taxonomy & Hygiene Standard)
+- **詳細架構索引入口**：任何 AI 代理在查找、新增、修改或搬移檔案前，必須優先查閱 `docs/FILE_TAXONOMY_AND_INDEX.md` 之「AI 代理任務導向快速檢索表」與「標準目錄分類架構」。
+- **標準目錄職責分區**：
+  1. `src/components/`：UI 視覺與互動元件（導覽列、Bento 網格、會員專區彈窗、預覽抽屜、Lucide 圖示系統）。
+  2. `src/services/`：核心業務與雲端服務層（`supabaseClient.js`、`memberAuthService.js`、`projectSyncService.js`、`storageService.js`、`securityService.js`、`aiService.js`、`aiFaqMatcher.js`）。
+  3. `src/data/`：靜態預設專案目錄、FAQ 知識庫與資安審計種子資料。
+  4. `src/styles/`：全域 CSS、多比例 `dvh` 響應式類別與關鍵影格動畫 (`index.css`)。
+  5. `src/__tests__/`：自動化單元測試與 `e2e_requirements/` 分層規格測試。
+  6. `data/`：本地開發伺服器 `/api/projects` 即時讀寫持久化專案目錄 (`data/projects.json`)，與 `src/data/`（靜態預設配置、知識庫與審計種子）職責分離。
+  7. `public/`：公開靜態資產（單一標準 `manifest.webmanifest`、`sw.js`、`robots.txt`、`ai.txt`、`favicon.svg`、`pwa-maskable.svg`、`logo-preview.html`、`demo-subproject.html`）、7 階品牌標誌 SVG (`public/previews/`) 與跨站返回大廳 SDK (`public/sdk/mei-dock.js`)。
+  8. `scripts/`：正式納管之建置檢驗與資產生成腳本（僅保留 `verify-hub.mjs` 與 `generate-logo-previews.mjs`）。
+  9. `supabase/`：雲端資料庫 Schema 與 RLS 遷移腳本 (`supabase/schema_migrations.sql`)。
+  10. `docs/`：全站檔案分類標準與 AI 代理檢索索引 (`docs/FILE_TAXONOMY_AND_INDEX.md`)。
+- **根目錄零雜物與清理紀律**：根目錄嚴禁殘留臨時測試報告（`TEST_*.md`、`*_REPORT.md`）、裸露 `.sql` 檔或一次性實驗腳本；凡應用程式、建置流程、驗證腳本與測試套件不需要之過時或重複檔案一律刪除。
+- **全繁體中文交付規範**：所有向使用者呈現之規劃草案 (`/plan`)、審查報告、驗證紀錄與檔案索引文件，一律使用繁體中文撰寫。

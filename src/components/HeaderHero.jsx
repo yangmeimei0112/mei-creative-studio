@@ -90,24 +90,24 @@ export default function HeaderHero({
     <header className="w-full theme-stagger-hero">
       {/* 頂部毛玻璃導覽列 */}
       <div className="sticky top-0 z-30 border-b border-sky-400/20 bg-white/82 dark:bg-slate-950/82 backdrop-blur-xl transition-colors pt-[env(safe-area-inset-top,0px)]">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 mobile-header-bar narrow-compact-px flex items-center justify-between gap-2 sm:gap-3">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 mobile-header-bar narrow-compact-px flex items-center justify-between gap-1.5 sm:gap-3">
           {/* 品牌主標誌 */}
           <a
             href="#top"
-            className="flex items-center gap-2 sm:gap-3 group focus:outline-none min-w-0 shrink"
+            className="flex items-center gap-1.5 sm:gap-3 group focus:outline-none min-w-0 shrink md:shrink-0"
             aria-label="咩創意工作室首頁"
           >
-            <StudioLogo size="md" className="group-hover:scale-105 transition-transform shrink-0 max-[360px]:scale-90 max-[360px]:-mr-1" />
+            <StudioLogo size="md" className="group-hover:scale-105 transition-transform shrink-0 max-[359px]:scale-90 max-[359px]:-mr-1" />
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                <span className="font-bold text-[15px] sm:text-lg tracking-tight text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors font-heading-lg whitespace-nowrap">
+                <span className="font-bold text-[15px] max-[359px]:text-[13.5px] sm:text-lg tracking-tight text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors font-heading-lg whitespace-nowrap">
                   {STUDIO_CONFIG.studioNameZh}
                 </span>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sky-500/12 text-sky-700 dark:text-sky-300 border border-sky-400/30 shrink-0">
+                <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sky-500/12 text-sky-700 dark:text-sky-300 border border-sky-400/30 shrink-0">
                   {STUDIO_CONFIG.version}
                 </span>
               </div>
-              <span className="hidden min-[380px]:block text-[10px] sm:text-[11px] font-medium tracking-wider uppercase text-sky-700/80 dark:text-sky-300/80 font-en truncate">
+              <span className="hidden min-[400px]:block text-[10px] sm:text-[11px] font-medium tracking-wider uppercase text-sky-700/80 dark:text-sky-300/80 font-en truncate">
                 {STUDIO_CONFIG.studioNameEn}
               </span>
             </div>
@@ -117,28 +117,28 @@ export default function HeaderHero({
           <button
             type="button"
             onClick={onOpenCommandPalette}
-            className="hidden md:flex items-center justify-between gap-6 px-4 py-2 rounded-full bg-sky-50/90 dark:bg-slate-900/90 border border-sky-400/30 hover:border-sky-400/70 text-slate-500 dark:text-slate-400 text-xs transition-all w-80 md:w-96 lg:w-[460px] xl:w-[540px] shadow-inner"
+            className="hidden md:flex flex-1 min-w-0 max-w-sm lg:max-w-[460px] xl:max-w-[540px] items-center justify-between gap-2 xl:gap-5 px-3 xl:px-4 py-2 rounded-full bg-sky-50/90 dark:bg-slate-900/90 border border-sky-400/30 hover:border-sky-400/70 text-slate-500 dark:text-slate-400 text-xs transition-all shadow-inner overflow-hidden"
             aria-label="開啟全域搜尋命令列"
           >
-            <span className="flex items-center gap-2">
-              <LucideIcon name="search" size={15} className="text-sky-500" />
-              <span>搜尋專案、分類或快捷指令...</span>
+            <span className="flex items-center gap-2 min-w-0">
+              <LucideIcon name="search" size={15} className="text-sky-500 shrink-0" />
+              <span className="truncate">搜尋專案、分類或快捷指令...</span>
             </span>
-            <kbd className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 border border-sky-400/25 text-[11px] font-mono text-sky-700 dark:text-sky-300">
+            <kbd className="hidden lg:inline-flex shrink-0 items-center gap-1 px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 border border-sky-400/25 text-[11px] font-mono text-sky-700 dark:text-sky-300">
               <LucideIcon name="command" size={11} />
               <span>K</span>
             </kbd>
           </button>
 
           {/* 右側工具控制組 */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="flex items-center gap-1 max-[359px]:gap-0.5 sm:gap-2 shrink-0">
             {/* 即時狀態巡檢按鈕 */}
             <button
               type="button"
               onClick={onRefreshHealth}
               disabled={isProbingHealth}
               title="即時巡檢所有子專案連線狀態"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full btn-sky-secondary text-xs font-medium"
+              className="hidden md:inline-flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-full btn-sky-secondary text-xs font-medium"
             >
               <LucideIcon
                 name={isProbingHealth ? 'refresh-cw' : 'activity'}
@@ -146,7 +146,14 @@ export default function HeaderHero({
                 className={isProbingHealth ? 'animate-spin text-sky-500' : 'text-emerald-500'}
               />
               <span>
-                {isProbingHealth ? '巡檢中...' : `${onlineCount}/${visibleProjects.length} 線上`}
+                {isProbingHealth ? (
+                  '巡檢中...'
+                ) : (
+                  <>
+                    {onlineCount}/{visibleProjects.length}
+                    <span className="hidden lg:inline"> 線上</span>
+                  </>
+                )}
               </span>
             </button>
 
@@ -156,7 +163,7 @@ export default function HeaderHero({
               onClick={onOpenInstallGuide}
               title="安裝至桌面或主畫面指南"
               aria-label="安裝應用指南"
-              className="inline-flex items-center justify-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-full btn-sky-secondary text-xs font-medium"
+              className={`${isAdmin ? 'hidden min-[480px]:inline-flex' : 'inline-flex'} items-center justify-center gap-1.5 p-1.5 sm:p-2 lg:px-3 lg:py-1.5 rounded-full btn-sky-secondary text-xs font-medium`}
             >
               <LucideIcon name="smartphone" size={15} />
               <span className="hidden lg:inline">安裝應用</span>
@@ -168,7 +175,7 @@ export default function HeaderHero({
               onClick={onToggleTheme}
               title={theme === 'dark' ? '切換至淺色模式' : '切換至深色模式'}
               aria-label="切換深淺色主題"
-              className="p-2 rounded-full btn-sky-secondary"
+              className="p-1.5 sm:p-2 rounded-full btn-sky-secondary"
             >
               <LucideIcon name={theme === 'dark' ? 'sun' : 'moon'} size={17} />
             </button>
@@ -183,7 +190,7 @@ export default function HeaderHero({
                   ? `全站聯通會員：${currentMember.displayName}（${currentMember.tierLabel}）`
                   : '開啟全站聯通會員專區（支援 Google 帳號與指紋/人臉快速登入）'
               }
-              className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all max-w-[124px] sm:max-w-[200px] ${
+              className={`inline-flex items-center gap-1.5 max-[359px]:gap-1 px-2.5 max-[359px]:px-2 sm:px-3.5 py-1.5 max-[359px]:py-1 rounded-full text-xs max-[359px]:text-[11px] font-semibold transition-colors max-w-[124px] max-[429px]:max-w-[94px] sm:max-w-[200px] md:max-w-[144px] lg:max-w-[200px] ${
                 currentMember ? 'btn-sky-primary' : 'btn-sky-secondary'
               }`}
             >
@@ -204,23 +211,23 @@ export default function HeaderHero({
 
             {/* 管理員專屬快速操作 (管理員解鎖按鈕已移至頁面底部頁尾) */}
             {isAdmin && (
-              <div className="flex items-center gap-1 sm:gap-1.5">
+              <div className="flex items-center gap-1 max-[359px]:gap-0.5 sm:gap-1.5">
                 <button
                   type="button"
                   onClick={onOpenAddProject}
                   title="新增連接專案"
                   aria-label="新增專案"
-                  className="inline-flex items-center justify-center gap-1.5 p-2 sm:px-3.5 sm:py-1.5 rounded-full btn-sky-primary text-xs font-semibold"
+                  className="hidden min-[375px]:inline-flex items-center justify-center gap-1.5 p-1.5 sm:p-2 lg:px-3.5 lg:py-1.5 rounded-full btn-sky-primary text-xs font-semibold"
                 >
                   <LucideIcon name="plus" size={16} />
-                  <span className="hidden sm:inline">新增專案</span>
+                  <span className="hidden lg:inline">新增專案</span>
                 </button>
                 <button
                   type="button"
                   onClick={onOpenBackupModal}
                   title="備份匯出 / 匯入 JSON 與後台設定"
                   aria-label="資料備份與管理設定"
-                  className="p-2 rounded-full btn-sky-secondary"
+                  className="p-1.5 sm:p-2 rounded-full btn-sky-secondary"
                 >
                   <LucideIcon name="sliders-horizontal" size={16} />
                 </button>
@@ -251,7 +258,7 @@ export default function HeaderHero({
 
             <div className="relative z-10">
               <div className="studio-title-align-box mb-2 sm:mb-4">
-                <h1 className="studio-hero-title-zh font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight mb-2 sm:mb-2.5 font-heading-lg flex flex-wrap sm:flex-nowrap items-baseline gap-x-2.5 sm:gap-x-3 gap-y-1">
+                <h1 className={`studio-hero-title-zh font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight mb-2 sm:mb-2.5 font-heading-lg flex flex-wrap ${isAdmin ? 'sm:flex-nowrap lg:flex-wrap xl:flex-nowrap' : 'sm:flex-nowrap'} items-baseline gap-x-2.5 sm:gap-x-3 gap-y-1`}>
                   <span className="shrink-0">{STUDIO_CONFIG.studioNameZh}</span>
                   <span className="studio-hero-title-en font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 dark:from-sky-300 dark:to-sky-500 bg-clip-text text-transparent font-en whitespace-nowrap">
                     {STUDIO_CONFIG.studioNameEn}

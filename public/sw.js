@@ -2,7 +2,7 @@ const CACHE_NAME = 'mei-studio-hub-v1';
 const PRECACHE_URLS = [
   '/',
   '/index.html',
-  '/manifest.json',
+  '/manifest.webmanifest',
   '/favicon.svg',
   '/pwa-maskable.svg',
   '/sdk/mei-dock.js'

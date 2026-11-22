@@ -1,10 +1,12 @@
 import React from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import App from '../App';
+import HeaderHero from '../components/HeaderHero';
+import { DEFAULT_PROJECTS } from '../data/defaultData';
 
 const EMOJI_REGEX = /[\u{1F300}-\u{1FAFF}\u{2300}-\u{23FF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/u;
 
@@ -223,5 +225,122 @@ describe('手機與多比例裝置響應式適配驗證 (Multi-Aspect-Ratio Mobi
     const primaryNavBtn = container.querySelector('.mobile-nav-primary-btn');
     expect(primaryNavBtn).toBeInTheDocument();
     expect(primaryNavBtn.className).not.toContain('-mt-4');
+  });
+
+  it('8. HeaderHero 頂部導覽列保護品牌區 (md:shrink-0)、防搜尋列 <kbd> 溢出、極窄屏防重疊與管理員 1024px Hero 標題換行', () => {
+    const baseProps = {
+      projects: DEFAULT_PROJECTS,
+      visibleProjects: DEFAULT_PROJECTS,
+      filteredCount: DEFAULT_PROJECTS.length,
+      recentProjects: [],
+      selectedCategory: 'all',
+      onSelectCategory: vi.fn(),
+      selectedStatus: 'all',
+      onSelectStatus: vi.fn(),
+      searchQuery: '',
+      onSearchChange: vi.fn(),
+      theme: 'light',
+      onToggleTheme: vi.fn(),
+      isAdmin: false,
+      onOpenAdminUnlock: vi.fn(),
+      onLockAdmin: vi.fn(),
+      onOpenAddProject: vi.fn(),
+      onOpenCommandPalette: vi.fn(),
+      onOpenSdkGuide: vi.fn(),
+      onOpenBackupModal: vi.fn(),
+      onRefreshHealth: vi.fn(),
+      isProbingHealth: false,
+      onOpenInstallGuide: vi.fn(),
+      onSelectProjectPreview: vi.fn(),
+      onReplayEntrance: vi.fn(),
+      onResetFilters: vi.fn(),
+      sortBy: 'default',
+      onSelectSortBy: vi.fn(),
+      currentMember: null,
+      onOpenMemberPortal: vi.fn()
+    };
+
+    const { rerender, container } = render(<HeaderHero {...baseProps} />);
+
+    // 1. 品牌區在 md 以上永不壓縮 (md:shrink-0)，完整保留標題、版本膠囊與英文副標；sm (640px-767px) 隱藏版本膠囊與線上巡檢膠囊以防重疊
+    const brandLink = container.querySelector('.mobile-header-bar a[href="#top"]');
+    expect(brandLink).toBeInTheDocument();
+    expect(brandLink).toHaveClass('min-w-0', 'shrink', 'md:shrink-0');
+    const titleZh = within(brandLink).getByText('咩創意工作室');
+    expect(titleZh).toHaveClass('whitespace-nowrap', 'max-[359px]:text-[13.5px]');
+    expect(within(brandLink).getByText('v1.0.0')).toHaveClass('hidden', 'md:inline-flex', 'shrink-0');
+    expect(within(brandLink).getByText('Mei Creative Studio')).toHaveClass('hidden', 'min-[400px]:block', 'uppercase', 'truncate');
+
+    const healthBtn = screen.getByTitle('即時巡檢所有子專案連線狀態');
+    expect(healthBtn).toHaveClass('hidden', 'md:inline-flex');
+
+    // 2. 中央搜尋列具備 overflow-hidden，且 <kbd> 於 <lg 時隱藏以避讓 768px–950px 空間
+    const searchBtn = screen.getByLabelText('開啟全域搜尋命令列');
+    expect(searchBtn).toHaveClass('hidden', 'md:flex', 'flex-1', 'min-w-0', 'overflow-hidden');
+    const kbd = searchBtn.querySelector('kbd');
+    expect(kbd).toBeInTheDocument();
+    expect(kbd).toHaveClass('hidden', 'lg:inline-flex', 'shrink-0');
+
+    // 3. 訪客模式 Hero <h1> 維持 sm:flex-nowrap
+    const guestHeroH1 = container.querySelector('h1.studio-hero-title-zh');
+    expect(guestHeroH1).toHaveClass('flex-wrap', 'sm:flex-nowrap');
+
+    // 4. 切換為「管理員 + 長名稱會員」模式
+    rerender(
+      <HeaderHero
+        {...baseProps}
+        isAdmin={true}
+        currentMember={{
+          unionId: 'mei_user_long_header',
+          uid: 'long-header-uid',
+          email: 'longheader@meistudio.live',
+          displayName: '超級長的名字測試創作者團隊代表',
+          tier: 'architect',
+          tierLabel: '領航架構師'
+        }}
+      />
+    );
+
+    // 保留測試鎖定之 memberBtn max-w-[124px] / sm:max-w-[200px]，並加入 <430px 與 md 收斂限制
+    const memberBtn = screen.getByTestId('header-member-portal-btn');
+    expect(memberBtn).toHaveClass(
+      'max-w-[124px]',
+      'max-[429px]:max-w-[94px]',
+      'sm:max-w-[200px]',
+      'md:max-w-[144px]',
+      'lg:max-w-[200px]'
+    );
+
+    // 新增專案保留 DOM 文字節點且於 <lg 折疊為圖示按鈕 (hidden lg:inline)，<375px 交由底部導覽提供入口
+    const addProjectTexts = screen.getAllByText('新增專案');
+    expect(addProjectTexts[0]).toHaveClass('hidden', 'lg:inline');
+    expect(addProjectTexts[0].closest('button')).toHaveClass('hidden', 'min-[375px]:inline-flex');
+
+    // 安裝按鈕保留 title="安裝至桌面或主畫面指南" 並於管理員極窄手機 (<480px) 自動隱藏避讓
+    const installBtn = screen.getByTitle('安裝至桌面或主畫面指南');
+    expect(installBtn).toHaveClass('hidden', 'min-[480px]:inline-flex');
+
+    // 管理員模式下 1024px (lg:col-span-8) 允許 Hero <h1> 換行防裁切，1280px (xl:) 恢復單行
+    const adminHeroH1 = container.querySelector('h1.studio-hero-title-zh');
+    expect(adminHeroH1).toHaveClass('lg:flex-wrap', 'xl:flex-nowrap');
+  });
+
+  it('9. 全域命令列提供 PWA 安裝應用指南捷徑，且主次按鈕禁止使用 transition: all 干擾響應式寬度收斂', () => {
+    const cssText = fs.readFileSync(path.resolve('src/styles/index.css'), 'utf-8');
+    const primaryMatch = cssText.match(/\.btn-sky-primary\s*\{[^}]*\}/);
+    const secondaryMatch = cssText.match(/\.btn-sky-secondary\s*\{[^}]*\}/);
+    expect(primaryMatch?.[0]).not.toContain('transition: all');
+    expect(secondaryMatch?.[0]).not.toContain('transition: all');
+
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('開啟全域搜尋命令列'));
+    const palette = screen.getByRole('dialog', { name: '全域極速搜尋與快捷命令列' });
+    const installCmd = within(palette).getByText('安裝應用指南 (PWA)');
+    expect(installCmd).toBeInTheDocument();
+
+    fireEvent.click(installCmd);
+    expect(screen.queryByRole('dialog', { name: '全域極速搜尋與快捷命令列' })).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: '子專案接入指南與跨平台安裝教學' })).toBeInTheDocument();
+    expect(screen.getByText('桌面與行動裝置安裝指南')).toBeInTheDocument();
   });
 });

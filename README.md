@@ -50,3 +50,13 @@ npm run build
   defer
 ></script>
 ```
+
+---
+
+## 3. 專案目錄分類標準與 AI 代理檢索索引
+
+本專案實行嚴格的目錄職責分區與根目錄零雜物規範：
+
+- **工作區工程規範**：請參閱 [AGENTS.md](./AGENTS.md)
+- **詳細檔案分類標準與 AI 代理快速檢索表**：請參閱 [docs/FILE_TAXONOMY_AND_INDEX.md](./docs/FILE_TAXONOMY_AND_INDEX.md)
+- **Supabase 獨立資料庫 Schema 與 RLS 遷移腳本**：請參閱 [supabase/schema_migrations.sql](./supabase/schema_migrations.sql)

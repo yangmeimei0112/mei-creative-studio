@@ -74,8 +74,32 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
       window.BroadcastChannel = BroadcastChannel;
     }
 
+    let authListenerCb = null;
+    vi.spyOn(supabase.auth, 'onAuthStateChange').mockImplementation((cb) => {
+      authListenerCb = cb;
+      return {
+        data: {
+          subscription: {
+            unsubscribe: vi.fn()
+          }
+        }
+      };
+    });
+
     // JSDOM OAuth navigation guard: default safe mock to prevent JSDOM navigation crash
     vi.spyOn(supabase.auth, 'signInWithOAuth').mockImplementation(async ({ provider }) => {
+      const mockUser = {
+        id: '00000000-0000-4000-a000-000000000099',
+        email: 'creator@meistudio.live',
+        user_metadata: {
+          full_name: 'Google 認證創作者',
+          picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+        },
+        app_metadata: { provider: 'google', providers: ['google'] }
+      };
+      if (authListenerCb) {
+        authListenerCb('SIGNED_IN', { user: mockUser, access_token: 'mock-token' });
+      }
       return {
         data: {
           provider,
@@ -85,15 +109,6 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
       };
     });
     vi.spyOn(supabase.auth, 'signOut').mockResolvedValue({ error: null });
-    vi.spyOn(supabase.auth, 'onAuthStateChange').mockImplementation((cb) => {
-      return {
-        data: {
-          subscription: {
-            unsubscribe: vi.fn()
-          }
-        }
-      };
-    });
   });
 
   afterEach(() => {
@@ -122,27 +137,28 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
   // Tier 1: Feature Coverage & Happy Paths (14 Features from PROJECT.md)
   // =========================================================================
   describe('Tier 1: Feature Coverage & Happy Paths (Features 1-14)', () => {
-    it('T1-F1-01: Supabase 唯讀盤點報告結構完整且標註唯讀防護規範 (Feature 1)', () => {
-      const candidates = [
-        path.resolve('SUPABASE_RISK_ASSESSMENT.md'),
-        path.resolve('.agents/teamwork/sub_orch_m1/SUPABASE_RISK_ASSESSMENT.md')
-      ];
-      const foundPath = candidates.find((p) => fs.existsSync(p));
-      expect(foundPath).toBeDefined();
+    it('T1-F1-01: 獨立 Supabase 規範與全站檔案分類索引結構完整且遵循 Zero Emoji (Feature 1)', () => {
+      const agentsPath = path.resolve('AGENTS.md');
+      const indexPath = path.resolve('docs/FILE_TAXONOMY_AND_INDEX.md');
+      expect(fs.existsSync(agentsPath)).toBe(true);
+      expect(fs.existsSync(indexPath)).toBe(true);
 
-      const content = fs.readFileSync(foundPath, 'utf-8');
-      expect(content).toContain('MeiStudyFlow');
-      expect(content).toContain('mdxnjlhjqskqsndeiepy');
-      expect(content).toContain('ap-southeast-2');
-      expect(content).toContain('PostgreSQL 17');
-      expect(content).toMatch(/RLS/i);
-      expect(EMOJI_REGEX.test(content.replace(/[\u2713\u2714]/g, ''))).toBe(false);
+      const agentsContent = fs.readFileSync(agentsPath, 'utf-8');
+      const indexContent = fs.readFileSync(indexPath, 'utf-8');
+      expect(agentsContent).toContain('xtyuyuralrnwzsjvyslp');
+      expect(agentsContent).toContain('ap-northeast-1');
+      expect(agentsContent).toContain('FORCE ROW LEVEL SECURITY');
+      expect(agentsContent).toContain('docs/FILE_TAXONOMY_AND_INDEX.md');
+      expect(indexContent).toContain('AI 代理任務導向快速檢索表');
+      expect(indexContent).toContain('supabase/schema_migrations.sql');
+      expect(EMOJI_REGEX.test(agentsContent.replace(/[\u2713\u2714]/g, ''))).toBe(false);
+      expect(EMOJI_REGEX.test(indexContent.replace(/[\u2713\u2714]/g, ''))).toBe(false);
     });
 
     it('T1-F2-01: 資料庫綱要與 RLS 隔離 DDL 規範符合前綴隔離與最小權限原則 (Feature 2)', () => {
       const candidates = [
-        path.resolve('schema_migrations.sql'),
-        path.resolve('.agents/teamwork/sub_orch_m1/schema_migrations.sql')
+        path.resolve('supabase/schema_migrations.sql'),
+        path.resolve('schema_migrations.sql')
       ];
       const foundPath = candidates.find((p) => fs.existsSync(p));
       expect(foundPath).toBeDefined();
@@ -305,16 +321,16 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
       expect(footer.querySelector('[data-testid="studio-brand-logo"][data-logo-size="sm"]')).toBeInTheDocument();
     });
 
-    it('T1-F6-01: Brand Logo Milestone 3 終驗報告發布且包含 12 端點簽核清單 (Feature 6)', () => {
-      const reportPath = path.resolve('BRAND_ACCEPTANCE_REPORT.md');
-      expect(fs.existsSync(reportPath)).toBe(true);
+    it('T1-F6-01: Brand Logo 與全站檔案分類索引規範包含 Candidate F 與核心元件清單 (Feature 6)', () => {
+      const indexPath = path.resolve('docs/FILE_TAXONOMY_AND_INDEX.md');
+      expect(fs.existsSync(indexPath)).toBe(true);
 
-      const report = fs.readFileSync(reportPath, 'utf-8');
+      const report = fs.readFileSync(indexPath, 'utf-8');
       expect(report).toContain('Candidate F');
       expect(report).toContain('PortalEntrance');
       expect(report).toContain('HeaderHero');
       expect(report).toContain('MemberPortalModal');
-      expect(report).toContain('strokeWidth={1.75}');
+      expect(report).toContain('strokeWidth=1.75');
       expect(EMOJI_REGEX.test(report.replace(/[\u2713\u2714]/g, ''))).toBe(false);
     });
 
@@ -414,7 +430,16 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
       expect(bio).toHaveProperty('icon');
 
       const oauthSpy = vi.spyOn(supabase.auth, 'signInWithOAuth').mockResolvedValueOnce({
-        data: { provider: 'google', url: 'https://accounts.google.com/o/oauth2/v2/auth' },
+        data: {
+          provider: 'google',
+          url: 'https://accounts.google.com/o/oauth2/v2/auth',
+          user: {
+            id: '00000000-0000-4000-a000-000000000099',
+            email: 'oauth.verified@meistudio.live',
+            user_metadata: { full_name: 'Google OAuth 驗證會員' },
+            app_metadata: { provider: 'google', providers: ['google'] }
+          }
+        },
         error: null
       });
 
@@ -1079,15 +1104,10 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
       }
     });
 
-    it('RW-04: Milestone 2 & Milestone 3 終驗簽核與發布發行工作流 (Release Sign-off)', () => {
-      const riskDocPath = [
-        path.resolve('SUPABASE_RISK_ASSESSMENT.md'),
-        path.resolve('.agents/teamwork/sub_orch_m1/SUPABASE_RISK_ASSESSMENT.md')
-      ].find((p) => fs.existsSync(p));
-      expect(riskDocPath).toBeDefined();
-
-      const acceptancePath = path.resolve('BRAND_ACCEPTANCE_REPORT.md');
-      expect(fs.existsSync(acceptancePath)).toBe(true);
+    it('RW-04: 全站檔案分類標準、資料庫遷移腳本與品牌預覽資產完整性驗證 (Release Sign-off)', () => {
+      expect(fs.existsSync(path.resolve('AGENTS.md'))).toBe(true);
+      expect(fs.existsSync(path.resolve('docs/FILE_TAXONOMY_AND_INDEX.md'))).toBe(true);
+      expect(fs.existsSync(path.resolve('supabase/schema_migrations.sql'))).toBe(true);
 
       const previewsHtml = path.resolve('public/logo-preview.html');
       expect(fs.existsSync(previewsHtml)).toBe(true);

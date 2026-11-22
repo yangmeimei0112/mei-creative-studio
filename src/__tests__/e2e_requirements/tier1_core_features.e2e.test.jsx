@@ -2,7 +2,7 @@
  * Tier 1: Core Feature Coverage E2E Test Suite
  * 
  * Verifies happy-path requirements across all 15 features (F1 to F15)
- * with ≥5 assertions or test cases per feature as specified in TEST_INFRA.md.
+ * with ≥5 assertions or test cases per feature.
  */
 
 import React from 'react';
@@ -132,7 +132,10 @@ describe('Tier 1: Core Feature Coverage (Features 1 to 15)', () => {
         fireEvent.click(googleBtn);
       });
 
-      expect(onMemberChange).toHaveBeenCalled();
+      expect(supabaseModule.supabase.auth.signInWithOAuth).toHaveBeenCalledWith(
+        expect.objectContaining({ provider: 'google' })
+      );
+      expect(onNotify).toHaveBeenCalledWith('正在為您導向 Google 官方帳號授權頁面...', 'globe');
     });
 
     it('T1-F2-03: Authenticated member profile card renders post-login', () => {
@@ -412,7 +415,7 @@ describe('Tier 1: Core Feature Coverage (Features 1 to 15)', () => {
   // Feature 5: Supabase Database Schema & Migration for Projects (R3-F1)
   // =========================================================================
   describe('Feature 5 (R3-F1): Supabase Database Schema & Migration for Projects', () => {
-    const schemaSqlPath = path.resolve('schema_migrations.sql');
+    const schemaSqlPath = path.resolve('supabase/schema_migrations.sql');
     const schemaSql = fs.existsSync(schemaSqlPath) ? fs.readFileSync(schemaSqlPath, 'utf-8') : '';
 
     it('T1-F5-01: schema_migrations.sql defines public.mei_member_projects table', () => {

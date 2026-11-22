@@ -138,7 +138,7 @@ test('2. 全站原始碼與 Lucide 圖示規範靜態與結構檢查 (strokeWidt
     'public/ai.txt',
     'public/sdk/mei-dock.js',
     'public/demo-subproject.html',
-    'public/manifest.json',
+    'public/manifest.webmanifest',
     'public/favicon.svg',
     'public/pwa-maskable.svg'
   ];
@@ -458,7 +458,7 @@ test('5. JSON 備份匯出/匯入驗證、null 元素防護、550 筆大型專�
   );
 });
 
-test('6. 子專案返回大廳 SDK (mei-dock.js) 嵌入碼產生器與連線巡檢真实 404/斷線測試', async () => {
+test('6. 子專案返回大廳 SDK (mei-dock.js) 嵌入碼產生器與連線巡檢真實 404/斷線測試', async () => {
   const snippet = generateSubprojectEmbedSnippet(
     { title: '雲端白板 "Special" <script>' },
     'https://mei.studio',

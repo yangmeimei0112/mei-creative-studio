@@ -102,31 +102,30 @@ export default function MemberPortalModal({
     setIsSubmitting(true);
     try {
       const trimmedNickname = gmailCustomNickname.trim();
-      let member = null;
+      let result;
       if (trimmedNickname) {
-        const result = await memberAuthService.signInWithGmailFastLogin({
+        result = await memberAuthService.signInWithGmailFastLogin({
           customDisplayName: trimmedNickname
         });
-        if (!result?.success || result?.error) {
-          throw new Error(result?.error || '第三方登入失敗，請稍後再試');
-        }
-        member = result.member || result?.data?.member || null;
       } else {
-        const result = await memberAuthService.signInWithGoogle();
-        if (result?.error) {
-          throw result.error instanceof Error
-            ? result.error
-            : new Error(result.error?.message || String(result.error));
-        }
-        member = result?.data?.member || (result?.unionId ? result : null);
+        result = await memberAuthService.signInWithGoogle();
       }
 
+      if (result?.error) {
+        throw result.error instanceof Error
+          ? result.error
+          : new Error(result.error?.message || String(result.error));
+      }
+
+      const member = result?.data?.member || (result?.member ? result.member : null);
       if (member) {
         onMemberChange?.(member);
+        onNotify?.('已使用 Google 帳號登入全站會員中心', 'user-check');
+      } else {
+        onNotify?.('正在為您導向 Google 官方帳號授權頁面...', 'globe');
       }
-      onNotify?.('已使用 Google 帳號登入全站會員中心', 'user-check');
     } catch (err) {
-      setErrorMsg(err?.message || '第三方登入失敗，請稍後再試');
+      setErrorMsg(err?.message || 'Google 授權登入失敗，請稍後再試');
     } finally {
       setIsSubmitting(false);
     }
@@ -495,8 +494,14 @@ export default function MemberPortalModal({
                       onClick={handleOAuthLogin}
                       className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white text-xs sm:text-sm font-bold transition-all shadow-md hover:shadow-sky-500/25 active:scale-[0.98] disabled:opacity-60"
                     >
-                      <LucideIcon name="globe" size={16} />
-                      <span>使用 Google 帳號繼續</span>
+                      <LucideIcon
+                        name={isSubmitting ? 'loader-2' : 'globe'}
+                        size={16}
+                        className={isSubmitting ? 'animate-spin' : ''}
+                      />
+                      <span>
+                        {isSubmitting ? '正在導向 Google 授權頁面...' : '使用 Google 帳號繼續'}
+                      </span>
                     </button>
                   </div>
                 </div>
