@@ -1,12 +1,12 @@
 {
   "studio": "咩創意工作室",
-  "updatedAt": "2026-11-24T20:15:00.000Z",
+  "updatedAt": "2026-11-24T20:55:00.000Z",
   "projects": [
     {
       "id": "mei-proj-schedule-v1",
       "title": "咩時光 MeiSchedule",
       "subtitle": "跨平台智慧排程與共享時間軸",
-      "description": "結合視覺化時間塊拖曳、自然語言快速新增、專注番茄鐘、智慧預覽重排與多人共享即時留言的全平台排程系統。",
+      "description": "結合視覺化時間塊拖曳、自然語言快速新增、專注番茄鐘輕音樂、智慧預覽重排與多人共享即時留言的全平台排程系統。",
       "url": "https://mei-schedule.vercel.app/",
       "category": "web-business",
       "icon": "calendar",
@@ -14,7 +14,7 @@
       "status": "beta",
       "featured": true,
       "pinned": true,
-      "version": "v1.3.1",
+      "version": "v1.4.0",
       "latencyMs": 72,
       "updatedAt": "2026-11-24",
       "platforms": [
@@ -25,8 +25,8 @@
       ],
       "highlights": [
         "視覺時間軸拖曳排程與中英文自然語言快輸",
+        "專注番茄鐘內建無版權離線輕音樂、自然環境音與背景迷你控制",
         "內建三套美學主題與柔緩交叉淡融深淺模式轉場",
-        "支援智慧預載全模組、60 天排程快取與流暢高幀率互動",
         "完整支援網頁、桌面與行動裝置離線優先即時同步"
       ]
     },
@@ -57,6 +57,15 @@
     }
   ],
   "changelog": [
+    {
+      "id": "pulse-2026-11-24-schedule-v1-4",
+      "version": "v1.1.5",
+      "date": "2026-11-24",
+      "title": "「咩時光 MeiSchedule」升級 v1.4.0 專注無版權輕音樂與共享成員管理",
+      "category": "全新上線",
+      "icon": "music",
+      "summary": "專注番茄鐘新增 4 首原創離線輕音樂、4 檔自然環境音疊加、個人本機音檔匯入與背景專注迷你控制膠囊；多人共享日曆同步新增一鍵移除成員與復原功能。"
+    },
     {
       "id": "pulse-2026-11-24-dock-hide-v1-3-1",
       "version": "v1.1.4",
