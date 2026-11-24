@@ -1,6 +1,6 @@
 {
   "studio": "咩創意工作室",
-  "updatedAt": "2026-11-24T15:40:00.000Z",
+  "updatedAt": "2026-11-24T16:25:00.000Z",
   "projects": [
     {
       "id": "mei-proj-schedule-v1",
@@ -14,7 +14,7 @@
       "status": "beta",
       "featured": true,
       "pinned": true,
-      "version": "v1.1.0",
+      "version": "v1.2.0",
       "latencyMs": 95,
       "updatedAt": "2026-11-24",
       "platforms": [
@@ -57,6 +57,15 @@
     }
   ],
   "changelog": [
+    {
+      "id": "pulse-2026-11-24-schedule-v1-2",
+      "version": "v1.1.2",
+      "date": "2026-11-24",
+      "title": "「咩時光 MeiSchedule」推出專屬「日曆時間塊」識別 Logo (v1.2.0)",
+      "category": "品牌升級",
+      "icon": "calendar",
+      "summary": "為咩時光換上全新原創「日曆時間塊 (Time Blocks)」極簡向量標誌，完整覆蓋頂部導覽列、桌面系統匣、網站圖示與手機主畫面 App Icon，並自動適配三套視覺主題與亮深模式。"
+    },
     {
       "id": "pulse-2026-11-24-schedule-v1-1",
       "version": "v1.1.1",
