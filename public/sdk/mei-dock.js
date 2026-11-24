@@ -479,8 +479,104 @@
     } catch {}
   }
 
+  // =========================================================================
+  // Dock Visibility Controller (visible | edge-hidden | completely-hidden)
+  // =========================================================================
+  const DOCK_VISIBILITY_STORAGE_KEY = 'mei_studio_dock_visibility_v1';
+  const VALID_VISIBILITY_MODES = ['visible', 'edge-hidden', 'completely-hidden'];
+  const dockModeListeners = new Set();
+  let activeApplyVisibility = null;
+
+  function readStoredDockVisibility(fallbackMode) {
+    try {
+      const saved =
+        window.localStorage &&
+        window.localStorage.getItem(DOCK_VISIBILITY_STORAGE_KEY);
+      if (saved && VALID_VISIBILITY_MODES.includes(saved)) {
+        return saved;
+      }
+    } catch {}
+    return VALID_VISIBILITY_MODES.includes(fallbackMode) ? fallbackMode : 'visible';
+  }
+
+  const bootScriptEl =
+    document.currentScript || document.querySelector('script[src*="mei-dock.js"]');
+  const defaultVisibilityAttr =
+    (bootScriptEl && bootScriptEl.getAttribute('data-default-visibility')) || 'visible';
+  let currentVisibilityMode = readStoredDockVisibility(defaultVisibilityAttr);
+
+  function setDockVisibilityMode(nextMode, options) {
+    const normalized = VALID_VISIBILITY_MODES.includes(nextMode)
+      ? nextMode
+      : 'visible';
+    currentVisibilityMode = normalized;
+    if (!options || options.persist !== false) {
+      try {
+        if (window.localStorage) {
+          window.localStorage.setItem(DOCK_VISIBILITY_STORAGE_KEY, normalized);
+        }
+      } catch {}
+    }
+    if (typeof activeApplyVisibility === 'function') {
+      activeApplyVisibility(normalized);
+    }
+    dockModeListeners.forEach((cb) => {
+      try {
+        cb(normalized);
+      } catch {}
+    });
+    try {
+      window.dispatchEvent(
+        new CustomEvent('mei-dock-mode-change', { detail: { mode: normalized } })
+      );
+    } catch {}
+    return normalized;
+  }
+
+  window.MeiStudioDock = {
+    getMode: function () {
+      return currentVisibilityMode;
+    },
+    setMode: function (mode) {
+      return setDockVisibilityMode(mode);
+    },
+    show: function () {
+      return setDockVisibilityMode('visible');
+    },
+    hideToEdge: function () {
+      return setDockVisibilityMode('edge-hidden');
+    },
+    hideCompletely: function () {
+      return setDockVisibilityMode('completely-hidden');
+    },
+    toggle: function () {
+      return setDockVisibilityMode(
+        currentVisibilityMode === 'visible' ? 'edge-hidden' : 'visible'
+      );
+    },
+    onModeChange: function (cb) {
+      if (typeof cb === 'function') {
+        dockModeListeners.add(cb);
+        return function unsubscribe() {
+          dockModeListeners.delete(cb);
+        };
+      }
+      return function noop() {};
+    }
+  };
+
+  window.addEventListener('storage', (evt) => {
+    if (evt.key === DOCK_VISIBILITY_STORAGE_KEY) {
+      setDockVisibilityMode(readStoredDockVisibility(defaultVisibilityAttr), {
+        persist: false
+      });
+    }
+  });
+
   // Guard against duplicate DOM dock mount
-  if (window.__MEI_STUDIO_DOCK_MOUNTED__) return;
+  if (window.__MEI_STUDIO_DOCK_MOUNTED__ && document.getElementById('mei-studio-dock-root')) {
+    return;
+  }
   window.__MEI_STUDIO_DOCK_MOUNTED__ = true;
 
   function escapeHtml(raw) {
@@ -501,8 +597,7 @@
     return trimmed;
   }
 
-  const currentScript =
-    document.currentScript || document.querySelector('script[src*="mei-dock.js"]');
+  const currentScript = bootScriptEl;
   const hubUrl = sanitizeUrl(
     currentScript && currentScript.getAttribute('data-hub-url'),
     '/'
@@ -513,6 +608,7 @@
     'Connected Project';
   const positionAttr =
     (currentScript && currentScript.getAttribute('data-position')) || 'bottom-right';
+  const isLeftAnchored = positionAttr === 'bottom-left';
 
   const DEFAULT_QUICK_PROJECTS = [
     {
@@ -572,10 +668,17 @@
     arrowUpRight:
       '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>',
     minimize:
-      '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>'
+      '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
+    eyeOff:
+      '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>',
+    chevronRight:
+      '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>',
+    chevronLeft:
+      '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>'
   };
 
   const style = document.createElement('style');
+  style.id = 'mei-studio-dock-style';
   style.textContent = `
     #mei-studio-dock-root {
       position: fixed;
@@ -584,7 +687,7 @@
       user-select: none;
       -webkit-user-select: none;
       touch-action: none;
-      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
+      transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease, visibility 0.22s ease;
     }
     #mei-studio-dock-root.pos-bottom-right {
       right: 20px;
@@ -594,6 +697,20 @@
       left: 20px;
       bottom: max(20px, env(safe-area-inset-bottom, 20px));
     }
+    #mei-studio-dock-root.mei-dock-edge-hidden {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      visibility: hidden;
+    }
+    #mei-studio-dock-root.mei-dock-edge-hidden.pos-bottom-left {
+      transform: translate3d(-120%, 0, 0) !important;
+    }
+    #mei-studio-dock-root.mei-dock-edge-hidden.pos-bottom-right {
+      transform: translate3d(120%, 0, 0) !important;
+    }
+    #mei-studio-dock-root.mei-dock-completely-hidden {
+      display: none !important;
+    }
     .mei-dock-capsule {
       display: inline-flex;
       align-items: center;
@@ -601,15 +718,19 @@
       padding: 8px 12px 8px 10px;
       border-radius: 9999px;
       background: rgba(255, 255, 255, 0.90);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(56, 189, 248, 0.38);
       box-shadow: 0 12px 32px -6px rgba(14, 165, 233, 0.24), 0 2px 6px rgba(15, 23, 42, 0.06);
       color: #0F172A;
       font-size: 13px;
       font-weight: 600;
       cursor: grab;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.25s ease;
+    }
+    .mei-dock-collapsed .mei-dock-capsule {
+      padding: 6px 8px;
+      gap: 5px;
     }
     .mei-dock-capsule:hover {
       border-color: rgba(56, 189, 248, 0.72);
@@ -628,6 +749,7 @@
       color: #0284C7;
       flex-shrink: 0;
       position: relative;
+      cursor: pointer;
     }
     .mei-dock-btn {
       display: inline-flex;
@@ -664,7 +786,8 @@
     .mei-dock-icon-btn:hover {
       background: #E0F2FE;
     }
-    .mei-dock-collapse-btn {
+    .mei-dock-collapse-btn,
+    .mei-dock-hide-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -675,6 +798,12 @@
       background: rgba(56, 189, 248, 0.12);
       color: #0369A1;
       cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .mei-dock-collapse-btn:hover,
+    .mei-dock-hide-btn:hover {
+      background: rgba(56, 189, 248, 0.24);
+      color: #0284C7;
     }
     .mei-dock-collapsed .mei-dock-details,
     .mei-dock-collapsed .mei-dock-popover {
@@ -691,8 +820,8 @@
       padding: 12px;
       border-radius: 20px;
       background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(56, 189, 248, 0.38);
       box-shadow: 0 18px 40px -10px rgba(14, 165, 233, 0.28);
       display: none;
@@ -733,6 +862,177 @@
       background: #E0F2FE;
       color: #0284C7;
     }
+    .mei-dock-popover-footer {
+      margin-top: 2px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(56, 189, 248, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .mei-dock-popover-hide-btn {
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      background: rgba(241, 245, 249, 0.85);
+      color: #475569;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .mei-dock-popover-hide-btn:hover {
+      background: #E2E8F0;
+      color: #0F172A;
+    }
+    /* Ultra-slim Translucent Edge Peek Handle (貼邊微露拉條) */
+    #mei-dock-edge-tab {
+      position: fixed;
+      z-index: 2147483640;
+      bottom: max(28px, env(safe-area-inset-bottom, 28px));
+      width: 18px;
+      height: 52px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(56, 189, 248, 0.42);
+      box-shadow: 0 8px 22px -6px rgba(14, 165, 233, 0.28);
+      color: #0284C7;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+      transition: width 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.22s ease,
+                  transform 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+                  background-color 0.2s ease,
+                  border-color 0.2s ease,
+                  box-shadow 0.2s ease;
+    }
+    #mei-dock-edge-tab.pos-bottom-left {
+      left: 0;
+      border-left: none;
+      border-radius: 0 12px 12px 0;
+      transform: translate3d(-100%, 0, 0);
+    }
+    #mei-dock-edge-tab.pos-bottom-right {
+      right: 0;
+      border-right: none;
+      border-radius: 12px 0 0 12px;
+      transform: translate3d(100%, 0, 0);
+    }
+    #mei-dock-edge-tab.mei-dock-edge-tab-visible {
+      opacity: 0.64;
+      pointer-events: auto;
+      visibility: visible;
+      transform: translate3d(0, 0, 0);
+    }
+    #mei-dock-edge-tab.mei-dock-edge-tab-visible:hover,
+    #mei-dock-edge-tab.mei-dock-edge-tab-visible:focus-visible {
+      opacity: 1;
+      width: 28px;
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(56, 189, 248, 0.78);
+      box-shadow: 0 10px 26px -6px rgba(14, 165, 233, 0.42);
+      outline: none;
+    }
+    .mei-dock-edge-bar {
+      width: 2.5px;
+      height: 16px;
+      border-radius: 9999px;
+      background: linear-gradient(180deg, #38BDF8, #0284C7);
+      flex-shrink: 0;
+    }
+    .mei-dock-edge-chevron {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    #mei-dock-edge-tab:hover .mei-dock-edge-chevron,
+    #mei-dock-edge-tab:focus-visible .mei-dock-edge-chevron {
+      display: inline-flex;
+    }
+    /* Dark Mode Glass Adaptation */
+    html.dark .mei-dock-capsule {
+      background: rgba(15, 23, 42, 0.90);
+      border-color: rgba(56, 189, 248, 0.35);
+      box-shadow: 0 14px 36px -8px rgba(2, 8, 23, 0.72), 0 0 0 1px rgba(56, 189, 248, 0.15);
+      color: #F8FAFC;
+    }
+    html.dark #mei-dock-project-label {
+      color: #F8FAFC !important;
+    }
+    html.dark .mei-dock-badge {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(14, 165, 233, 0.10));
+      border-color: rgba(56, 189, 248, 0.40);
+      box-shadow: inset 0 1px 1px rgba(56, 189, 248, 0.22);
+      color: #38BDF8;
+    }
+    html.dark .mei-dock-icon-btn {
+      background: rgba(30, 41, 59, 0.90);
+      border-color: rgba(56, 189, 248, 0.30);
+      color: #7DD3FC;
+    }
+    html.dark .mei-dock-icon-btn:hover {
+      background: rgba(56, 189, 248, 0.22);
+    }
+    html.dark .mei-dock-collapse-btn,
+    html.dark .mei-dock-hide-btn {
+      background: rgba(56, 189, 248, 0.16);
+      color: #7DD3FC;
+    }
+    html.dark .mei-dock-collapse-btn:hover,
+    html.dark .mei-dock-hide-btn:hover {
+      background: rgba(56, 189, 248, 0.28);
+      color: #BAE6FD;
+    }
+    html.dark .mei-dock-popover {
+      background: rgba(15, 23, 42, 0.96);
+      border-color: rgba(56, 189, 248, 0.35);
+      box-shadow: 0 18px 42px -10px rgba(2, 8, 23, 0.8);
+    }
+    html.dark .mei-dock-popover-title {
+      color: #7DD3FC;
+    }
+    html.dark .mei-dock-popover-item {
+      color: #F1F5F9;
+    }
+    html.dark .mei-dock-popover-item:hover {
+      background: rgba(56, 189, 248, 0.18);
+      color: #7DD3FC;
+    }
+    html.dark .mei-dock-popover-hide-btn {
+      background: rgba(30, 41, 59, 0.85);
+      border-color: rgba(148, 163, 184, 0.25);
+      color: #CBD5E1;
+    }
+    html.dark .mei-dock-popover-hide-btn:hover {
+      background: rgba(51, 65, 85, 0.92);
+      color: #F8FAFC;
+    }
+    html.dark #mei-dock-edge-tab {
+      background: rgba(15, 23, 42, 0.78);
+      border-color: rgba(56, 189, 248, 0.36);
+      box-shadow: 0 8px 24px -6px rgba(2, 8, 23, 0.72);
+      color: #38BDF8;
+    }
+    html.dark #mei-dock-edge-tab.mei-dock-edge-tab-visible:hover,
+    html.dark #mei-dock-edge-tab.mei-dock-edge-tab-visible:focus-visible {
+      background: rgba(15, 23, 42, 0.95);
+      border-color: rgba(56, 189, 248, 0.72);
+    }
     @media (max-width: 480px) {
       #mei-studio-dock-root.pos-bottom-right {
         right: 12px;
@@ -747,6 +1047,10 @@
         padding: 6px 10px 6px 8px;
         gap: 6px;
       }
+      .mei-dock-collapsed .mei-dock-capsule {
+        padding: 5px 7px;
+        gap: 4px;
+      }
       #mei-dock-project-label {
         max-width: 82px !important;
       }
@@ -757,21 +1061,36 @@
       }
     }
     @media (orientation: landscape) and (max-height: 500px) {
+      #mei-dock-edge-tab {
+        bottom: 16px !important;
+        height: 44px;
+      }
       .mei-dock-popover {
         max-height: 70dvh;
         overflow-y: auto;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #mei-studio-dock-root,
+      #mei-dock-edge-tab {
+        transition: none !important;
       }
     }
   `;
 
   function mount() {
     if (document.getElementById('mei-studio-dock-root')) return;
+
+    const staleStyle = document.getElementById('mei-studio-dock-style');
+    if (staleStyle) staleStyle.remove();
     document.head.appendChild(style);
+
+    const staleEdgeTab = document.getElementById('mei-dock-edge-tab');
+    if (staleEdgeTab) staleEdgeTab.remove();
 
     const container = document.createElement('div');
     container.id = 'mei-studio-dock-root';
-    container.className =
-      positionAttr === 'bottom-left' ? 'pos-bottom-left' : 'pos-bottom-right';
+    container.className = isLeftAnchored ? 'pos-bottom-left' : 'pos-bottom-right';
 
     const quickProjects = getQuickProjects();
     const quickLinksHtml = quickProjects
@@ -792,9 +1111,15 @@
           <span style="font-weight:500;color:#64748B;">Mei Hub</span>
         </div>
         ${quickLinksHtml}
+        <div class="mei-dock-popover-footer">
+          <button type="button" class="mei-dock-popover-hide-btn" id="mei-dock-hide-completely-btn" aria-label="完全隱藏返回大廳懸浮按鈕">
+            ${LUCIDE_SVGS.eyeOff}
+            <span>完全隱藏此懸浮按鈕</span>
+          </button>
+        </div>
       </div>
       <div class="mei-dock-capsule" title="可拖曳移動位置">
-        <span class="mei-dock-badge" title="咩創意工作室">${LUCIDE_SVGS.cloud}</span>
+        <span class="mei-dock-badge" id="mei-dock-badge-btn" title="咩創意工作室（點擊展開／收合）">${LUCIDE_SVGS.cloud}</span>
         <div class="mei-dock-details" style="display:flex;align-items:center;gap:7px;">
           <div style="display:flex;flex-direction:column;line-height:1.2;padding-right:2px;">
             <span style="font-size:10px;color:#0284C7;font-weight:700;letter-spacing:0.03em;">MEI CREATIVE HUB</span>
@@ -808,38 +1133,34 @@
             <span>返回咩創意大廳</span>
           </a>
         </div>
-        <button type="button" class="mei-dock-collapse-btn" id="mei-dock-toggle-btn" aria-label="收合或展開導覽膠囊">
+        <button type="button" class="mei-dock-collapse-btn" id="mei-dock-toggle-btn" title="收合或展開導覽膠囊" aria-label="收合或展開導覽膠囊">
           ${LUCIDE_SVGS.minimize}
+        </button>
+        <button type="button" class="mei-dock-hide-btn" id="mei-dock-hide-btn" title="隱藏至螢幕邊緣（點擊邊緣小拉條可再展開）" aria-label="隱藏返回咩創意大廳按鈕">
+          ${LUCIDE_SVGS.eyeOff}
         </button>
       </div>
     `;
 
-    document.body.appendChild(container);
+    const edgeTab = document.createElement('button');
+    edgeTab.id = 'mei-dock-edge-tab';
+    edgeTab.type = 'button';
+    edgeTab.className = isLeftAnchored ? 'pos-bottom-left' : 'pos-bottom-right';
+    edgeTab.setAttribute('aria-label', '展開返回咩創意大廳按鈕');
+    edgeTab.setAttribute('title', '點擊展開返回咩創意大廳');
+    edgeTab.innerHTML = isLeftAnchored
+      ? `<span class="mei-dock-edge-bar"></span><span class="mei-dock-edge-chevron">${LUCIDE_SVGS.chevronRight}</span>`
+      : `<span class="mei-dock-edge-chevron">${LUCIDE_SVGS.chevronLeft}</span><span class="mei-dock-edge-bar"></span>`;
 
+    document.body.appendChild(container);
+    document.body.appendChild(edgeTab);
+
+    const badgeBtn = container.querySelector('#mei-dock-badge-btn');
     const toggleBtn = container.querySelector('#mei-dock-toggle-btn');
+    const hideBtn = container.querySelector('#mei-dock-hide-btn');
+    const hideCompletelyBtn = container.querySelector('#mei-dock-hide-completely-btn');
     const switcherBtn = container.querySelector('#mei-dock-switcher-btn');
     const popover = container.querySelector('#mei-dock-popover');
-
-    if (toggleBtn) {
-      toggleBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        container.classList.toggle('mei-dock-collapsed');
-        if (popover) popover.classList.remove('open');
-        clampToViewport();
-      });
-    }
-
-    if (switcherBtn && popover) {
-      switcherBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        popover.classList.toggle('open');
-      });
-      document.addEventListener('click', (e) => {
-        if (!container.contains(e.target)) {
-          popover.classList.remove('open');
-        }
-      });
-    }
 
     // Drag support for desktop mouse and mobile touch with viewport boundary clamping
     let isDragging = false;
@@ -880,10 +1201,90 @@
     }
 
     function clampToViewport() {
+      if (currentVisibilityMode !== 'visible') return;
       const clamped = clampOffset(offsetX, offsetY);
       offsetX = clamped.x;
       offsetY = clamped.y;
       container.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0)`;
+    }
+
+    function applyVisibilityToDom(mode) {
+      container.classList.remove('mei-dock-edge-hidden', 'mei-dock-completely-hidden');
+      container.setAttribute('data-dock-visibility', mode);
+      if (popover) popover.classList.remove('open');
+
+      if (mode === 'edge-hidden') {
+        container.classList.add('mei-dock-edge-hidden');
+        container.setAttribute('aria-hidden', 'true');
+        edgeTab.classList.add('mei-dock-edge-tab-visible');
+        edgeTab.removeAttribute('aria-hidden');
+        edgeTab.tabIndex = 0;
+      } else if (mode === 'completely-hidden') {
+        container.classList.add('mei-dock-completely-hidden');
+        container.setAttribute('aria-hidden', 'true');
+        edgeTab.classList.remove('mei-dock-edge-tab-visible');
+        edgeTab.setAttribute('aria-hidden', 'true');
+        edgeTab.tabIndex = -1;
+      } else {
+        container.removeAttribute('aria-hidden');
+        edgeTab.classList.remove('mei-dock-edge-tab-visible');
+        edgeTab.setAttribute('aria-hidden', 'true');
+        edgeTab.tabIndex = -1;
+        clampToViewport();
+      }
+    }
+
+    activeApplyVisibility = applyVisibilityToDom;
+    applyVisibilityToDom(currentVisibilityMode);
+
+    if (badgeBtn) {
+      badgeBtn.addEventListener('click', (e) => {
+        if (container.classList.contains('mei-dock-collapsed')) {
+          e.stopPropagation();
+          container.classList.remove('mei-dock-collapsed');
+          clampToViewport();
+        }
+      });
+    }
+
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        container.classList.toggle('mei-dock-collapsed');
+        if (popover) popover.classList.remove('open');
+        clampToViewport();
+      });
+    }
+
+    if (hideBtn) {
+      hideBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setDockVisibilityMode('edge-hidden');
+      });
+    }
+
+    if (hideCompletelyBtn) {
+      hideCompletelyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setDockVisibilityMode('completely-hidden');
+      });
+    }
+
+    edgeTab.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setDockVisibilityMode('visible');
+    });
+
+    if (switcherBtn && popover) {
+      switcherBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        popover.classList.toggle('open');
+      });
+      document.addEventListener('click', (e) => {
+        if (!container.contains(e.target)) {
+          popover.classList.remove('open');
+        }
+      });
     }
 
     const onPointerDown = (e) => {
@@ -915,7 +1316,7 @@
       if (!isDragging) return;
       isDragging = false;
       container.style.transition =
-        'transform 0.22s cubic-bezier(0.22, 1, 0.36, 1)';
+        'transform 0.26s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease, visibility 0.22s ease';
       clampToViewport();
     };
 

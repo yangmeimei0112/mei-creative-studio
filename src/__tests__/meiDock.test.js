@@ -19,8 +19,11 @@ const EMOJI_REGEX = /[\u{1F300}-\u{1FAFF}\u{2300}-\u{23FF}\u{2600}-\u{27BF}\u{2B
 function mountDock(attributes = {}) {
   delete window.__MEI_STUDIO_DOCK_MOUNTED__;
   delete window.MeiStudioSSO;
+  delete window.MeiStudioDock;
   const existing = document.getElementById('mei-studio-dock-root');
   if (existing) existing.remove();
+  const existingTab = document.getElementById('mei-dock-edge-tab');
+  if (existingTab) existingTab.remove();
   document.querySelectorAll('script[src*="mei-dock.js"]').forEach((s) => s.remove());
 
   const scriptEl = document.createElement('script');
@@ -43,9 +46,12 @@ describe('Milestone 3: Mei Studio Universal SSO SDK (mei-dock.js)', () => {
     vi.restoreAllMocks();
     delete window.__MEI_STUDIO_DOCK_MOUNTED__;
     delete window.MeiStudioSSO;
+    delete window.MeiStudioDock;
     delete window.__XSS_FIRED__;
     const existing = document.getElementById('mei-studio-dock-root');
     if (existing) existing.remove();
+    const existingTab = document.getElementById('mei-dock-edge-tab');
+    if (existingTab) existingTab.remove();
     document.querySelectorAll('script[src*="mei-dock.js"]').forEach((s) => s.remove());
     window.localStorage.clear();
   });
@@ -250,6 +256,62 @@ describe('Milestone 3: Mei Studio Universal SSO SDK (mei-dock.js)', () => {
 
       const root = mountDock();
       expect(EMOJI_REGEX.test(root.innerHTML)).toBe(false);
+    });
+  });
+
+  // Suite 6: Dual-Mode Hiding (Edge Peek Handle + Complete Hide + window.MeiStudioDock API)
+  describe('6. Dual-Mode Hiding (Edge Peek Tab, Complete Hide & window.MeiStudioDock)', () => {
+    it('hides dock to translucent edge peek handle via #mei-dock-hide-btn and restores on edge tab click', () => {
+      const root = mountDock({ 'data-position': 'bottom-left' });
+      const edgeTab = document.getElementById('mei-dock-edge-tab');
+      expect(edgeTab).toBeInTheDocument();
+      expect(edgeTab).toHaveClass('pos-bottom-left');
+      expect(window.MeiStudioDock.getMode()).toBe('visible');
+
+      const hideBtn = root.querySelector('#mei-dock-hide-btn');
+      expect(hideBtn).toBeInTheDocument();
+      fireEvent.click(hideBtn);
+
+      expect(root).toHaveClass('mei-dock-edge-hidden');
+      expect(edgeTab).toHaveClass('mei-dock-edge-tab-visible');
+      expect(window.MeiStudioDock.getMode()).toBe('edge-hidden');
+      expect(window.localStorage.getItem('mei_studio_dock_visibility_v1')).toBe('edge-hidden');
+
+      // Clicking edge peek tab restores dock
+      fireEvent.click(edgeTab);
+      expect(root).not.toHaveClass('mei-dock-edge-hidden');
+      expect(edgeTab).not.toHaveClass('mei-dock-edge-tab-visible');
+      expect(window.MeiStudioDock.getMode()).toBe('visible');
+      expect(window.localStorage.getItem('mei_studio_dock_visibility_v1')).toBe('visible');
+      edgeTab?.remove();
+    });
+
+    it('supports completely-hidden mode via popover button & window.MeiStudioDock API, persisting across remounts', () => {
+      const root = mountDock();
+      const edgeTab = document.getElementById('mei-dock-edge-tab');
+      const modes = [];
+      const unsub = window.MeiStudioDock.onModeChange((m) => modes.push(m));
+
+      fireEvent.click(root.querySelector('#mei-dock-switcher-btn'));
+      fireEvent.click(root.querySelector('#mei-dock-hide-completely-btn'));
+
+      expect(root).toHaveClass('mei-dock-completely-hidden');
+      expect(edgeTab).not.toHaveClass('mei-dock-edge-tab-visible');
+      expect(window.MeiStudioDock.getMode()).toBe('completely-hidden');
+      expect(modes).toEqual(['completely-hidden']);
+
+      // Remounting preserves persisted completely-hidden state
+      const remounted = mountDock();
+      expect(remounted).toHaveClass('mei-dock-completely-hidden');
+      expect(window.MeiStudioDock.getMode()).toBe('completely-hidden');
+
+      // Programmatic show() restores normal visibility
+      window.MeiStudioDock.show();
+      expect(remounted).not.toHaveClass('mei-dock-completely-hidden');
+      expect(window.MeiStudioDock.getMode()).toBe('visible');
+
+      unsub();
+      document.getElementById('mei-dock-edge-tab')?.remove();
     });
   });
 });
