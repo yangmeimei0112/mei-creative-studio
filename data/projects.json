@@ -14,7 +14,7 @@
       "status": "beta",
       "featured": true,
       "pinned": true,
-      "version": "v1.5.3",
+      "version": "v1.5.4",
       "latencyMs": 70,
       "updatedAt": "2026-11-24",
       "platforms": [
@@ -24,7 +24,7 @@
         "Windows"
       ],
       "highlights": [
-        "三套主題 × 亮深雙模式全站統一視覺色系（保留自選行程圖塊底色）與 Android 沉浸透視底部導覽列",
+        "三套主題 × 亮深雙模式全站統一視覺色系（保留自選行程圖塊底色）與零卡頓 GPU 亮暗色切換引擎",
         "統一全高左側側欄（可縮為 64px 精簡圖示軌）、獨立右側待辦翼板與全站行程標題自動換行系統",
         "專注番茄鐘內建無版權離線輕音樂、自然環境音與背景迷你控制",
         "完整支援網頁、桌面與行動裝置離線優先即時同步與嚴格邀請碼共享協作"
@@ -57,6 +57,15 @@
     }
   ],
   "changelog": [
+    {
+      "id": "pulse-2026-11-24-schedule-v1-5-4",
+      "version": "v1.1.9",
+      "date": "2026-11-24",
+      "title": "「咩時光 MeiSchedule」升級 v1.5.4 手機端零卡頓亮暗色切換引擎",
+      "category": "效能優化",
+      "icon": "zap",
+      "summary": "導入原生 GPU 合成 View Transitions API 與獨立 VisualThemeContext 隔離，切換亮暗色時 0 主畫面重繪、延後 IndexedDB 與雲端同步至轉場完成，並強化舊版行動瀏覽器毛玻璃與陰影降載退路。"
+    },
     {
       "id": "pulse-2026-11-24-schedule-v1-5-3",
       "version": "v1.1.8",
