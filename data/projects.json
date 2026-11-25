@@ -14,7 +14,7 @@
       "status": "beta",
       "featured": true,
       "pinned": true,
-      "version": "v1.5.2",
+      "version": "v1.5.3",
       "latencyMs": 70,
       "updatedAt": "2026-11-24",
       "platforms": [
@@ -57,6 +57,15 @@
     }
   ],
   "changelog": [
+    {
+      "id": "pulse-2026-11-24-schedule-v1-5-3",
+      "version": "v1.1.8",
+      "date": "2026-11-24",
+      "title": "「咩時光 MeiSchedule」升級 v1.5.3 行動端 + 鈕直開空白完整新增行程表單",
+      "category": "操作體驗",
+      "icon": "calendar-plus",
+      "summary": "行動端右下角懸浮 + 按鈕改為直接開啟空白的完整「新增行程」抽屜表單（不再跳轉至快速輸入列），所有欄位預設空白、支援全天日期選擇與必填驗證，取消時不殘留多餘行程。"
+    },
     {
       "id": "pulse-2026-11-24-schedule-v1-5-2",
       "version": "v1.1.7",
