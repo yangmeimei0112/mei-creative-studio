@@ -16,7 +16,10 @@ describe('工作室領域知識庫 (studioKnowledgeBase) 規格與提示詞生�
       expect(brand.nameEn).toBe('Mei Creative Studio');
       expect(brand.tagline).toBe('創意無限∞咩有極限');
       expect(brand.themeColor).toBe('#38BDF8');
-      expect(brand.version).toBe('v1.0.0');
+      expect(brand.version).toBe('v1.1.0');
+      expect(brand.logoConcept).toContain('Mei Flow');
+      expect(brand.logoConcept).toContain('M 字時光律動');
+      expect(brand.logoConcept).not.toContain('星芒徽章');
       expect(Array.isArray(brand.supportedPlatforms)).toBe(true);
       expect(brand.supportedPlatforms.length).toBeGreaterThan(0);
     });
@@ -84,6 +87,7 @@ describe('工作室領域知識庫 (studioKnowledgeBase) 規格與提示詞生�
       expect(typeof defaultPrompt).toBe('string');
       expect(defaultPrompt).toContain('咩創意 AI 專屬特助');
       expect(defaultPrompt).toContain('創意無限∞咩有極限');
+      expect(defaultPrompt).toContain('Mei Flow');
       expect(defaultPrompt).toContain('目前大廳暫無已儲存專案。');
       expect(defaultPrompt).toContain('暫無最新動態。');
     });

@@ -839,19 +839,19 @@ describe('咩創意工作室 Mei Creative Studio - 全站動畫系統端對端 (
 
       // 3. StudioLogo linear SVG strokeWidth
       const { container: logoContainer } = render(<StudioLogo size="md" />);
-      const cloudSvg = logoContainer.querySelector('.studio-infinity-cloud');
-      expect(cloudSvg).toBeInTheDocument();
-      expect(cloudSvg.getAttribute('stroke-width')).toBe('1.75');
+      const meiFlowSvg = logoContainer.querySelector('.studio-mei-flow');
+      expect(meiFlowSvg).toBeInTheDocument();
+      expect(meiFlowSvg.getAttribute('stroke-width')).toBe('1.75');
     });
 
-    it('T4-U1-07: 視覺系統規範：全站品牌標誌 (StudioLogo) 完整體現「晴空淡藍 #38BDF8 + 靈感雲朵 × 無限符號 (∞) 純粹極簡線性」', () => {
+    it('T4-U1-07: 視覺系統規範：全站品牌標誌 (StudioLogo) 完整體現「晴空淡藍 #38BDF8 + M 字時光律動 · Mei Flow 純粹極簡線性」', () => {
       const { container } = render(<StudioLogo size="lg" />);
       const logo = container.querySelector('[data-testid="studio-brand-logo"]');
       expect(logo).toBeInTheDocument();
 
-      const cloudInfinitySvg = logo.querySelector('.studio-infinity-cloud');
-      expect(cloudInfinitySvg).toBeInTheDocument();
-      expect(cloudInfinitySvg.getAttribute('stroke-width')).toBe('1.75');
+      const meiFlowSvg = logo.querySelector('.studio-mei-flow');
+      expect(meiFlowSvg).toBeInTheDocument();
+      expect(meiFlowSvg.getAttribute('stroke-width')).toBe('1.75');
 
       const sparkles = logo.querySelector('.studio-logo-sparkle');
       expect(sparkles).not.toBeInTheDocument();

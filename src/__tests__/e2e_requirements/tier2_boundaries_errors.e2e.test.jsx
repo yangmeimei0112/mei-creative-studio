@@ -1141,7 +1141,7 @@ describe('Tier 2: Boundary & Corner Cases (Features 1 to 15)', () => {
       const sizes = ['2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl'];
       sizes.forEach((s) => {
         const { container } = render(<StudioLogo size={s} frameless={true} />);
-        expect(container.querySelector('.studio-infinity-cloud')).toBeInTheDocument();
+        expect(container.querySelector('.studio-mei-flow')).toBeInTheDocument();
       });
     });
 

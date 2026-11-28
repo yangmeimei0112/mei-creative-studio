@@ -268,7 +268,7 @@ describe('手機與多比例裝置響應式適配驗證 (Multi-Aspect-Ratio Mobi
     expect(brandLink).toHaveClass('min-w-0', 'shrink', 'md:shrink-0');
     const titleZh = within(brandLink).getByText('咩創意工作室');
     expect(titleZh).toHaveClass('whitespace-nowrap', 'max-[359px]:text-[13.5px]');
-    expect(within(brandLink).getByText('v1.0.0')).toHaveClass('hidden', 'md:inline-flex', 'shrink-0');
+    expect(within(brandLink).getByText('v1.1.0')).toHaveClass('hidden', 'md:inline-flex', 'shrink-0');
     expect(within(brandLink).getByText('Mei Creative Studio')).toHaveClass('hidden', 'min-[400px]:block', 'uppercase', 'truncate');
 
     const healthBtn = screen.getByTitle('即時巡檢所有子專案連線狀態');

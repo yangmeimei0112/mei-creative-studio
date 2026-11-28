@@ -22,7 +22,7 @@
 
 ## 4. 零系統 Emoji 與品牌視覺規範
 - 全站原始碼、SVG、HTML 與測試檔案嚴格禁止任何系統 Unicode Emoji，100% 使用 Lucide 向量圖示（`strokeWidth=1.75`、`absoluteStrokeWidth=true`）。
-- 品牌標誌 `StudioLogo` 嚴格維持 Candidate F 雲朵無限幾何路徑與 7 級尺寸規範（`2xs` 至 `2xl`）。
+- 品牌標誌 `StudioLogo` 嚴格維持「M 字時光律動 · Mei Flow」幾何常數（單筆圓角大寫 M 路徑 `M4.8 18V8.8a2.1 2.1 0 0 1 3.58-1.48L12 10.95l3.62-3.63A2.1 2.1 0 0 1 19.2 8.8v3.7` 與右下靈感光點 `cx="19.2" cy="16.9" r="1.95"`）與 7 級尺寸規範（`2xs` 至 `2xl`）。
 
 ## 5. 任務狀態回報與多代理監控紀律 (Task Status Reporting Integrity & Anti-Noise Protocol)
 - **靜默過濾純心跳檢查**：攔截 `[Sentinel Liveness Check]` 或僅表達「運作正常／請稍候」且無實質代碼或閘門狀態變更的訊息，嚴禁轉發給使用者；僅於任務完成、里程碑狀態切換（過閘或退回）、發生阻塞／錯誤／重啟、或需要使用者輸入資料時才回報。

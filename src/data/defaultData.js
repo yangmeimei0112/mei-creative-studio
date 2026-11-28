@@ -9,7 +9,7 @@ export const STUDIO_CONFIG = {
   tagline: '創意無限∞咩有極限',
   description: '創意無限∞咩有極限',
   themeColor: '#38BDF8',
-  version: 'v1.0.0',
+  version: 'v1.1.0',
   defaultAdminPin: 'mei888'
 };
 

@@ -1,7 +1,7 @@
 {
   "name": "mei-creative-studio-hub",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "咩創意工作室 Mei Creative Studio — 跨平台專案導引大廳 (Cross-Platform Project Portal & Launchpad Hub)",
   "type": "module",
   "scripts": {

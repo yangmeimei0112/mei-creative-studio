@@ -28,7 +28,7 @@
 ├── supabase/
 │   └── schema_migrations.sql        # 專屬 Supabase (xtyuyuralrnwzsjvyslp) 資料表與 FORCE RLS 遷移腳本
 ├── public/
-│   ├── favicon.svg                  # 瀏覽器頁籤向量圖示 (Candidate F)
+│   ├── favicon.svg                  # 瀏覽器頁籤向量圖示 (Mei Flow)
 │   ├── pwa-maskable.svg             # PWA 主畫面自適應遮罩圖示
 │   ├── manifest.webmanifest         # 標準 PWA Web App Manifest（全站唯一來源）
 │   ├── sw.js                        # PWA Service Worker 離線快取腳本
@@ -69,7 +69,7 @@
 | **管理員解鎖、新增／編輯專案、JSON 備份還原、PWA 安裝指南** | `src/components/AdminProjectModal.jsx`<br>`src/services/storageService.js`<br>`src/data/defaultData.js` | `src/__tests__/installGuideDeviceDetection.test.jsx`<br>`src/__tests__/memberPortalAndToast.test.jsx`<br>`scripts/verify-hub.mjs` |
 | **管理員 AI 客服小幫手與離線 FAQ 語意比對** | `src/components/AdminChatWidget.jsx`<br>`src/services/aiService.js`<br>`src/services/aiFaqMatcher.js`<br>`src/data/studioKnowledgeBase.js` | `src/__tests__/aiService.test.jsx`<br>`src/__tests__/aiFaqMatcher.test.jsx`<br>`src/__tests__/studioKnowledgeBase.test.js`<br>`src/__tests__/adminAiCustomerSupport.e2e.test.jsx` |
 | **工作室動態脈搏、更新日誌與 SOC 資安防禦審計面板** | `src/components/StudioPulseSection.jsx`<br>`src/components/SecurityAuditModal.jsx`<br>`src/services/securityService.js`<br>`src/data/securityAuditData.js` | `src/__tests__/security.test.jsx`<br>`scripts/verify-hub.mjs` |
-| **品牌標誌 (`StudioLogo` Candidate F) 與 Lucide 圖示系統** | `src/components/LucideIcon.jsx`<br>`scripts/generate-logo-previews.mjs`<br>`public/previews/` | `src/__tests__/logoE2E.test.jsx`<br>`src/__tests__/authAndLogoE2E.test.jsx` |
+| **品牌標誌 (`StudioLogo` Mei Flow) 與 Lucide 圖示系統** | `src/components/LucideIcon.jsx`<br>`scripts/generate-logo-previews.mjs`<br>`public/previews/` | `src/__tests__/logoE2E.test.jsx`<br>`src/__tests__/authAndLogoE2E.test.jsx` |
 | **開場雲霧推進動畫、Toast 通知膠囊與多比例響應式 CSS** | `src/components/PortalEntrance.jsx`<br>`src/App.jsx`<br>`src/styles/index.css` | `src/__tests__/animationE2E.test.jsx`<br>`src/__tests__/mobileResponsiveAdaptation.test.jsx`<br>`src/__tests__/mobilePwa.test.jsx` |
 
 ---
@@ -103,7 +103,7 @@
 | `src/components/MobileBottomNav.jsx` | 行動端底部單手操作導覽列（探索、搜尋、安裝、會員／設定）。 |
 | `src/components/PortalEntrance.jsx` | 首次進站雲霧散開與空間景深推進開場動畫。 |
 | `src/components/QRCodeModal.jsx` | 跨裝置掃描開啟子專案之純 SVG QR-code 產生器彈窗。 |
-| `src/components/LucideIcon.jsx` | 統一封裝之 Lucide 圖示渲染器（預設 `strokeWidth=1.75`、`absoluteStrokeWidth=true`）、`SquircleIconBadge` 與 `StudioLogo`（Candidate F 雲朵無限幾何，支援 `2xs` 至 `2xl`）。 |
+| `src/components/LucideIcon.jsx` | 統一封裝之 Lucide 圖示渲染器（預設 `strokeWidth=1.75`、`absoluteStrokeWidth=true`）、`SquircleIconBadge` 與 `StudioLogo`（M 字時光律動 · Mei Flow 幾何，支援 `2xs` 至 `2xl`）。 |
 
 ### 3. 資料層 (`src/data/`)
 | 檔案路徑 | 核心職責 |
@@ -137,7 +137,7 @@
   - `tier3_cross_features.e2e.test.jsx`：跨功能交互組合測試。
   - `tier4_user_journeys.e2e.test.jsx`：真實使用者完整旅程測試。
 - **品牌視覺、響應式、動畫與資安測試**：
-  - `src/__tests__/logoE2E.test.jsx` / `src/__tests__/authAndLogoE2E.test.jsx`：`StudioLogo` Candidate F 幾何、7 級尺寸與 12 端點一致性驗證。
+  - `src/__tests__/logoE2E.test.jsx` / `src/__tests__/authAndLogoE2E.test.jsx`：`StudioLogo` Mei Flow 幾何、7 級尺寸與 12 端點一致性驗證。
   - `src/__tests__/mobileResponsiveAdaptation.test.jsx` / `src/__tests__/mobilePwa.test.jsx` / `src/__tests__/installGuideDeviceDetection.test.jsx`：四大長寬比響應式、PWA 與裝置偵測驗證。
   - `src/__tests__/animationE2E.test.jsx`：開場動畫、抽屜轉場、主題波浪切換與無障礙屬性驗證。
   - `src/__tests__/security.test.jsx`：雜湊、XSS 消毒、防爆破鎖定與蜜罐陷阱驗證。

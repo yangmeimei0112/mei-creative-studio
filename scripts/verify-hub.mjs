@@ -69,8 +69,23 @@ test('1. 品牌配置、三大預設分類與 48 款 Lucide 圖示挑選器驗�
   assert.equal(STUDIO_CONFIG.studioNameZh, '咩創意工作室');
   assert.equal(STUDIO_CONFIG.studioNameEn, 'Mei Creative Studio');
   assert.equal(STUDIO_CONFIG.themeColor, '#38BDF8');
-  assert.equal(STUDIO_CONFIG.version, 'v1.0.0');
+  assert.equal(STUDIO_CONFIG.version, 'v1.1.0');
   assert.equal(STUDIO_CONFIG.defaultAdminPin, 'mei888');
+
+  const pkg = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf-8'));
+  assert.equal(pkg.version, '1.1.0');
+
+  const swContent = fs.readFileSync(path.resolve('public/sw.js'), 'utf-8');
+  assert.equal(swContent.includes('mei-studio-hub-v2'), true);
+  assert.equal(swContent.includes('mei-studio-hub-v1'), false);
+
+  const projectsJson = JSON.parse(fs.readFileSync(path.resolve('data/projects.json'), 'utf-8'));
+  assert.equal(
+    Array.isArray(projectsJson.changelog) &&
+      projectsJson.changelog.some((item) => item.version === 'v1.1.0'),
+    true,
+    'data/projects.json 必須包含 v1.1.0 更新日誌'
+  );
 
   const catIds = PROJECT_CATEGORIES.map((c) => c.id);
   assert.deepEqual(catIds, [
@@ -140,7 +155,9 @@ test('2. 全站原始碼與 Lucide 圖示規範靜態與結構檢查 (strokeWidt
     'public/demo-subproject.html',
     'public/manifest.webmanifest',
     'public/favicon.svg',
-    'public/pwa-maskable.svg'
+    'public/pwa-maskable.svg',
+    'public/logo-preview.html',
+    'data/projects.json'
   ];
 
   for (const relPath of filesToCheck) {
@@ -152,16 +169,66 @@ test('2. 全站原始碼與 Lucide 圖示規範靜態與結構檢查 (strokeWidt
     );
   }
 
-  // 驗證 favicon.svg 與 mei-dock.js 採用正統 Lucide Cloud × Infinity 向量結構，無非官方手繪相異圖形
-  const faviconContent = fs.readFileSync(path.resolve('public/favicon.svg'), 'utf-8');
-  assert.match(faviconContent, /M17\.5 19H9/);
-  assert.match(faviconContent, /M12 14\.5c/);
-  assert.equal(faviconContent.includes('m12 3-1.912'), false);
+  // 驗證全站品牌向量端點皆採用 Mei Flow 凍結向量幾何，且無舊版雲朵無限或手繪路徑殘留
+  const MEI_FLOW_M_PATH =
+    'M4.8 18V8.8a2.1 2.1 0 0 1 3.58-1.48L12 10.95l3.62-3.63A2.1 2.1 0 0 1 19.2 8.8v3.7';
+  const MEI_FLOW_DOT_ATTRS = 'cx="19.2" cy="16.9" r="1.95"';
 
-  const dockContent = fs.readFileSync(path.resolve('public/sdk/mei-dock.js'), 'utf-8');
-  assert.match(dockContent, /M17\.5 19H9/);
-  assert.match(dockContent, /M12 14\.5c/);
-  assert.equal(dockContent.includes('m12 3-1.912'), false);
+  assert.equal(lucideComponentSource.includes('MEI_FLOW_M_PATH'), true);
+  assert.equal(lucideComponentSource.includes(MEI_FLOW_M_PATH), true);
+  assert.equal(lucideComponentSource.includes('data-lucide-name="mei-flow"'), true);
+  assert.equal(lucideComponentSource.includes('studio-mei-flow'), true);
+  assert.equal(lucideComponentSource.includes('studio-infinity-cloud'), false);
+  assert.equal(lucideComponentSource.includes('M17.5 19H9'), false);
+  assert.equal(lucideComponentSource.includes('M12 14.5c'), false);
+
+  const brandVectorFiles = [
+    'public/favicon.svg',
+    'public/pwa-maskable.svg',
+    'public/demo-subproject.html',
+    'public/sdk/mei-dock.js',
+    'public/logo-preview.html',
+    'public/previews/logo-2xs.svg',
+    'public/previews/logo-xs.svg',
+    'public/previews/logo-sm.svg',
+    'public/previews/logo-md.svg',
+    'public/previews/logo-lg.svg',
+    'public/previews/logo-xl.svg',
+    'public/previews/logo-2xl.svg'
+  ];
+
+  for (const relPath of brandVectorFiles) {
+    const vectorContent = fs.readFileSync(path.resolve(relPath), 'utf-8');
+    assert.equal(
+      vectorContent.includes(MEI_FLOW_M_PATH),
+      true,
+      `${relPath} 必須包含 Mei Flow M 字母凍結路徑`
+    );
+    assert.equal(
+      vectorContent.includes(MEI_FLOW_DOT_ATTRS),
+      true,
+      `${relPath} 必須包含 Mei Flow 右下靈感光點`
+    );
+    assert.equal(
+      vectorContent.includes('M17.5 19H9'),
+      false,
+      `${relPath} 不應殘留舊版雲朵路徑`
+    );
+    assert.equal(
+      vectorContent.includes('M12 14.5c'),
+      false,
+      `${relPath} 不應殘留舊版無限路徑`
+    );
+    assert.equal(
+      vectorContent.includes('m12 3-1.912'),
+      false,
+      `${relPath} 不應殘留手繪舊版路徑`
+    );
+  }
+
+  const dockSource = fs.readFileSync(path.resolve('public/sdk/mei-dock.js'), 'utf-8');
+  assert.match(dockSource, /z-index:\s*35/);
+  assert.equal(dockSource.includes('2147483640'), false);
 
   // Verify UI components and data files do not expose internal design-spec commentary or technical tags UI
   const uiAndDataFiles = [

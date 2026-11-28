@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { StudioLogo, SquircleIconBadge, LucideIcon } from '../components/LucideIcon';
+import { StudioLogo, SquircleIconBadge, LucideIcon, MEI_FLOW_M_PATH, MEI_FLOW_DOT } from '../components/LucideIcon';
 import PortalEntrance from '../components/PortalEntrance';
 import HeaderHero from '../components/HeaderHero';
 import MobileBottomNav from '../components/MobileBottomNav';
@@ -41,9 +41,9 @@ import {
   broadcastMemberSsoEvent
 } from '../services/memberAuthService';
 
-const CANDIDATE_F_CLOUD = 'M17.5 19H9';
-const CANDIDATE_F_LEMNISCATE = 'M12 14.5c';
-const SPARKLES_PATH = 'M9.937 15.5';
+const MEI_FLOW_DOT_ATTRS = `cx="${MEI_FLOW_DOT.cx}" cy="${MEI_FLOW_DOT.cy}" r="${MEI_FLOW_DOT.r}"`;
+const FORBIDDEN_LEGACY_CLOUD = 'M17.5 19H9';
+const FORBIDDEN_LEGACY_LEMNISCATE = 'M12 14.5c';
 const FORBIDDEN_LEGACY_PATH = 'm12 3-1.912';
 const EMOJI_REGEX = /[\u{1F300}-\u{1FAFF}\u{2300}-\u{23FF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/u;
 
@@ -126,6 +126,8 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
     delete window.__MEI_STUDIO_DOCK_MOUNTED__;
     const dockRoot = document.getElementById('mei-studio-dock-root');
     if (dockRoot) dockRoot.remove();
+    const dockStyle = document.getElementById('mei-studio-dock-style');
+    if (dockStyle) dockStyle.remove();
     document.querySelectorAll('script[src*="mei-dock.js"]').forEach((s) => s.remove());
 
     // 4. Timer and mock restoration
@@ -189,8 +191,10 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
         expect(fs.existsSync(svgPath)).toBe(true);
         const svgContent = fs.readFileSync(svgPath, 'utf-8');
         expect(svgContent).toContain('stroke-width="1.75"');
-        expect(svgContent).toContain(CANDIDATE_F_CLOUD);
-        expect(svgContent).toContain(CANDIDATE_F_LEMNISCATE);
+        expect(svgContent).toContain(MEI_FLOW_M_PATH);
+        expect(svgContent).toContain(MEI_FLOW_DOT_ATTRS);
+        expect(svgContent).not.toContain(FORBIDDEN_LEGACY_CLOUD);
+        expect(svgContent).not.toContain(FORBIDDEN_LEGACY_LEMNISCATE);
         expect(svgContent).not.toContain(FORBIDDEN_LEGACY_PATH);
         expect(EMOJI_REGEX.test(svgContent)).toBe(false);
       }
@@ -202,15 +206,15 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
         'utf-8'
       );
       expect(previewScript).toContain('--check');
-      expect(previewScript).toContain(CANDIDATE_F_CLOUD);
-      expect(previewScript).toContain(CANDIDATE_F_LEMNISCATE);
+      expect(previewScript).toContain(MEI_FLOW_M_PATH);
+      expect(previewScript).toContain(MEI_FLOW_DOT_ATTRS);
 
       const verifyHub = fs.readFileSync(path.resolve('scripts/verify-hub.mjs'), 'utf-8');
       expect(verifyHub).toContain('strokeWidth=1.75');
       expect(verifyHub).toContain('absoluteStrokeWidth');
     });
 
-    it('T1-F5-01: 全站 12 大品牌識別消費端點均正確渲染 StudioLogo 與 Candidate F 幾何 (Feature 5)', () => {
+    it('T1-F5-01: 全站 12 大品牌識別消費端點均正確渲染 StudioLogo 與 Mei Flow 幾何 (Feature 5)', () => {
       const testProject = {
         id: 'test-p1',
         title: '雲端白板',
@@ -321,12 +325,12 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
       expect(footer.querySelector('[data-testid="studio-brand-logo"][data-logo-size="sm"]')).toBeInTheDocument();
     });
 
-    it('T1-F6-01: Brand Logo 與全站檔案分類索引規範包含 Candidate F 與核心元件清單 (Feature 6)', () => {
+    it('T1-F6-01: Brand Logo 與全站檔案分類索引規範包含 Mei Flow 與核心元件清單 (Feature 6)', () => {
       const indexPath = path.resolve('docs/FILE_TAXONOMY_AND_INDEX.md');
       expect(fs.existsSync(indexPath)).toBe(true);
 
       const report = fs.readFileSync(indexPath, 'utf-8');
-      expect(report).toContain('Candidate F');
+      expect(report).toContain('Mei Flow');
       expect(report).toContain('PortalEntrance');
       expect(report).toContain('HeaderHero');
       expect(report).toContain('MemberPortalModal');
@@ -528,8 +532,8 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
       const logo = container.querySelector('[data-testid="studio-brand-logo"]');
       expect(logo).toBeInTheDocument();
 
-      const cloudSvg = container.querySelector('.studio-infinity-cloud');
-      expect(cloudSvg.getAttribute('stroke-width')).toBe('1.75');
+      const meiFlowSvg = container.querySelector('.studio-mei-flow');
+      expect(meiFlowSvg.getAttribute('stroke-width')).toBe('1.75');
 
       expect(EMOJI_REGEX.test(container.innerHTML)).toBe(false);
     });
@@ -800,7 +804,7 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
 
       const logoAfter = screen.getByTestId('studio-brand-logo');
       expect(logoAfter).toHaveAttribute('data-logo-size', 'md');
-      expect(logoAfter.querySelector('[data-lucide-name="cloud"]')).toHaveClass('studio-infinity-cloud');
+      expect(logoAfter.querySelector('[data-lucide-name="mei-flow"]')).toHaveClass('studio-mei-flow');
     });
 
     it('T3-C-02: 跨分頁即時登出同步與 UI 視圖聯動 (F9 + F10 + F11 + F14)', async () => {
@@ -856,8 +860,8 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
       const squircleDark = container.querySelector('.squircle-icon-badge');
       expect(squircleDark).toHaveClass('dark:bg-sky-400/10');
 
-      const cloudSvg = container.querySelector('.studio-infinity-cloud');
-      expect(cloudSvg).toHaveClass('text-sky-500', 'dark:text-sky-400');
+      const meiFlowSvg = container.querySelector('.studio-mei-flow');
+      expect(meiFlowSvg).toHaveClass('text-sky-500', 'dark:text-sky-400');
     });
 
     it('T3-C-05: 子專案膠囊 SDK 接收主大廳真實 Session 廣播 (F9 + F11 + F5)', async () => {
@@ -1083,10 +1087,13 @@ describe('Mei Creative Studio - Universal Member Auth & Brand Logo Designer 4-Ti
         expect(logo).toBeInTheDocument();
         expect(logo).toHaveAttribute('data-logo-size', sz);
 
-        const cloudSvg = logo.querySelector('[data-lucide-name="cloud"]');
-        expect(cloudSvg.innerHTML).toContain(CANDIDATE_F_CLOUD);
-        expect(cloudSvg.innerHTML).toContain(CANDIDATE_F_LEMNISCATE);
-        expect(cloudSvg.innerHTML).not.toContain(FORBIDDEN_LEGACY_PATH);
+        const meiFlowSvg = logo.querySelector('[data-lucide-name="mei-flow"]');
+        expect(meiFlowSvg).toBeInTheDocument();
+        expect(meiFlowSvg.innerHTML).toContain(MEI_FLOW_M_PATH);
+        expect(meiFlowSvg.innerHTML).toContain(MEI_FLOW_DOT_ATTRS);
+        expect(meiFlowSvg.innerHTML).not.toContain(FORBIDDEN_LEGACY_CLOUD);
+        expect(meiFlowSvg.innerHTML).not.toContain(FORBIDDEN_LEGACY_LEMNISCATE);
+        expect(meiFlowSvg.innerHTML).not.toContain(FORBIDDEN_LEGACY_PATH);
         unmount();
       }
 

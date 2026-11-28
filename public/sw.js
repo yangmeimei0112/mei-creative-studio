@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mei-studio-hub-v1';
+const CACHE_NAME = 'mei-studio-hub-v2';
 const PRECACHE_URLS = [
   '/',
   '/index.html',

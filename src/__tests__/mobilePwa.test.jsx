@@ -68,6 +68,15 @@ describe('咩創意工作室 Mei Creative Studio - 行動裝置比例與 PWA APP
       const maskableIcon = manifest.icons.find((i) => i.purpose === 'maskable');
       expect(maskableIcon).toBeDefined();
     });
+
+    it('PWA-04: Service Worker (public/sw.js) 快取版本必須升級為 mei-studio-hub-v2 且無舊版快取名稱', () => {
+      const swPath = path.resolve('public/sw.js');
+      expect(fs.existsSync(swPath)).toBe(true);
+
+      const swContent = fs.readFileSync(swPath, 'utf-8');
+      expect(swContent).toContain("'mei-studio-hub-v2'");
+      expect(swContent).not.toContain('mei-studio-hub-v1');
+    });
   });
 
   // =========================================================================

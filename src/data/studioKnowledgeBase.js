@@ -29,7 +29,7 @@ export const STUDIO_DOMAIN_KNOWLEDGE = {
     visualPhilosophy:
       '晴空雲朵淡藍 (#38BDF8) 搭配極簡毛玻璃排版，全站採用 Lucide 向量符號系統，遵守嚴格零 Emoji 規範。',
     logoConcept:
-      '靈感雲朵結合無限符號 (∞) 線性向量徽章，雲朵外廓內嵌無限雙環與右上角星芒徽章。',
+      'M 字時光律動 · Mei Flow 線性向量徽章，以極簡幾何單筆圓角大寫 M 結合右下時刻／靈感光點象徵數位工藝律動。',
     supportedPlatforms: ['iOS', 'Android', 'macOS', 'Windows', 'PWA 桌面與行動裝置主畫面安裝']
   },
 
@@ -166,7 +166,7 @@ export function buildStudioSystemPrompt(params = {}) {
 - 核心標語：創意無限∞咩有極限
 - 主題色彩：晴空雲朵淡藍 (#38BDF8)
 - 視覺風格：極簡毛玻璃排版，100% 純粹 Lucide 向量圖示符號系統
-- 品牌標誌：靈感雲朵結合無限符號 (∞) 線性向量徽章
+- 品牌標誌：M 字時光律動 · Mei Flow 線性向量徽章（單筆圓角大寫 M ＋ 右下時刻靈感光點）
 
 【專案核心領域分類】
 1. AI 與自動化工具 (ai-automation)：智慧代理、LLM 工作流、自動化腳本與生產力助手。

@@ -436,9 +436,14 @@ export function SquircleIconBadge({
   );
 }
 
+export const MEI_FLOW_M_PATH =
+  'M4.8 18V8.8a2.1 2.1 0 0 1 3.58-1.48L12 10.95l3.62-3.63A2.1 2.1 0 0 1 19.2 8.8v3.7';
+
+export const MEI_FLOW_DOT = { cx: 19.2, cy: 16.9, r: 1.95 };
+
 /**
  * 咩創意工作室統一品牌標誌徽章 (Studio Brand Logo Emblem)
- * - 核心意象：靈感雲朵 × 無限符號 (∞)
+ * - 核心意象：M 字時光律動 · Mei Flow（單筆圓角大寫 M ＋ 右下時刻／靈感光點）
  * - 視覺風格：純粹極簡線性美學 (Pure Linear Minimalist)
  * - 統一 1.75 線寬、俐落黃金比例幾何負空間、深淺色自適應
  * - 支援標準尺寸：2xs, xs, sm, md, lg, xl, 2xl
@@ -485,6 +490,25 @@ export function StudioLogo({
   const normalizedSize = sizeMap[size] ? size : 'md';
   const current = sizeMap[normalizedSize];
 
+  const meiFlowSvg = (
+    <svg
+      data-lucide-name="mei-flow"
+      xmlns="http://www.w3.org/2000/svg"
+      width={current.icon}
+      height={current.icon}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={`text-sky-500 dark:text-sky-400 studio-mei-flow ${frameless ? 'drop-shadow-md' : ''}`.trim()}
+    >
+      <path d={MEI_FLOW_M_PATH} />
+      <circle cx={MEI_FLOW_DOT.cx} cy={MEI_FLOW_DOT.cy} r={MEI_FLOW_DOT.r} fill="currentColor" stroke="none" />
+    </svg>
+  );
+
   return (
     <div
       className={`studio-brand-logo relative inline-flex items-center justify-center shrink-0 ${className}`.trim()}
@@ -493,47 +517,12 @@ export function StudioLogo({
       {...rest}
     >
       {frameless ? (
-        <svg
-          data-lucide-name="cloud"
-          xmlns="http://www.w3.org/2000/svg"
-          width={current.icon}
-          height={current.icon}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.75}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="text-sky-500 dark:text-sky-400 studio-infinity-cloud drop-shadow-md"
-        >
-          {/* 靈感雲朵輪廓 (Lucide Standard Anchor) */}
-          <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
-          {/* 核心無限符號 (∞) 創意環 (Refined Orthogonal Lemniscate) */}
-          <path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z" />
-        </svg>
+        meiFlowSvg
       ) : (
         <div
           className={`squircle-icon-badge inline-flex items-center justify-center shrink-0 transition-transform duration-300 border border-sky-400/25 dark:border-sky-500/25 bg-sky-500/10 dark:bg-sky-400/10 ${current.box} ${badgeClassName}`.trim()}
         >
-          {/* 純粹極簡線性：靈感雲朵 × 無限符號 (∞) */}
-          <svg
-            data-lucide-name="cloud"
-            xmlns="http://www.w3.org/2000/svg"
-            width={current.icon}
-            height={current.icon}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.75}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-sky-500 dark:text-sky-400 studio-infinity-cloud"
-          >
-            {/* 靈感雲朵輪廓 (Lucide Standard Anchor) */}
-            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
-            {/* 核心無限符號 (∞) 創意環 (Refined Orthogonal Lemniscate) */}
-            <path d="M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z" />
-          </svg>
+          {meiFlowSvg}
         </div>
       )}
     </div>

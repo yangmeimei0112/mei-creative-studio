@@ -10,7 +10,9 @@ import {
   SquircleIconBadge,
   StudioLogo,
   LUCIDE_ICON_MAP,
-  LUCIDE_PICKER_GROUPS
+  LUCIDE_PICKER_GROUPS,
+  MEI_FLOW_M_PATH,
+  MEI_FLOW_DOT
 } from '../components/LucideIcon';
 import {
   DEFAULT_PROJECTS,
@@ -51,7 +53,7 @@ describe('咩創意工作室 Mei Creative Studio — 跨平台導引大廳完整
       ).toBeInTheDocument();
     });
 
-    // Check StudioLogo renders unified structure: squircle cloud + infinity loop (without sparkle badge)
+    // Check StudioLogo renders unified structure: squircle + Mei Flow vector (without sparkle badge)
     const studioLogoRender = render(<StudioLogo size="md" />);
     const logoEl = studioLogoRender.container.querySelector(
       '[data-testid="studio-brand-logo"]'
@@ -61,27 +63,31 @@ describe('咩創意工作室 Mei Creative Studio — 跨平台導引大廳完整
     expect(logoEl.querySelector('.squircle-icon-badge')).toBeInTheDocument();
     expect(logoEl.querySelector('.studio-logo-sparkle')).not.toBeInTheDocument();
 
-    const cloudSvg = logoEl.querySelector('[data-lucide-name="cloud"]');
-    expect(cloudSvg).toBeInTheDocument();
-    expect(cloudSvg).toHaveAttribute('data-lucide-name', 'cloud');
-    expect(cloudSvg).toHaveClass('studio-infinity-cloud');
-    expect(cloudSvg).toHaveAttribute('stroke-width', '1.75');
+    const meiFlowSvg = logoEl.querySelector('[data-lucide-name="mei-flow"]');
+    expect(meiFlowSvg).toBeInTheDocument();
+    expect(meiFlowSvg).toHaveAttribute('data-lucide-name', 'mei-flow');
+    expect(meiFlowSvg).toHaveClass('studio-mei-flow');
+    expect(meiFlowSvg).toHaveAttribute('stroke-width', '1.75');
 
-    // Verify cloud anchor path and Candidate F lemniscate path
-    const paths = cloudSvg.querySelectorAll('path');
-    expect(paths).toHaveLength(2);
-    expect(paths[0]).toHaveAttribute('d', 'M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z');
-    expect(paths[1]).toHaveAttribute(
-      'd',
-      'M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z'
-    );
+    // Verify Mei Flow frozen vector constants (1 path + 1 circle)
+    const paths = meiFlowSvg.querySelectorAll('path');
+    expect(paths).toHaveLength(1);
+    expect(paths[0]).toHaveAttribute('d', MEI_FLOW_M_PATH);
+
+    const circles = meiFlowSvg.querySelectorAll('circle');
+    expect(circles).toHaveLength(1);
+    expect(circles[0]).toHaveAttribute('cx', String(MEI_FLOW_DOT.cx));
+    expect(circles[0]).toHaveAttribute('cy', String(MEI_FLOW_DOT.cy));
+    expect(circles[0]).toHaveAttribute('r', String(MEI_FLOW_DOT.r));
+    expect(circles[0]).toHaveAttribute('fill', 'currentColor');
+    expect(circles[0]).toHaveAttribute('stroke', 'none');
 
     // Verify all 7 size variants of StudioLogo ('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl')
     ['2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl'].forEach((sz) => {
       const { container: szContainer } = render(<StudioLogo size={sz} />);
       const szEl = szContainer.querySelector(`[data-logo-size="${sz}"]`);
       expect(szEl).toBeInTheDocument();
-      expect(szEl.querySelector('[data-lucide-name="cloud"]')).toBeInTheDocument();
+      expect(szEl.querySelector('[data-lucide-name="mei-flow"]')).toBeInTheDocument();
       expect(szEl.querySelector('.studio-logo-sparkle')).not.toBeInTheDocument();
     });
 
@@ -160,7 +166,7 @@ describe('咩創意工作室 Mei Creative Studio — 跨平台導引大廳完整
     // 品牌名稱與統一品牌 Logo 正確渲染，且不顯示內部設計規格註解或技術標籤（含自動清理舊版快取）
     expect(screen.getAllByText('咩創意工作室').length).toBeGreaterThan(0);
     expect(screen.getAllByTestId('studio-brand-logo').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('v1.0.0').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('v1.1.0').length).toBeGreaterThan(0);
     const taglineEls = screen.getAllByText('創意無限∞咩有極限');
     const taglineEl =
       taglineEls.find((el) => el.classList.contains('studio-tagline-justify')) ||

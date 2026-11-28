@@ -1122,7 +1122,7 @@ describe('Tier 1: Core Feature Coverage (Features 1 to 15)', () => {
   // Feature 15: PortalEntrance Frameless Logo Loading Animation (R8-F1)
   // =========================================================================
   describe('Feature 15 (R8-F1): PortalEntrance Frameless Logo Loading Animation', () => {
-    it('T1-F15-01: PortalEntrance core emblem renders .studio-infinity-cloud SVG', () => {
+    it('T1-F15-01: PortalEntrance core emblem renders .studio-mei-flow SVG', () => {
       const { container } = render(
         <PortalEntrance
           isOpen={true}
@@ -1131,8 +1131,9 @@ describe('Tier 1: Core Feature Coverage (Features 1 to 15)', () => {
           onComplete={vi.fn()}
         />
       );
-      const coreSvg = container.querySelector('.portal-core-emblem .studio-infinity-cloud');
+      const coreSvg = container.querySelector('.portal-core-emblem .studio-mei-flow');
       expect(coreSvg).toBeInTheDocument();
+      expect(coreSvg).toHaveAttribute('data-lucide-name', 'mei-flow');
     });
 
     it('T1-F15-02: Core emblem retains data-logo-size="xl"', () => {
@@ -1169,7 +1170,7 @@ describe('Tier 1: Core Feature Coverage (Features 1 to 15)', () => {
 
       expect(framed.querySelector('.squircle-icon-badge')).toBeInTheDocument();
       expect(frameless.querySelector('.squircle-icon-badge')).toBeNull();
-      expect(frameless.querySelector('.studio-infinity-cloud')).toBeInTheDocument();
+      expect(frameless.querySelector('.studio-mei-flow')).toBeInTheDocument();
     });
 
     it('T1-F15-05: PortalEntrance handles onComplete callback when skipped or completed', () => {

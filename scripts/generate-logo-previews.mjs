@@ -7,15 +7,15 @@
  * 
  * 功能：
  * 1. 自動產生 7 階純向量獨立 SVG 檔案至 public/previews/
- *    - logo-2xs.svg (20x20, rx=6, icon=11px, sparkle=6px)
- *    - logo-xs.svg  (24x24, rx=8, icon=13px, sparkle=8px)
- *    - logo-sm.svg  (36x36, rx=12, icon=18px, sparkle=9px)
- *    - logo-md.svg  (44x44, rx=14, icon=22px, sparkle=11px)
- *    - logo-lg.svg  (56x56, rx=18, icon=28px, sparkle=13px)
- *    - logo-xl.svg  (96x96, rx=30, icon=46px, sparkle=18px)
- *    - logo-2xl.svg (128x128, rx=36, icon=58px, sparkle=22px)
+ *    - logo-2xs.svg (20x20, rx=6, icon=11px)
+ *    - logo-xs.svg  (24x24, rx=8, icon=13px)
+ *    - logo-sm.svg  (36x36, rx=12, icon=18px)
+ *    - logo-md.svg  (44x44, rx=14, icon=22px)
+ *    - logo-lg.svg  (56x56, rx=18, icon=28px)
+ *    - logo-xl.svg  (96x96, rx=30, icon=46px)
+ *    - logo-2xl.svg (128x128, rx=36, icon=58px)
  * 2. 自動產生 public/logo-preview.html 現代互動式預覽大廳 (支援深淺主題、7 階展示、放大鏡檢視與格線)
- * 3. 支援 --check 參數：靜態檢核所有生成檔案是否符合 Lucide 1.75 線寬、Candidate F 幾何與 0 Emoji
+ * 3. 支援 --check 參數：靜態檢核所有生成檔案是否符合 Lucide 1.75 線寬、Mei Flow 幾何與 0 Emoji
  */
 
 import fs from 'node:fs';
@@ -40,12 +40,6 @@ const TIERS = [
     boxSize: 20,
     rx: 6,
     iconSize: 11,
-    sparkleSize: 6,
-    sparkleR: 4,
-    sparkleCx: 16,
-    sparkleCy: 4,
-    sparkleX: 13,
-    sparkleY: 1,
     nameZh: '超微縮型',
     usage: '超微縮行內標籤、極致微型狀態指示點'
   },
@@ -54,12 +48,6 @@ const TIERS = [
     boxSize: 24,
     rx: 8,
     iconSize: 13,
-    sparkleSize: 8,
-    sparkleR: 5,
-    sparkleCx: 19,
-    sparkleCy: 5,
-    sparkleX: 15,
-    sparkleY: 1,
     nameZh: '緊湊型',
     usage: 'MobileBottomNav 行動底欄、AdminChatWidget 客服頂欄、CommandPalette 頁尾'
   },
@@ -68,12 +56,6 @@ const TIERS = [
     boxSize: 36,
     rx: 12,
     iconSize: 18,
-    sparkleSize: 9,
-    sparkleR: 7,
-    sparkleCx: 29,
-    sparkleCy: 7,
-    sparkleX: 24.5,
-    sparkleY: 2.5,
     nameZh: '小型',
     usage: 'CommandPalette 全域命令列、App Footer 頁尾品牌列'
   },
@@ -82,12 +64,6 @@ const TIERS = [
     boxSize: 44,
     rx: 14,
     iconSize: 22,
-    sparkleSize: 11,
-    sparkleR: 8.5,
-    sparkleCx: 35.5,
-    sparkleCy: 8.5,
-    sparkleX: 30,
-    sparkleY: 3,
     nameZh: '標準型 (預設)',
     usage: 'HeaderHero 主導覽列、MemberPortalModal 會員專區、QRCodeModal、AdminUnlockModal'
   },
@@ -96,12 +72,6 @@ const TIERS = [
     boxSize: 56,
     rx: 18,
     iconSize: 28,
-    sparkleSize: 13,
-    sparkleR: 10.5,
-    sparkleCx: 45.5,
-    sparkleCy: 10.5,
-    sparkleX: 39,
-    sparkleY: 4,
     nameZh: '增強型',
     usage: '專案焦點看板、特性卡片徽章'
   },
@@ -110,12 +80,6 @@ const TIERS = [
     boxSize: 96,
     rx: 30,
     iconSize: 46,
-    sparkleSize: 18,
-    sparkleR: 15,
-    sparkleCx: 81,
-    sparkleCy: 15,
-    sparkleX: 72,
-    sparkleY: 6,
     nameZh: '主視覺型',
     usage: 'PortalEntrance 載入大廳開場核心'
   },
@@ -124,25 +88,17 @@ const TIERS = [
     boxSize: 128,
     rx: 36,
     iconSize: 58,
-    sparkleSize: 22,
-    sparkleR: 19,
-    sparkleCx: 109,
-    sparkleCy: 19,
-    sparkleX: 98,
-    sparkleY: 8,
     nameZh: '旗艦展示型',
     usage: '大螢幕劇院展演、品牌發布會、高解析度旗艦展示'
   }
 ];
 
-// 正統向量貝茲幾何路徑常數
+// M 字時光律動 · Mei Flow 凍結向量幾何常數
 const GEOMETRY = {
-  // 靈感雲朵輪廓 (Lucide Standard Anchor)
-  cloudAnchor: 'M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z',
-  // 核心 Candidate F 正交雙極創意無限環
-  infinityLoop: 'M12 14.5c-1.2-1.2-2.4-1.8-3.6-1.8a1.8 1.8 0 1 0 0 3.6c1.2 0 2.4-.6 3.6-1.8Zm0 0c1.2 1.2 2.4 1.8 3.6 1.8a1.8 1.8 0 0 0 0-3.6c-1.2 0-2.4.6-3.6 1.8Z',
-  // 正統 Lucide Sparkles 主星
-  sparklesMain: 'M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z'
+  // 單筆圓角大寫 M 向量路徑
+  meiFlowM: 'M4.8 18V8.8a2.1 2.1 0 0 1 3.58-1.48L12 10.95l3.62-3.63A2.1 2.1 0 0 1 19.2 8.8v3.7',
+  // 右下時刻／靈感光點
+  meiFlowDot: { cx: 19.2, cy: 16.9, r: 1.95 }
 };
 
 /**
@@ -155,7 +111,7 @@ function generateTierSvg(t) {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${t.boxSize} ${t.boxSize}" width="${t.boxSize}" height="${t.boxSize}" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color: #0284C7;">
   <defs>
-    <linearGradient id="cloudGrad_${t.tier}" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="meiFlowGrad_${t.tier}" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#38BDF8" />
       <stop offset="100%" stop-color="#0284C7" />
     </linearGradient>
@@ -166,10 +122,10 @@ function generateTierSvg(t) {
   </defs>
   <!-- 咩創意工作室統一品牌標誌底座 (Squircle Base) -->
   <rect x="0.5" y="0.5" width="${t.boxSize - 1}" height="${t.boxSize - 1}" rx="${t.rx}" fill="url(#bgGlow_${t.tier})" stroke="#38BDF8" stroke-width="1.75" stroke-opacity="0.45" />
-  <!-- 正統 Lucide Cloud x Infinity 純粹極簡線性向量 (Candidate F) -->
+  <!-- M 字時光律動 · Mei Flow 純粹極簡線性向量 -->
   <g transform="translate(${iconX}, ${iconY}) scale(${iconScale})" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none">
-    <path d="${GEOMETRY.cloudAnchor}" />
-    <path d="${GEOMETRY.infinityLoop}" />
+    <path d="${GEOMETRY.meiFlowM}" />
+    <circle cx="${GEOMETRY.meiFlowDot.cx}" cy="${GEOMETRY.meiFlowDot.cy}" r="${GEOMETRY.meiFlowDot.r}" fill="currentColor" stroke="none" />
   </g>
 </svg>
 `.trim();
@@ -603,7 +559,7 @@ function generateShowcaseHtml() {
       <div class="brand-title-group">
         <div>
           <h1>咩創意工作室 · Brand Logo 向量預覽與快篩大廳</h1>
-          <p>Candidate F (靈感雲朵 × 雙極正交無限環 + Sparkles 徽章) · 全站 7 階響應式向量規格</p>
+          <p>M 字時光律動 · Mei Flow（極簡幾何單筆圓角大寫 M ＋ 右下靈感光點）· 全站 7 階響應式向量規格</p>
         </div>
       </div>
       <div class="controls-group">
@@ -620,11 +576,10 @@ function generateShowcaseHtml() {
     </header>
 
     <div class="compliance-bar">
-      <span class="compliance-badge">幾何規範: Candidate F (Refined Orthogonal Lemniscate)</span>
+      <span class="compliance-badge">幾何規範: M 字時光律動 · Mei Flow</span>
       <span class="compliance-badge">線寬標準: Lucide 1.75 (stroke-width="1.75")</span>
-      <span class="compliance-badge">雲朵輪廓錨點: M17.5 19H9</span>
-      <span class="compliance-badge">無限環幾何: M12 14.5c-1.2-1.2</span>
-      <span class="compliance-badge">靈感火花幾何: M9.937 15.5</span>
+      <span class="compliance-badge">M 字母路徑錨點: M4.8 18V8.8</span>
+      <span class="compliance-badge">時刻靈感光點: cx="19.2" cy="16.9" r="1.95"</span>
       <span class="compliance-badge">全站政策: 100% 向量化 · 嚴格 0 Emoji</span>
     </div>
 
@@ -711,12 +666,27 @@ function generateShowcaseHtml() {
  */
 function runStaticCheck() {
   console.log('[Check] 正在執行 Brand Logo 生成資產靜態規格快篩...');
+  const expectedSvgFiles = TIERS.map((t) => `logo-${t.tier}.svg`);
   const filesToCheck = [
     HTML_PATH,
-    ...TIERS.map((t) => path.join(PREVIEWS_DIR, `logo-${t.tier}.svg`))
+    ...expectedSvgFiles.map((file) => path.join(PREVIEWS_DIR, file))
   ];
 
   let hasErrors = false;
+
+  if (fs.existsSync(PREVIEWS_DIR)) {
+    const actualPreviewFiles = fs.readdirSync(PREVIEWS_DIR).sort();
+    const sortedExpected = [...expectedSvgFiles].sort();
+    if (
+      actualPreviewFiles.length !== sortedExpected.length ||
+      actualPreviewFiles.some((f, idx) => f !== sortedExpected[idx])
+    ) {
+      console.error(
+        `[FAIL] public/previews/ 必須嚴格僅含 7 支 SVG 檔案，實際發現: ${actualPreviewFiles.join(', ')}`
+      );
+      hasErrors = true;
+    }
+  }
 
   for (const filePath of filesToCheck) {
     const relPath = path.relative(ROOT_DIR, filePath);
@@ -734,25 +704,27 @@ function runStaticCheck() {
       hasErrors = true;
     }
 
-    // 2. 包含靈感雲朵輪廓錨點 M17.5 19H9
-    if (!content.includes('M17.5 19H9')) {
-      console.error(`[FAIL] ${relPath} 缺少靈感雲朵正統錨點 (未包含 'M17.5 19H9')`);
+    // 2. 包含 Mei Flow 單筆圓角大寫 M 向量路徑
+    if (!content.includes(GEOMETRY.meiFlowM)) {
+      console.error(`[FAIL] ${relPath} 缺少 Mei Flow M 字母凍結路徑`);
       hasErrors = true;
     }
 
-    // 3. 包含 Candidate F 正交雙環幾何 M12 14.5c-1.2-1.2
-    if (!content.includes('M12 14.5c-1.2-1.2')) {
-      console.error(`[FAIL] ${relPath} 缺少 Candidate F 無限環幾何 (未包含 'M12 14.5c-1.2-1.2')`);
+    // 3. 包含 Mei Flow 右下時刻／靈感光點
+    if (!content.includes('cx="19.2" cy="16.9" r="1.95"')) {
+      console.error(`[FAIL] ${relPath} 缺少 Mei Flow 右下靈感光點 (<circle cx="19.2" cy="16.9" r="1.95">)`);
       hasErrors = true;
     }
 
-    // 4. 嚴禁手繪舊版路徑 m12 3-1.912
-    if (content.includes('m12 3-1.912')) {
-      console.error(`[FAIL] ${relPath} 含有手繪舊版未規範路徑 'm12 3-1.912'`);
-      hasErrors = true;
+    // 4. 嚴禁殘留舊版 Candidate F 或手繪舊版路徑
+    for (const legacyFragment of ['M17.5 19H9', 'M12 14.5c', 'm12 3-1.912', 'Candidate F']) {
+      if (content.includes(legacyFragment)) {
+        console.error(`[FAIL] ${relPath} 違規殘留舊版路徑或名稱 '${legacyFragment}'`);
+        hasErrors = true;
+      }
     }
 
-    // 6. 嚴格 0 Emoji
+    // 5. 嚴格 0 Emoji
     if (EMOJI_REGEX.test(content)) {
       console.error(`[FAIL] ${relPath} 違規包含 Unicode Emoji 字符`);
       hasErrors = true;
@@ -763,15 +735,19 @@ function runStaticCheck() {
     console.error('[Check] 快篩失敗：存在規格不合規之生成資產。');
     process.exit(1);
   } else {
-    console.log(`[PASS] 快篩全部通過！已成功檢核 ${filesToCheck.length} 個生成檔案，無 Emoji、合規 1.75 線寬與 Candidate F 幾何。`);
+    console.log(`[PASS] 快篩全部通過！已成功檢核 ${filesToCheck.length} 個生成檔案，無 Emoji、合規 1.75 線寬與 Mei Flow 幾何。`);
     process.exit(0);
   }
 }
 
 /**
- * 嘗試以系統 Headless Chrome/Edge 輸出預覽截圖
+ * 嘗試以系統 Headless Chrome/Edge 輸出預覽截圖（僅於明確傳入 --screenshot 時執行，不寫入 public/previews/ 以免干擾 7 檔斷言）
  */
 function tryCaptureHeadlessScreenshot() {
+  if (!process.argv.includes('--screenshot')) {
+    return;
+  }
+
   const browserCandidates = [
     'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
@@ -785,7 +761,7 @@ function tryCaptureHeadlessScreenshot() {
     return;
   }
 
-  const screenshotPath = path.join(PREVIEWS_DIR, 'preview-showcase.png');
+  const screenshotPath = path.join(ROOT_DIR, 'preview-showcase.png');
   const fileUrl = `file:///${HTML_PATH.replace(/\\/g, '/')}`;
 
   try {
@@ -834,7 +810,7 @@ function main() {
     const svgCode = generateTierSvg(t);
     const svgPath = path.join(PREVIEWS_DIR, `logo-${t.tier}.svg`);
     fs.writeFileSync(svgPath, svgCode, 'utf-8');
-    console.log(`[SVG] 產出 logo-${t.tier}.svg (${t.boxSize}x${t.boxSize} px, rx=${t.rx}, icon=${t.iconSize}px, sparkle=${t.sparkleSize}px)`);
+    console.log(`[SVG] 產出 logo-${t.tier}.svg (${t.boxSize}x${t.boxSize} px, rx=${t.rx}, icon=${t.iconSize}px)`);
   }
 
   // 3. 產出展示大廳 HTML
@@ -842,7 +818,7 @@ function main() {
   fs.writeFileSync(HTML_PATH, htmlContent, 'utf-8');
   console.log(`[HTML] 產出預覽展示大廳: ${path.relative(ROOT_DIR, HTML_PATH)}`);
 
-  // 4. 嘗試產出 Headless 截圖
+  // 4. 僅於 --screenshot 模式下輸出截圖（不污染 public/previews/）
   tryCaptureHeadlessScreenshot();
 
   console.log('[Done] 全部預覽資產已生成完成！可執行 "npm run preview:logo -- --check" 或 "node scripts/generate-logo-previews.mjs --check" 進行規格快篩。');

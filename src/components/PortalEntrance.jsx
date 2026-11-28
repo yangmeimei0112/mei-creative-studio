@@ -188,7 +188,7 @@ export default function PortalEntrance({
             className="portal-aurora-glow absolute inset-5 sm:inset-6 rounded-full"
           />
 
-          {/* 中心發光雲朵與無限標誌 */}
+          {/* 中心發光 Mei Flow 品牌標誌 */}
           <StudioLogo
             size="xl"
             frameless={true}
