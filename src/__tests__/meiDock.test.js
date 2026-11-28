@@ -60,10 +60,13 @@ function mockViewport({ width = 1024, height = 768, dark = false } = {}) {
 function cleanupDockArtifacts() {
   delete window.__MEI_STUDIO_DOCK_MOUNTED__;
   delete window.MeiStudioSSO;
+  delete window.MeiStudioDock;
   delete window.__MEI_STUDIO_DOCK_SET_PROJECT__;
   delete window.__XSS_FIRED__;
   const existing = document.getElementById('mei-studio-dock-root');
   if (existing) existing.remove();
+  const existingTab = document.getElementById('mei-dock-edge-tab');
+  if (existingTab) existingTab.remove();
   const styleEl = document.getElementById('mei-studio-dock-style');
   if (styleEl) styleEl.remove();
   document.querySelectorAll('style').forEach((s) => {
@@ -447,6 +450,62 @@ describe('Milestone 3: Mei Studio Universal SSO SDK (mei-dock.js)', () => {
       window.dispatchEvent(new Event('resize'));
       expect(root).toHaveClass('mei-dock-collapsed');
       expect(toggleBtn).toHaveAttribute('aria-expanded', 'false');
+    });
+  });
+
+  // Suite 7: Dual-Mode Hiding (Edge Peek Handle + Complete Hide + window.MeiStudioDock API)
+  describe('7. Dual-Mode Hiding (Edge Peek Tab, Complete Hide & window.MeiStudioDock)', () => {
+    it('hides dock to translucent edge peek handle via #mei-dock-hide-btn and restores on edge tab click', () => {
+      const root = mountDock({ 'data-position': 'bottom-left' });
+      const edgeTab = document.getElementById('mei-dock-edge-tab');
+      expect(edgeTab).toBeInTheDocument();
+      expect(edgeTab).toHaveClass('pos-bottom-left');
+      expect(window.MeiStudioDock.getMode()).toBe('visible');
+
+      const hideBtn = root.querySelector('#mei-dock-hide-btn');
+      expect(hideBtn).toBeInTheDocument();
+      fireEvent.click(hideBtn);
+
+      expect(root).toHaveClass('mei-dock-edge-hidden');
+      expect(edgeTab).toHaveClass('mei-dock-edge-tab-visible');
+      expect(window.MeiStudioDock.getMode()).toBe('edge-hidden');
+      expect(window.localStorage.getItem('mei_studio_dock_visibility_v1')).toBe('edge-hidden');
+
+      // Clicking edge peek tab restores dock
+      fireEvent.click(edgeTab);
+      expect(root).not.toHaveClass('mei-dock-edge-hidden');
+      expect(edgeTab).not.toHaveClass('mei-dock-edge-tab-visible');
+      expect(window.MeiStudioDock.getMode()).toBe('visible');
+      expect(window.localStorage.getItem('mei_studio_dock_visibility_v1')).toBe('visible');
+      edgeTab?.remove();
+    });
+
+    it('supports completely-hidden mode via popover button & window.MeiStudioDock API, persisting across remounts', () => {
+      const root = mountDock();
+      const edgeTab = document.getElementById('mei-dock-edge-tab');
+      const modes = [];
+      const unsub = window.MeiStudioDock.onModeChange((m) => modes.push(m));
+
+      fireEvent.click(root.querySelector('#mei-dock-switcher-btn'));
+      fireEvent.click(root.querySelector('#mei-dock-hide-completely-btn'));
+
+      expect(root).toHaveClass('mei-dock-completely-hidden');
+      expect(edgeTab).not.toHaveClass('mei-dock-edge-tab-visible');
+      expect(window.MeiStudioDock.getMode()).toBe('completely-hidden');
+      expect(modes).toEqual(['completely-hidden']);
+
+      // Remounting preserves persisted completely-hidden state
+      const remounted = mountDock();
+      expect(remounted).toHaveClass('mei-dock-completely-hidden');
+      expect(window.MeiStudioDock.getMode()).toBe('completely-hidden');
+
+      // Programmatic show() restores normal visibility
+      window.MeiStudioDock.show();
+      expect(remounted).not.toHaveClass('mei-dock-completely-hidden');
+      expect(window.MeiStudioDock.getMode()).toBe('visible');
+
+      unsub();
+      document.getElementById('mei-dock-edge-tab')?.remove();
     });
   });
 });
